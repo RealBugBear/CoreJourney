@@ -1,0 +1,134 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Flutter: Run Development",
+            "type": "shell",
+            "command": "flutter",
+            "args": [
+                "run",
+                "--flavor",
+                "development",
+                "-t",
+                "lib/main_development.dart"
+            ],
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            }
+        },
+        {
+            "label": "Flutter: Run Staging",
+            "type": "shell",
+            "command": "flutter",
+            "args": [
+                "run",
+                "--flavor",
+                "staging",
+                "-t",
+                "lib/main_staging.dart"
+            ],
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            }
+        },
+        {
+            "label": "Flutter: Run Production",
+            "type": "shell",
+            "command": "flutter",
+            "args": [
+                "run",
+                "--flavor",
+                "production",
+                "-t",
+                "lib/main_production.dart"
+            ],
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            }
+        },
+        {
+            "label": "Flutter: Test",
+            "type": "shell",
+            "command": "flutter",
+            "args": [
+                "test"
+            ],
+            "group": {
+                "kind": "test",
+                "isDefault": true
+            }
+        },
+        {
+            "label": "Flutter: Test with Coverage",
+            "type": "shell",
+            "command": "flutter",
+            "args": [
+                "test",
+                "--coverage"
+            ],
+            "group": "test"
+        },
+        {
+            "label": "Flutter: Analyze",
+            "type": "shell",
+            "command": "flutter",
+            "args": [
+                "analyze"
+            ],
+            "group": "build",
+            "problemMatcher": "$dart-analyze"
+        },
+        {
+            "label": "Flutter: Format",
+            "type": "shell",
+            "command": "dart",
+            "args": [
+                "format",
+                "."
+            ],
+            "group": "build"
+        },
+        {
+            "label": "Build Runner: Generate",
+            "type": "shell",
+            "command": "flutter",
+            "args": [
+                "pub",
+                "run",
+                "build_runner",
+                "build",
+                "--delete-conflicting-outputs"
+            ],
+            "group": "build"
+        },
+        {
+            "label": "Build Runner: Watch",
+            "type": "shell",
+            "command": "flutter",
+            "args": [
+                "pub",
+                "run",
+                "build_runner",
+                "watch",
+                "--delete-conflicting-outputs"
+            ],
+            "group": "build",
+            "isBackground": true
+        },
+        {
+            "label": "Flutter: Clean",
+            "type": "shell",
+            "command": "flutter",
+            "args": [
+                "clean"
+            ],
+            "group": "build"
+        }
+    ]
+}

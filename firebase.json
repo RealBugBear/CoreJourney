@@ -1,0 +1,70 @@
+{
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "corejourney-prod",
+          "appId": "1:673501917704:android:63ddd42b1717d282e657bd",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "ios": {
+        "default": {
+          "projectId": "corejourney-prod",
+          "appId": "1:673501917704:ios:9446cd7e1a342713e657bd",
+          "uploadDebugSymbols": false,
+          "fileOutput": "ios/Runner/GoogleService-Info.plist"
+        }
+      },
+      "dart": {
+        "lib/firebase_options_dev.dart": {
+          "projectId": "corejourney-dev",
+          "configurations": {
+            "android": "1:153996966068:android:bec705a62ac0d9cf0bbfe1",
+            "ios": "1:153996966068:ios:c05a136bf8b3bc320bbfe1"
+          }
+        },
+        "lib/firebase_options_prod.dart": {
+          "projectId": "corejourney-prod",
+          "configurations": {
+            "android": "1:673501917704:android:63ddd42b1717d282e657bd",
+            "ios": "1:673501917704:ios:9446cd7e1a342713e657bd",
+            "macos": "1:673501917704:ios:669e646fb9018d4ee657bd",
+            "web": "1:673501917704:web:1fd84a6ac991312de657bd",
+            "windows": "1:673501917704:web:f1416578131ee8bfe657bd"
+          }
+        },
+        "lib/firebase_options.dart": {
+          "projectId": "corejourney-dev",
+          "configurations": {
+            "android": "1:153996966068:android:9a0abcc75c8e6f7e0bbfe1",
+            "ios": "1:153996966068:ios:2106fb17d0bed5700bbfe1",
+            "macos": "1:153996966068:ios:c05a136bf8b3bc320bbfe1",
+            "web": "1:153996966068:web:884cd8bc7d1c5f480bbfe1",
+            "windows": "1:153996966068:web:9dc25e714e53958a0bbfe1"
+          }
+        }
+      },
+      "macos": {
+        "default": {
+          "projectId": "corejourney-prod",
+          "appId": "1:673501917704:ios:669e646fb9018d4ee657bd",
+          "uploadDebugSymbols": false,
+          "fileOutput": "macos/Runner/GoogleService-Info.plist"
+        }
+      }
+    }
+  },
+  "firestore": {
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
+  },
+  "hosting": {
+    "public": "public",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ]
+  }
+}

@@ -1,0 +1,12 @@
+allprojects {
+    afterEvaluate { project ->
+        if (project.hasProperty("android")) {
+            project.android {
+                // Ensure namespace is set for all Android projects
+                if (!namespace) {
+                    namespace = project.group?.toString() ?: "com.unknown.${project.name}"
+                }
+            }
+        }
+    }
+}
