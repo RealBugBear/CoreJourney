@@ -16,7 +16,12 @@ class ProgressService {
   final NotificationService _notifications;
   final String _userId;
 
-  ProgressService(this._db, this._sync, this._notifications, this._userId);
+  ProgressService(
+    this._db,
+    this._sync,
+    this._userId, {
+    NotificationService? notifications,
+  }) : _notifications = notifications ?? NotificationService();
 
   Future<ProgressEntry> initializeProgress() async {
     final now = DateTime.now();

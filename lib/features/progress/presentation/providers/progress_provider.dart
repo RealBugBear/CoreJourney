@@ -14,5 +14,5 @@ final progressServiceProvider = Provider<ProgressService>((ref) {
   final notifications = NotificationService();
   final user = FirebaseAuth.instance.currentUser;
   final userId = user?.uid ?? 'unknown';
-  return ProgressService(database, sync, notifications, userId);
+  return ProgressService(database, sync, userId, notifications: notifications);
 });
