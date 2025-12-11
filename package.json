@@ -1,0 +1,29 @@
+{
+  "name": "corejourney",
+  "version": "1.0.0",
+  "description": "Pränatales Reflextraining App - A comprehensive Flutter application for prenatal reflex training.",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs",
+    "lib": "lib",
+    "test": "test"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/RealBugBear/CoreJourney.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/RealBugBear/CoreJourney/issues"
+  },
+  "homepage": "https://github.com/RealBugBear/CoreJourney#readme",
+  "dependencies": {
+    "openai": "^6.10.0"
+  }
+}
