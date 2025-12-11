@@ -9,6 +9,9 @@ import '../../../training/presentation/providers/training_flow_provider.dart';
 import '../../../training/presentation/widgets/animated_progress_bar.dart';
 import '../../../training/presentation/widgets/training_disclaimer_dialog.dart';
 import '../../../profile/presentation/screens/profile_screen.dart';
+import '../../../progress/domain/models/training_week.dart';
+import '../../../progress/domain/models/user_preferences.dart';
+import '../../../progress/domain/models/progress_entry.dart';
 
 class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({super.key});
@@ -44,6 +47,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     final progressService = ref.watch(progressServiceProvider);
     final user = FirebaseAuth.instance.currentUser;
 
+    final preferences = UserPreferences.defaultPreferences();
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('CoreJourney'),
@@ -61,14 +66,25 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         ],
       ),
       body: FutureBuilder(
-        future: progressService.getCurrentProgress(),
+        future: Future.wait([
+          progressService.getCurrentProgress(),
+          progressService.buildWeeklyOverview(preferences: preferences),
+        ]),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
 
-          final progress = snapshot.data;
-          
+          if (!snapshot.hasData || snapshot.data == null) {
+            return const Center(
+              child: Text('Lade Fortschritt...'),
+            );
+          }
+
+          final data = snapshot.data as List<Object?>;
+          final progress = data.first as ProgressEntry?;
+          final weeklyOverview = data.last as WeeklyProgressOverview?;
+
           if (progress == null) {
             return const Center(
               child: Text('Lade Fortschritt...'),
@@ -247,9 +263,19 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                     ),
                   ),
                 ),
-                
+
                 const SizedBox(height: 24),
-                
+
+                if (weeklyOverview != null) ...[
+                  _WeeklyGoalCard(
+                    overview: weeklyOverview!,
+                    theme: theme,
+                  ),
+                  const SizedBox(height: 16),
+                  _StreakStrip(overview: weeklyOverview!),
+                  const SizedBox(height: 24),
+                ],
+
                 // Start Training Button
                 SizedBox(
                   width: double.infinity,
@@ -428,6 +454,135 @@ class _StatCard extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _WeeklyGoalCard extends StatelessWidget {
+  final WeeklyProgressOverview overview;
+  final ThemeData theme;
+
+  const _WeeklyGoalCard({required this.overview, required this.theme});
+
+  @override
+  Widget build(BuildContext context) {
+    final buffer = overview.remainingBuffer;
+    final remainingDays = overview.remainingCalendarDaysFromToday;
+
+    return Card(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Row(
+          children: [
+            SizedBox(
+              height: 72,
+              width: 72,
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  CircularProgressIndicator(
+                    value: overview.progress.clamp(0, 1),
+                    strokeWidth: 8,
+                    backgroundColor: theme.colorScheme.primary.withOpacity(0.1),
+                    valueColor: AlwaysStoppedAnimation(theme.colorScheme.primary),
+                  ),
+                  Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          '${overview.completedCount}',
+                          style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+                        ),
+                        Text(
+                          '/${overview.targetCount}',
+                          style: theme.textTheme.bodySmall,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Wochenziel 5/7',
+                    style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Noch $buffer Trainings und $remainingDays Kalendertage übrig.',
+                    style: theme.textTheme.bodyMedium,
+                  ),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 4,
+                    children: overview.days
+                        .map(
+                          (day) => Chip(
+                            backgroundColor: day.completed
+                                ? Colors.green.withOpacity(0.1)
+                                : Colors.grey.withOpacity(0.1),
+                            label: Text(
+                              DateFormat.E().format(day.date),
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: day.completed ? Colors.green[800] : Colors.grey[700],
+                              ),
+                            ),
+                            avatar: Icon(
+                              day.completed ? Icons.check : Icons.circle_outlined,
+                              size: 18,
+                              color: day.completed ? Colors.green : Colors.grey,
+                            ),
+                          ),
+                        )
+                        .toList(),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _StreakStrip extends StatelessWidget {
+  final WeeklyProgressOverview overview;
+
+  const _StreakStrip({required this.overview});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Row(
+      children: [
+        Expanded(
+          child: _StatCard(
+            icon: Icons.local_fire_department,
+            color: Colors.orange,
+            value: '${overview.dailyStreakDays}',
+            label: 'Tage am Stück',
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: _StatCard(
+            icon: Icons.calendar_month,
+            color: theme.colorScheme.primary,
+            value: '${overview.weeklyStreakWeeks}',
+            label: 'Wochen in Folge (5/7)',
+          ),
+        ),
+      ],
     );
   }
 }
