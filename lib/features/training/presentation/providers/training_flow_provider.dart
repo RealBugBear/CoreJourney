@@ -2,8 +2,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
-import '../../../../bootstrap/providers.dart';
 import '../../../progress/domain/services/progress_service.dart';
+import '../../../progress/presentation/providers/progress_provider.dart';
 import '../../domain/models/exercise.dart';
 
 enum TrainingScreenType { 
@@ -188,12 +188,8 @@ class TrainingFlowNotifier extends StateNotifier<TrainingFlowState> {
 
 final trainingFlowProvider =
     StateNotifierProvider<TrainingFlowNotifier, TrainingFlowState>((ref) {
-  final database = ref.watch(databaseProvider);
-  final sync = ref.watch(syncServiceProvider);
-  final user = FirebaseAuth.instance.currentUser;
-  final userId = user?.uid ?? 'unknown';
-  final progressService = ProgressService(database, sync, userId);
-  
+  final progressService = ref.watch(progressServiceProvider);
+
   return TrainingFlowNotifier(progressService);
 });
 

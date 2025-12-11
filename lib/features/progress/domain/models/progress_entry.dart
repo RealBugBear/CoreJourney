@@ -28,7 +28,10 @@ class ProgressEntry {
   int currentStreakWeeks = 0;
   int trainingsThisWeek = 0;
   DateTime? lastTrainingWeekStart;
-  
+  int dailyStreak = 0;
+  int plannedSkipsThisWeek = 0;
+  int weeklyGoal = 5;
+
   // Sync
   late String firestoreId;
   late bool needsSync;

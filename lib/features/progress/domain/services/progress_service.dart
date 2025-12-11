@@ -6,6 +6,9 @@ import '../../../../core/database/database_service.dart';
 import '../../../../core/sync/sync_service.dart';
 import '../models/progress_entry.dart';
 import '../../../../core/services/notification_service.dart';
+import '../models/user_preferences.dart';
+import '../models/training_week.dart';
+import '../../../training/domain/models/training_session.dart';
 
 class ProgressService {
   final DatabaseService _db;
@@ -71,6 +74,20 @@ class ProgressService {
   void updateStreakAndActivity(ProgressEntry progress, DateTime now) {
     final lastActivity = progress.lastActivityDate;
 
+    // Daily streak logic
+    if (lastActivity == null) {
+      progress.dailyStreak = 1;
+    } else {
+      final daysSinceLastActivity = now.difference(lastActivity).inDays;
+      if (daysSinceLastActivity == 0) {
+        // Already trained today, keep streak as is
+      } else if (daysSinceLastActivity == 1) {
+        progress.dailyStreak += 1;
+      } else {
+        progress.dailyStreak = 1;
+      }
+    }
+
     // Streak Logic
     final currentWeekStart = _getWeekStart(now);
     final lastWeekStart = progress.lastTrainingWeekStart ?? (lastActivity != null ? _getWeekStart(lastActivity) : null);
@@ -94,9 +111,10 @@ class ProgressService {
       } else {
         progress.currentStreakWeeks = 0;
       }
-      
+
       progress.trainingsThisWeek = 1;
       progress.lastTrainingWeekStart = currentWeekStart;
+      progress.plannedSkipsThisWeek = 0;
     }
 
     if (lastActivity != null) {
@@ -152,6 +170,81 @@ class ProgressService {
 
     // Record the activity
     await recordActivity(progress);
+  }
+
+  Future<void> registerPlannedSkip(ProgressEntry progress) async {
+    final now = DateTime.now();
+    final currentWeekStart = _getWeekStart(now);
+
+    if (progress.lastTrainingWeekStart == null || !progress.lastTrainingWeekStart!.isAtSameMomentAs(currentWeekStart)) {
+      progress.plannedSkipsThisWeek = 0;
+      progress.lastTrainingWeekStart = currentWeekStart;
+    }
+
+    if (progress.plannedSkipsThisWeek < 1) {
+      progress.plannedSkipsThisWeek += 1;
+      progress.needsSync = true;
+
+      await _db.isar.writeTxn(() async {
+        await _db.isar.progressEntrys.put(progress);
+      });
+
+      await _sync.addJob(
+        collection: 'progress',
+        docId: progress.firestoreId,
+        action: 'update',
+        payload: progress.toJson(),
+      );
+    }
+  }
+
+  Future<WeeklyProgressOverview> buildWeeklyOverview({
+    DateTime? reference,
+    UserPreferences? preferences,
+  }) async {
+    final now = reference ?? DateTime.now();
+    final weekStart = _getWeekStart(now);
+    final weekEnd = weekStart.add(const Duration(days: 7));
+    final progress = await getCurrentProgress();
+    final weeklyTarget = progress?.weeklyGoal ?? 5;
+
+    final List<TrainingSession> sessions = await _db.isar.trainingSessions
+        .filter()
+        .userIdEqualTo(_userId)
+        .dateBetween(weekStart, weekEnd)
+        .findAll();
+
+    final days = <TrainingDayStatus>[];
+    for (var i = 0; i < 7; i++) {
+      final date = weekStart.add(Duration(days: i));
+      final completed = sessions.any((session) {
+        final completedAt = session.completedAt ?? session.date;
+        return completedAt.year == date.year &&
+            completedAt.month == date.month &&
+            completedAt.day == date.day &&
+            session.isCompleted;
+      });
+
+      final window = preferences?.primaryWindowForWeekday(date.weekday);
+      days.add(
+        TrainingDayStatus(
+          date: date,
+          completed: completed,
+          plannedSkip: progress?.plannedSkipsThisWeek > 0 && !completed,
+          predictedWindow: window,
+          locationLabel: window?.locationLabel,
+        ),
+      );
+    }
+
+    return WeeklyProgressOverview(
+      weekStart: weekStart,
+      days: days,
+      targetCount: weeklyTarget,
+      weeklyStreakWeeks: progress?.currentStreakWeeks ?? 0,
+      dailyStreakDays: progress?.dailyStreak ?? 0,
+      plannedSkips: progress?.plannedSkipsThisWeek ?? 0,
+    );
   }
   
   /// Check if disclaimer should be shown
@@ -222,6 +315,9 @@ extension ProgressEntryJson on ProgressEntry {
       'currentStreakWeeks': currentStreakWeeks,
       'trainingsThisWeek': trainingsThisWeek,
       'lastTrainingWeekStart': lastTrainingWeekStart?.toIso8601String(),
+      'dailyStreak': dailyStreak,
+      'plannedSkipsThisWeek': plannedSkipsThisWeek,
+      'weeklyGoal': weeklyGoal,
     };
   }
 }

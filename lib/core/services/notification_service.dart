@@ -1,7 +1,10 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 import 'package:flutter_timezone/flutter_timezone.dart';
+
+import '../../features/progress/domain/models/user_preferences.dart';
 
 class NotificationService {
   static final NotificationService _instance = NotificationService._internal();
@@ -103,6 +106,171 @@ class NotificationService {
       // uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
       matchDateTimeComponents: DateTimeComponents.time, // This makes it repeat daily at this time
     );
+  }
+
+  Future<void> scheduleReminderWindow({
+    required DateTime date,
+    required HabitWindow window,
+    int baseId = 100,
+    String? message,
+  }) async {
+    if (!_isWithinQuietHours(window, date)) {
+      final scheduledDate = tz.TZDateTime(
+        tz.local,
+        date.year,
+        date.month,
+        date.day,
+        window.start.hour,
+        window.start.minute,
+      );
+
+      await flutterLocalNotificationsPlugin.zonedSchedule(
+        baseId,
+        'Zeit für dein Training!',
+        message ?? 'Dein bevorzugtes Trainingsfenster hat begonnen.',
+        scheduledDate,
+        const NotificationDetails(
+          android: AndroidNotificationDetails(
+            'daily_reminder_window',
+            'Trainingsfenster',
+            channelDescription: 'Erinnerungen innerhalb des Wunschzeitraums',
+            importance: Importance.max,
+            priority: Priority.high,
+          ),
+          iOS: DarwinNotificationDetails(),
+        ),
+        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      );
+
+      final failoverDate = scheduledDate.add(const Duration(minutes: 45));
+      await flutterLocalNotificationsPlugin.zonedSchedule(
+        baseId + 1,
+        'Kleiner Stups',
+        'Du kannst die Einheit noch heute erledigen. Nimm dir 15 Minuten!',
+        failoverDate,
+        const NotificationDetails(
+          android: AndroidNotificationDetails(
+            'daily_reminder_window_failover',
+            'Trainingsfenster Follow-up',
+            channelDescription: 'Zusätzliche Hinweise, wenn die erste Erinnerung nicht geöffnet wurde',
+            importance: Importance.defaultImportance,
+            priority: Priority.defaultPriority,
+          ),
+          iOS: DarwinNotificationDetails(),
+        ),
+        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      );
+    }
+  }
+
+  Future<void> scheduleWeeklyTouchpoints({
+    required DateTime weekStart,
+    required UserPreferences preferences,
+  }) async {
+    if (preferences.silentMode) return;
+
+    final kickoff = tz.TZDateTime(
+      tz.local,
+      weekStart.year,
+      weekStart.month,
+      weekStart.day,
+      7,
+      30,
+    );
+
+    await flutterLocalNotificationsPlugin.zonedSchedule(
+      200,
+      'Starte deine Woche',
+      'Plane deine fünf Trainingstage und sichere dir deinen 5/7-Streak.',
+      kickoff,
+      const NotificationDetails(
+        android: AndroidNotificationDetails(
+          'weekly_kickoff',
+          'Wöchentlicher Start',
+          channelDescription: 'Montagmorgens die Woche planen',
+        ),
+        iOS: DarwinNotificationDetails(),
+      ),
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+    );
+
+    if (preferences.midweekCheckinEnabled) {
+      final midweek = kickoff.add(const Duration(days: 2));
+      await flutterLocalNotificationsPlugin.zonedSchedule(
+        201,
+        'Wo stehst du diese Woche?',
+        'Mittwochs-Check-in: Was braucht es, um 5/7 zu schaffen?',
+        midweek,
+        const NotificationDetails(
+          android: AndroidNotificationDetails(
+            'weekly_midweek',
+            'Wochenmitte',
+            channelDescription: 'Motivations-Check-in am Mittwoch',
+          ),
+          iOS: DarwinNotificationDetails(),
+        ),
+        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      );
+    }
+
+    final closeout = kickoff.add(const Duration(days: 6, hours: 11));
+    await flutterLocalNotificationsPlugin.zonedSchedule(
+      202,
+      'Wochenausklang',
+      'Schließe die Woche ab und bereite die nächste vor.',
+      closeout,
+      const NotificationDetails(
+        android: AndroidNotificationDetails(
+          'weekly_closeout',
+          'Wochenausklang',
+          channelDescription: 'Sonntags-Zusammenfassung und Ausblick',
+        ),
+        iOS: DarwinNotificationDetails(),
+      ),
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+    );
+  }
+
+  Future<void> scheduleMakeUpPlan(DateTime date) async {
+    final scheduledDate = tz.TZDateTime(
+      tz.local,
+      date.year,
+      date.month,
+      date.day,
+      20,
+      0,
+    );
+
+    await flutterLocalNotificationsPlugin.zonedSchedule(
+      300,
+      'Noch ist Zeit für heute',
+      'Eine kurze 15-Minuten-Einheit bewahrt deinen 5/7-Puffer.',
+      scheduledDate,
+      const NotificationDetails(
+        android: AndroidNotificationDetails(
+          'daily_makeup',
+          'Aufhol-Erinnerung',
+          channelDescription: 'Ermutigung für eine Recovery-Session',
+        ),
+        iOS: DarwinNotificationDetails(),
+      ),
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+    );
+  }
+
+  Future<void> cancelReminderWindow(int baseId) async {
+    await flutterLocalNotificationsPlugin.cancel(baseId);
+    await flutterLocalNotificationsPlugin.cancel(baseId + 1);
+  }
+
+  bool _isWithinQuietHours(HabitWindow window, DateTime date) {
+    final start = DateTime(date.year, date.month, date.day, window.start.hour, window.start.minute);
+    final end = DateTime(date.year, date.month, date.day, window.end.hour, window.end.minute);
+
+    final quietStart = DateTime(date.year, date.month, date.day, 22);
+    final quietEnd = DateTime(date.year, date.month, date.day, 6);
+
+    return start.isBefore(quietEnd) || end.isAfter(quietStart);
   }
 
   Future<void> cancelAll() async {
