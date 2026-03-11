@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../settings/presentation/screens/settings_screen.dart';
+import 'admin_tools_screen.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
@@ -116,6 +117,25 @@ class ProfileScreen extends ConsumerWidget {
               },
             ),
           ),
+
+          if ((user?.email ?? '').toLowerCase() == 'admin@test.de') ...[
+            const SizedBox(height: 12),
+            Card(
+              child: ListTile(
+                leading: const Icon(Icons.science_outlined),
+                title: const Text('Test Tools'),
+                subtitle: const Text('Nur für QA/Admin'),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => const AdminToolsScreen(),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
           
           const SizedBox(height: 32),
           

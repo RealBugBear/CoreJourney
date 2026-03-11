@@ -45,6 +45,20 @@ class ReminderSchedulePlan {
   });
 }
 
+class ReconnectProbeResult {
+  final int beforePendingJobs;
+  final int afterPendingJobs;
+  final bool beforeReminderScheduled;
+  final bool afterReminderScheduled;
+
+  const ReconnectProbeResult({
+    required this.beforePendingJobs,
+    required this.afterPendingJobs,
+    required this.beforeReminderScheduled,
+    required this.afterReminderScheduled,
+  });
+}
+
 class ProgressService {
   final DatabaseService _db;
   final SyncService _sync;
@@ -129,6 +143,26 @@ class ProgressService {
     );
   }
 
+  Future<ReconnectProbeResult> runReconnectProbe({
+    DateTime? reference,
+  }) async {
+    final beforeQueue = await _sync.getQueueStats();
+    final beforeReminder = await _notifications.hasScheduledDailyReminder();
+
+    await syncReminderSchedule(reference: reference);
+    await _sync.syncPendingJobs();
+
+    final afterQueue = await _sync.getQueueStats();
+    final afterReminder = await _notifications.hasScheduledDailyReminder();
+
+    return ReconnectProbeResult(
+      beforePendingJobs: beforeQueue.pendingJobs,
+      afterPendingJobs: afterQueue.pendingJobs,
+      beforeReminderScheduled: beforeReminder,
+      afterReminderScheduled: afterReminder,
+    );
+  }
+
   @visibleForTesting
   void updateStreakAndActivity(ProgressEntry progress, DateTime now) {
     final lastActivity = progress.lastActivityDate;
@@ -192,18 +226,31 @@ class ProgressService {
   }
 
   DateTime _getWeekStart(DateTime date) {
+    final local = date.toLocal();
     // Monday is 1, Sunday is 7
     // Subtract (weekday - 1) days to get to Monday
-    final monday = date.subtract(Duration(days: date.weekday - 1));
+    final monday = local.subtract(Duration(days: local.weekday - 1));
     return DateTime(monday.year, monday.month, monday.day);
   }
 
-  DateTime _startOfDay(DateTime date) =>
-      DateTime(date.year, date.month, date.day);
+  DateTime _startOfDay(DateTime date) {
+    final local = date.toLocal();
+    return DateTime(local.year, local.month, local.day);
+  }
 
   bool _isSameDay(DateTime a, DateTime b) {
-    return a.year == b.year && a.month == b.month && a.day == b.day;
+    final left = a.toLocal();
+    final right = b.toLocal();
+    return left.year == right.year &&
+        left.month == right.month &&
+        left.day == right.day;
   }
+
+  @visibleForTesting
+  DateTime startOfDayForTesting(DateTime date) => _startOfDay(date);
+
+  @visibleForTesting
+  bool isSameLocalDayForTesting(DateTime a, DateTime b) => _isSameDay(a, b);
 
   Future<Set<int>> _completedDayEpochsInRange(
     DateTime fromInclusive,
@@ -524,6 +571,13 @@ class ProgressService {
 
     if (!now.isBefore(windowStart) && now.isBefore(windowEnd)) {
       final delayed = now.add(inWindowDelay);
+      if (!delayed.isBefore(windowEnd)) {
+        return ReminderSchedulePlan(
+          startDate: today.add(const Duration(days: 1)),
+          window: baseWindow,
+          recentlyActive: false,
+        );
+      }
       return ReminderSchedulePlan(
         startDate: today,
         window: HabitWindow(

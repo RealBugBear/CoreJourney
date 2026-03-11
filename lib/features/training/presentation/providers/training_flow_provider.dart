@@ -6,35 +6,47 @@ import '../../../progress/domain/services/progress_service.dart';
 import '../../../progress/presentation/providers/progress_provider.dart';
 import '../../domain/models/exercise.dart';
 
-enum TrainingScreenType { 
-  intro, 
-  position,      // Position screen (Ausgangsposition)
-  movement,      // Movement description (Bewegung)
-  exercise,      // Actual exercise execution
-  outro 
+enum TrainingScreenType {
+  intro,
+  position, // Position screen (Ausgangsposition)
+  movement, // Movement description (Bewegung)
+  exercise, // Actual exercise execution
+  outro
 }
 
+enum TrainingMode {
+  tutorial,
+  routine,
+}
 
 class TrainingFlowState {
   final int currentExerciseIndex; // 0-6
   final TrainingScreenType screenType;
   final bool isCompleted;
+  final TrainingMode mode;
+  final bool compactTutorial;
 
   const TrainingFlowState({
     required this.currentExerciseIndex,
     required this.screenType,
     required this.isCompleted,
+    required this.mode,
+    this.compactTutorial = false,
   });
 
   TrainingFlowState copyWith({
     int? currentExerciseIndex,
     TrainingScreenType? screenType,
     bool? isCompleted,
+    TrainingMode? mode,
+    bool? compactTutorial,
   }) {
     return TrainingFlowState(
       currentExerciseIndex: currentExerciseIndex ?? this.currentExerciseIndex,
       screenType: screenType ?? this.screenType,
       isCompleted: isCompleted ?? this.isCompleted,
+      mode: mode ?? this.mode,
+      compactTutorial: compactTutorial ?? this.compactTutorial,
     );
   }
 
@@ -56,14 +68,23 @@ class TrainingFlowNotifier extends StateNotifier<TrainingFlowState> {
           currentExerciseIndex: 0,
           screenType: TrainingScreenType.intro,
           isCompleted: false,
+          mode: TrainingMode.tutorial,
+          compactTutorial: false,
         ));
 
-
-  void startTraining() {
-    state = const TrainingFlowState(
+  void startTraining({
+    TrainingMode mode = TrainingMode.tutorial,
+    bool compactTutorial = false,
+  }) {
+    final initialScreen = mode == TrainingMode.routine
+        ? TrainingScreenType.exercise
+        : TrainingScreenType.intro;
+    state = TrainingFlowState(
       currentExerciseIndex: 0,
-      screenType: TrainingScreenType.intro,
+      screenType: initialScreen,
       isCompleted: false,
+      mode: mode,
+      compactTutorial: compactTutorial,
     );
   }
 
@@ -72,10 +93,14 @@ class TrainingFlowNotifier extends StateNotifier<TrainingFlowState> {
 
     switch (state.screenType) {
       case TrainingScreenType.intro:
-        // Intro → Position 1
+        // Intro → Position 1 (tutorial) or Exercise 1 (routine)
         state = state.copyWith(
           currentExerciseIndex: 0,
-          screenType: TrainingScreenType.position,
+          screenType: state.mode == TrainingMode.routine
+              ? TrainingScreenType.exercise
+              : state.compactTutorial
+                  ? TrainingScreenType.movement
+                  : TrainingScreenType.position,
         );
         break;
 
@@ -101,20 +126,28 @@ class TrainingFlowNotifier extends StateNotifier<TrainingFlowState> {
             screenType: TrainingScreenType.outro,
           );
         } else {
-          // Next position
+          // Next screen depends on selected mode.
           state = state.copyWith(
             currentExerciseIndex: state.currentExerciseIndex + 1,
-            screenType: TrainingScreenType.position,
+            screenType: state.mode == TrainingMode.routine
+                ? TrainingScreenType.exercise
+                : state.compactTutorial
+                    ? TrainingScreenType.movement
+                    : TrainingScreenType.position,
           );
         }
         break;
 
       case TrainingScreenType.outro:
         // Outro → Completed
-        _completeTraining();
-        state = state.copyWith(isCompleted: true);
+        _completeTrainingAndFinish();
         break;
     }
+  }
+
+  Future<void> _completeTrainingAndFinish() async {
+    await _completeTraining();
+    state = state.copyWith(isCompleted: true);
   }
 
   void previousScreen() {
@@ -124,6 +157,17 @@ class TrainingFlowNotifier extends StateNotifier<TrainingFlowState> {
         break;
 
       case TrainingScreenType.position:
+        if (state.mode == TrainingMode.routine) {
+          if (state.currentExerciseIndex == 0) {
+            state = state.copyWith(screenType: TrainingScreenType.intro);
+          } else {
+            state = state.copyWith(
+              currentExerciseIndex: state.currentExerciseIndex - 1,
+              screenType: TrainingScreenType.exercise,
+            );
+          }
+          break;
+        }
         // Position → Previous Exercise or Intro
         if (state.currentExerciseIndex == 0) {
           // First position → Intro
@@ -140,6 +184,12 @@ class TrainingFlowNotifier extends StateNotifier<TrainingFlowState> {
         break;
 
       case TrainingScreenType.movement:
+        if (state.mode == TrainingMode.routine) {
+          state = state.copyWith(
+            screenType: TrainingScreenType.exercise,
+          );
+          break;
+        }
         // Movement → Position
         state = state.copyWith(
           screenType: TrainingScreenType.position,
@@ -147,10 +197,22 @@ class TrainingFlowNotifier extends StateNotifier<TrainingFlowState> {
         break;
 
       case TrainingScreenType.exercise:
-        // Exercise → Movement
-        state = state.copyWith(
-          screenType: TrainingScreenType.movement,
-        );
+        if (state.mode == TrainingMode.routine) {
+          if (state.currentExerciseIndex == 0) {
+            // In hands-free quick mode, don't bounce back to intro.
+            return;
+          } else {
+            state = state.copyWith(
+              currentExerciseIndex: state.currentExerciseIndex - 1,
+              screenType: TrainingScreenType.exercise,
+            );
+          }
+        } else {
+          // Exercise → Movement
+          state = state.copyWith(
+            screenType: TrainingScreenType.movement,
+          );
+        }
         break;
 
       case TrainingScreenType.outro:
@@ -170,7 +232,7 @@ class TrainingFlowNotifier extends StateNotifier<TrainingFlowState> {
 
       // Record training session in progress tracking
       await _progressService.recordTrainingSession(user.uid);
-      
+
       debugPrint('[TrainingFlow] Training session recorded successfully');
     } catch (e) {
       debugPrint('[TrainingFlow] Error recording training session: $e');
@@ -182,6 +244,8 @@ class TrainingFlowNotifier extends StateNotifier<TrainingFlowState> {
       currentExerciseIndex: 0,
       screenType: TrainingScreenType.intro,
       isCompleted: false,
+      mode: TrainingMode.tutorial,
+      compactTutorial: false,
     );
   }
 }
@@ -192,4 +256,3 @@ final trainingFlowProvider =
 
   return TrainingFlowNotifier(progressService);
 });
-

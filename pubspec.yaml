@@ -1,9 +1,7 @@
 name: corejourney
 description: "Pränatales Reflextraining App"
 publish_to: 'none'
-version: 1.0.0+5
-
-
+version: 1.0.0+9
 
 environment:
   sdk: ">=3.3.0 <4.0.0"
@@ -57,6 +55,9 @@ dependencies:
   flutter_local_notifications: ^19.5.0
   timezone: ^0.10.1
   flutter_timezone: ^2.0.0
+  audioplayers: ^6.5.1
+  wakelock_plus: ^1.3.3
+  flutter_tts: ^4.2.3
 
 dev_dependencies:
   flutter_test:
@@ -77,3 +78,4 @@ flutter:
     - .env.prod
     - assets/images/
     - assets/images/trainings/moro/
+    - assets/sounds/

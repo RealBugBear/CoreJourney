@@ -1,6 +1,7 @@
 import 'package:isar/isar.dart';
 import 'package:path_provider/path_provider.dart';
 
+import '../../features/mood/domain/models/mood_checkin.dart';
 import '../../features/training/domain/models/training_session.dart';
 import '../../features/progress/domain/models/progress_entry.dart';
 import '../sync/models/sync_job.dart';
@@ -14,6 +15,7 @@ class DatabaseService {
       [
         TrainingSessionSchema,
         ProgressEntrySchema,
+        MoodCheckinSchema,
         SyncJobSchema,
       ],
       directory: dir.path,
@@ -25,7 +27,7 @@ class DatabaseService {
       await isar.clear();
     });
   }
-  
+
   Future<void> close() async {
     await isar.close();
   }

@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 import '../../../../config/app_config.dart';
+import '../../../../bootstrap/providers.dart';
 
 /// Developer-only debug tools for manipulating test data
 /// Only available in development and staging builds
@@ -18,6 +19,17 @@ class _DebugToolsWidgetState extends ConsumerState<DebugToolsWidget> {
   int? _selectedDay;
   bool _isLoading = false;
   String? _message;
+  int _pendingSyncJobs = 0;
+  int _pendingCreateJobs = 0;
+  int _pendingUpdateJobs = 0;
+  int _pendingDeleteJobs = 0;
+  DateTime? _oldestSyncJobAt;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadLocalDiagnostics();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -50,23 +62,31 @@ class _DebugToolsWidgetState extends ConsumerState<DebugToolsWidget> {
             ],
           ),
           const Divider(),
-          
+          _SyncDiagnosticsCard(
+            pendingJobs: _pendingSyncJobs,
+            createJobs: _pendingCreateJobs,
+            updateJobs: _pendingUpdateJobs,
+            deleteJobs: _pendingDeleteJobs,
+            oldestJobAt: _oldestSyncJobAt,
+            isLoading: _isLoading,
+            onRefresh: _isLoading ? null : _loadLocalDiagnostics,
+            onForceSync: _isLoading ? null : _forceSyncNow,
+            onClearQueue: _isLoading ? null : _clearPendingSyncJobs,
+          ),
+          const SizedBox(height: 12),
           if (_message != null) ...[
             Text(
               _message!,
               style: TextStyle(
-                color: _message!.contains('Error') 
-                    ? Colors.red 
-                    : Colors.green,
+                color: _message!.contains('Error') ? Colors.red : Colors.green,
                 fontWeight: FontWeight.bold,
               ),
             ),
             const SizedBox(height: 8),
           ],
-
-          const Text('Quick Actions:', style: TextStyle(fontWeight: FontWeight.bold)),
+          const Text('Quick Actions:',
+              style: TextStyle(fontWeight: FontWeight.bold)),
           const SizedBox(height: 8),
-          
           Wrap(
             spacing: 8,
             runSpacing: 8,
@@ -103,11 +123,10 @@ class _DebugToolsWidgetState extends ConsumerState<DebugToolsWidget> {
               ),
             ],
           ),
-
           const SizedBox(height: 16),
-          const Text('Manual Day Selection:', style: TextStyle(fontWeight: FontWeight.bold)),
+          const Text('Manual Day Selection:',
+              style: TextStyle(fontWeight: FontWeight.bold)),
           const SizedBox(height: 8),
-          
           Row(
             children: [
               Expanded(
@@ -118,12 +137,15 @@ class _DebugToolsWidgetState extends ConsumerState<DebugToolsWidget> {
                   items: List.generate(29, (index) => index)
                       .map((day) => DropdownMenuItem(
                             value: day,
-                            child: Text('Day $day${day == 28 ? ' (Golden Day)' : ''}'),
+                            child: Text(
+                                'Day $day${day == 28 ? ' (Golden Day)' : ''}'),
                           ))
                       .toList(),
-                  onChanged: _isLoading ? null : (value) {
-                    setState(() => _selectedDay = value);
-                  },
+                  onChanged: _isLoading
+                      ? null
+                      : (value) {
+                          setState(() => _selectedDay = value);
+                        },
                 ),
               ),
               const SizedBox(width: 8),
@@ -135,11 +157,10 @@ class _DebugToolsWidgetState extends ConsumerState<DebugToolsWidget> {
               ),
             ],
           ),
-
           const SizedBox(height: 16),
-          const Text('Other Actions:', style: TextStyle(fontWeight: FontWeight.bold)),
+          const Text('Other Actions:',
+              style: TextStyle(fontWeight: FontWeight.bold)),
           const SizedBox(height: 8),
-          
           Wrap(
             spacing: 8,
             runSpacing: 8,
@@ -164,7 +185,6 @@ class _DebugToolsWidgetState extends ConsumerState<DebugToolsWidget> {
               ),
             ],
           ),
-
           if (_isLoading)
             const Center(
               child: Padding(
@@ -193,7 +213,7 @@ class _DebugToolsWidgetState extends ConsumerState<DebugToolsWidget> {
       if (user == null) throw Exception('Not logged in');
 
       final firestore = FirebaseFirestore.instance;
-      
+
       // Delete all progress documents
       final progressDocs = await firestore
           .collection('users')
@@ -224,6 +244,78 @@ class _DebugToolsWidgetState extends ConsumerState<DebugToolsWidget> {
         _isLoading = false;
       });
     } catch (e) {
+      setState(() {
+        _message = 'Error: $e';
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _loadLocalDiagnostics() async {
+    try {
+      final sync = ref.read(syncServiceProvider);
+      final stats = await sync.getQueueStats();
+
+      if (!mounted) return;
+      setState(() {
+        _pendingSyncJobs = stats.pendingJobs;
+        _pendingCreateJobs = stats.createJobs;
+        _pendingUpdateJobs = stats.updateJobs;
+        _pendingDeleteJobs = stats.deleteJobs;
+        _oldestSyncJobAt = stats.oldestJobAt;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _message = 'Error loading diagnostics: $e';
+      });
+    }
+  }
+
+  Future<void> _forceSyncNow() async {
+    setState(() {
+      _isLoading = true;
+      _message = null;
+    });
+    try {
+      final sync = ref.read(syncServiceProvider);
+      await sync.syncPendingJobs();
+      await _loadLocalDiagnostics();
+      if (!mounted) return;
+      setState(() {
+        _message = '✓ Sync manuell ausgelöst';
+        _isLoading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _message = 'Error: $e';
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _clearPendingSyncJobs() async {
+    final confirmed = await _showConfirmDialog(
+      'Alle ausstehenden Sync-Jobs lokal löschen?',
+    );
+    if (!confirmed) return;
+
+    setState(() {
+      _isLoading = true;
+      _message = null;
+    });
+    try {
+      final sync = ref.read(syncServiceProvider);
+      await sync.clearPendingJobs();
+      await _loadLocalDiagnostics();
+      if (!mounted) return;
+      setState(() {
+        _message = '✓ Pending Sync Queue geleert';
+        _isLoading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
       setState(() {
         _message = 'Error: $e';
         _isLoading = false;
@@ -283,7 +375,7 @@ class _DebugToolsWidgetState extends ConsumerState<DebugToolsWidget> {
       await batch.commit();
 
       setState(() {
-        _message = targetDay == 28 
+        _message = targetDay == 28
             ? '✨ Golden Day activated! (28/28)'
             : '✓ Jumped to Day $targetDay ($targetDay/28)';
         _isLoading = false;
@@ -338,9 +430,10 @@ class _DebugToolsWidgetState extends ConsumerState<DebugToolsWidget> {
     final projectId = AppConfig.current.environment == 'production'
         ? 'YOUR_PROD_PROJECT_ID'
         : 'YOUR_DEV_PROJECT_ID';
-    
+
     setState(() {
-      _message = 'Open: https://console.firebase.google.com/project/$projectId/firestore';
+      _message =
+          'Open: https://console.firebase.google.com/project/$projectId/firestore';
       _message = '$_message\nUser UID: ${user?.uid ?? "not logged in"}';
     });
   }
@@ -387,9 +480,89 @@ class _ActionButton extends StatelessWidget {
       icon: Icon(icon, size: 16),
       label: Text(label, style: const TextStyle(fontSize: 12)),
       style: ElevatedButton.styleFrom(
-        backgroundColor: color.shade100,
-        foregroundColor: color.shade900,
+        backgroundColor: color.withOpacity(0.15),
+        foregroundColor: color,
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      ),
+    );
+  }
+}
+
+class _SyncDiagnosticsCard extends StatelessWidget {
+  final int pendingJobs;
+  final int createJobs;
+  final int updateJobs;
+  final int deleteJobs;
+  final DateTime? oldestJobAt;
+  final bool isLoading;
+  final VoidCallback? onRefresh;
+  final VoidCallback? onForceSync;
+  final VoidCallback? onClearQueue;
+
+  const _SyncDiagnosticsCard({
+    required this.pendingJobs,
+    required this.createJobs,
+    required this.updateJobs,
+    required this.deleteJobs,
+    required this.oldestJobAt,
+    required this.isLoading,
+    required this.onRefresh,
+    required this.onForceSync,
+    required this.onClearQueue,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.55),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.orange.shade300),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Local Sync Diagnostics',
+            style: textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 8),
+          Text('Pending: $pendingJobs'),
+          Text('create/update/delete: $createJobs / $updateJobs / $deleteJobs'),
+          Text(
+            oldestJobAt == null
+                ? 'oldest: -'
+                : 'oldest: ${oldestJobAt!.toIso8601String()}',
+          ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _ActionButton(
+                label: 'Refresh Queue',
+                icon: Icons.refresh,
+                color: Colors.blueGrey,
+                onPressed: isLoading ? null : onRefresh,
+              ),
+              _ActionButton(
+                label: 'Force Sync Now',
+                icon: Icons.sync,
+                color: Colors.green,
+                onPressed: isLoading ? null : onForceSync,
+              ),
+              _ActionButton(
+                label: 'Clear Queue',
+                icon: Icons.delete_sweep,
+                color: Colors.red,
+                onPressed: isLoading ? null : onClearQueue,
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }

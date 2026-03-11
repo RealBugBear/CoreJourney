@@ -1,5 +1,3 @@
-import 'package:flutter/material.dart';
-
 import 'user_preferences.dart';
 
 class TrainingDayStatus {
@@ -40,9 +38,12 @@ class WeeklyProgressOverview {
   int get remainingBuffer => (targetCount - plannedSkips - completedCount).clamp(0, targetCount);
 
   int calendarDaysRemaining(DateTime now) {
-    final difference = now.difference(weekStart).inDays;
-    final daysConsumed = difference.clamp(0, 6);
-    return (7 - daysConsumed - 1).clamp(0, 6);
+    final normalizedNow = DateTime(now.year, now.month, now.day);
+    final normalizedStart =
+        DateTime(weekStart.year, weekStart.month, weekStart.day);
+    final weekEnd = normalizedStart.add(const Duration(days: 7));
+    final remaining = weekEnd.difference(normalizedNow).inDays;
+    return remaining.clamp(0, 7);
   }
 
   double get progress => targetCount == 0 ? 0 : completedCount / targetCount;

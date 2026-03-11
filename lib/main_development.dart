@@ -9,13 +9,37 @@ void main() async {
   // Set development configuration
   AppConfig.setConfig(AppConfig.development);
 
-  // Bootstrap app with dev environment
-  final result = await bootstrapApp(env: 'dev');
+  try {
+    // Bootstrap app with dev environment
+    final result = await bootstrapApp(
+      env: 'dev',
+    ).timeout(const Duration(seconds: 30));
 
-  runApp(
-    ProviderScope(
-      overrides: result.toOverrides(),
-      child: const CoreJourneyApp(),
-    ),
-  );
+    runApp(
+      ProviderScope(
+        overrides: result.toOverrides(),
+        child: const CoreJourneyApp(),
+      ),
+    );
+  } catch (error, stackTrace) {
+    debugPrint('Dev bootstrap failed: $error');
+    debugPrint('$stackTrace');
+
+    runApp(
+      MaterialApp(
+        debugShowCheckedModeBanner: false,
+        home: Scaffold(
+          body: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Text(
+                'Startup failed in development mode:\n$error',
+                textAlign: TextAlign.center,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }

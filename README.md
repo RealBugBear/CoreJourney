@@ -74,6 +74,9 @@ We use a Makefile for common development tasks. Run `make help` to see all avail
 make dev              # Run in development mode
 make staging          # Run in staging mode
 make prod             # Run in production mode
+make iphone           # Build/install/launch on iPhone (home-screen safe default)
+make iphone-debug     # iPhone debug attach flow (Flutter/Xcode launch only)
+make iphone-open      # Reopen installed iPhone app without rebuild
 
 # Building
 make build-dev        # Build development APK
@@ -98,7 +101,18 @@ make watch            # Run build_runner in watch mode
 # Utilities
 make clean            # Clean build artifacts
 make setup            # Install deps + generate code
+make release-readiness-mobile # Focused release-readiness checks
 ```
+
+### iPhone Launch Flow
+
+- Daily use (recommended): `make iphone`
+  - Builds and launches in a mode that can be reopened from the iOS home screen.
+- Live debugging: `make iphone-debug`
+  - Starts a Flutter debug session with VM attach.
+  - iOS 14+ will show a warning if you later open this debug app directly from home screen.
+- Reopen without rebuild: `make iphone-open`
+  - Launches the already-installed dev app on a connected iPhone.
 
 ## Architecture
 
@@ -211,6 +225,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for development guidelines.
 - [Deployment Guide](docs/DEPLOYMENT.md)
 - [iOS Setup Guide](docs/IOS_SCHEMES_SETUP.md)
 - [Accessibility Guide](docs/ACCESSIBILITY_GUIDE.md)
+- [Release Readiness Checklist](docs/RELEASE_READINESS_CHECKLIST.md)
 
 ## License
 

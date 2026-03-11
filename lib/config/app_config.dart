@@ -36,7 +36,7 @@ class AppConfig {
     bundleId: 'com.alexandermessinger.corejourney.dev',
     enableAnalytics: false,
     enableCrashReporting: false,
-    showDebugBanner: true,
+    showDebugBanner: false,
     enablePerformanceMonitoring: false,
     logLevel: 'debug',
   );

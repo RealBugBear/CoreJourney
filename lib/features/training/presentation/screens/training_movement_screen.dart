@@ -5,7 +5,6 @@ import '../../domain/models/exercise.dart';
 import '../providers/training_flow_provider.dart';
 import '../widgets/animated_progress_bar.dart';
 
-
 class TrainingMovementScreen extends ConsumerWidget {
   final Exercise exercise;
   final VoidCallback onContinue;
@@ -29,10 +28,14 @@ class TrainingMovementScreen extends ConsumerWidget {
           tooltip: 'Zurück',
         ),
         // Slim progress bar
-        title: AnimatedProgressBar(
-          currentStep: (exercise.exerciseNumber - 1) * 3 + 2,
-          totalSteps: 21,
-          compact: true,
+        title: Semantics(
+          label:
+              'Fortschritt ${((exercise.exerciseNumber - 1) * 3 + 2)} von 21 Schritten.',
+          child: AnimatedProgressBar(
+            currentStep: (exercise.exerciseNumber - 1) * 3 + 2,
+            totalSteps: 21,
+            compact: true,
+          ),
         ),
         centerTitle: true,
         actions: [
@@ -58,7 +61,8 @@ class TrainingMovementScreen extends ConsumerWidget {
         ),
         child: SafeArea(
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+            padding:
+                const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -71,7 +75,8 @@ class TrainingMovementScreen extends ConsumerWidget {
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(14),
                         border: Border.all(
-                          color: theme.colorScheme.onPrimaryContainer.withOpacity(0.12),
+                          color: theme.colorScheme.onPrimaryContainer
+                              .withOpacity(0.12),
                           width: 1.5,
                         ),
                         boxShadow: [
@@ -90,6 +95,8 @@ class TrainingMovementScreen extends ConsumerWidget {
                           width: 140,
                           height: 140,
                           fit: BoxFit.contain,
+                          semanticLabel:
+                              'Referenzbild für Übung ${exercise.exerciseNumber}',
                           errorBuilder: (context, error, stackTrace) {
                             return Container(
                               width: 140,
@@ -107,12 +114,13 @@ class TrainingMovementScreen extends ConsumerWidget {
                     ),
                   ],
                 ),
-                
+
                 // Movement Instructions - THE FOCUS!
                 Expanded(
                   child: ListView.separated(
                     itemCount: exercise.movementInstructions.length,
-                    separatorBuilder: (context, index) => const SizedBox(height: 28),
+                    separatorBuilder: (context, index) =>
+                        const SizedBox(height: 28),
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     itemBuilder: (context, index) {
                       return Row(
@@ -133,7 +141,8 @@ class TrainingMovementScreen extends ConsumerWidget {
                               ),
                               boxShadow: [
                                 BoxShadow(
-                                  color: theme.colorScheme.primary.withOpacity(0.3),
+                                  color: theme.colorScheme.primary
+                                      .withOpacity(0.3),
                                   blurRadius: 4,
                                   spreadRadius: 1,
                                 ),
@@ -158,7 +167,7 @@ class TrainingMovementScreen extends ConsumerWidget {
                     },
                   ),
                 ),
-                
+
                 // Hints Section (if available) - Compact
                 if (exercise.hints != null && exercise.hints!.isNotEmpty) ...[
                   const SizedBox(height: 12),
@@ -195,20 +204,20 @@ class TrainingMovementScreen extends ConsumerWidget {
                         ),
                         const SizedBox(height: 8),
                         ...exercise.hints!.map((hint) => Padding(
-                          padding: const EdgeInsets.only(top: 3),
-                          child: Text(
-                            '• $hint',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.orange[900],
-                            ),
-                          ),
-                        )),
+                              padding: const EdgeInsets.only(top: 3),
+                              child: Text(
+                                '• $hint',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.orange[900],
+                                ),
+                              ),
+                            )),
                       ],
                     ),
                   ),
                 ],
-                
+
                 // Repetitions - Very minimal
                 const SizedBox(height: 8),
                 Text(
@@ -219,37 +228,44 @@ class TrainingMovementScreen extends ConsumerWidget {
                   ),
                   textAlign: TextAlign.center,
                 ),
-                
+
                 const SizedBox(height: 20),
-                
+
                 // Continue Button - Prominent
                 SizedBox(
                   width: double.infinity,
-                  height: 56,
-                  child: FilledButton(
-                    onPressed: onContinue,
-                    style: FilledButton.styleFrom(
-                      backgroundColor: theme.colorScheme.primary,
-                      foregroundColor: theme.colorScheme.onPrimary,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      elevation: 2,
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Text(
-                          'Übung starten',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 0.5,
-                          ),
+                  height: 76,
+                  child: Semantics(
+                    button: true,
+                    label: 'Übung starten',
+                    child: FilledButton(
+                      onPressed: onContinue,
+                      style: FilledButton.styleFrom(
+                        backgroundColor: theme.colorScheme.primary,
+                        foregroundColor: theme.colorScheme.onPrimary,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
                         ),
-                        const SizedBox(width: 10),
-                        const Icon(Icons.play_arrow, size: 24),
-                      ],
+                        elevation: 2,
+                      ),
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: const [
+                            Text(
+                              'Übung starten',
+                              style: TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                            SizedBox(width: 10),
+                            Icon(Icons.play_arrow, size: 30),
+                          ],
+                        ),
+                      ),
                     ),
                   ),
                 ),

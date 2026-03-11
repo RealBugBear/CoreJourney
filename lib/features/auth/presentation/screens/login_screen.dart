@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 import '../providers/auth_provider.dart';
 
@@ -48,6 +49,80 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       if (mounted) {
         _showError(_isSignUp ? 'Registrierung fehlgeschlagen: $e' : 'Login fehlgeschlagen: $e');
       }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _handleForgotPassword() async {
+    final initialEmail = _emailController.text.trim();
+    final emailController = TextEditingController(text: initialEmail);
+    final messenger = ScaffoldMessenger.of(context);
+
+    final shouldSend = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('Passwort zurücksetzen'),
+          content: TextField(
+            controller: emailController,
+            decoration: const InputDecoration(
+              labelText: 'E-Mail',
+              hintText: 'name@example.com',
+            ),
+            keyboardType: TextInputType.emailAddress,
+            autofocus: true,
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: const Text('Abbrechen'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              child: const Text('Link senden'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (shouldSend != true) {
+      emailController.dispose();
+      return;
+    }
+
+    final email = emailController.text.trim();
+    emailController.dispose();
+
+    if (email.isEmpty) {
+      _showError('Bitte gib eine E-Mail ein');
+      return;
+    }
+
+    setState(() => _isLoading = true);
+    try {
+      final repo = ref.read(authRepositoryProvider);
+      await repo.sendPasswordResetEmail(email);
+      if (!mounted) return;
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text('Reset-Link wurde an $email gesendet'),
+        ),
+      );
+    } on FirebaseAuthException catch (e) {
+      if (!mounted) return;
+      final message = switch (e.code) {
+        'invalid-email' => 'Die E-Mail-Adresse ist ungültig.',
+        'user-not-found' => 'Für diese E-Mail gibt es kein Konto.',
+        'too-many-requests' =>
+          'Zu viele Versuche. Bitte später erneut versuchen.',
+        _ => e.message ?? e.code,
+      };
+      _showError('Passwort-Reset fehlgeschlagen: $message');
+    } catch (e) {
+      if (!mounted) return;
+      _showError('Passwort-Reset fehlgeschlagen: $e');
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -140,6 +215,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ),
                   ),
                 const SizedBox(height: 16),
+                if (!_isSignUp)
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton(
+                      onPressed: _isLoading ? null : _handleForgotPassword,
+                      child: const Text('Passwort vergessen?'),
+                    ),
+                  ),
+                if (!_isSignUp) const SizedBox(height: 4),
                 TextButton(
                   onPressed: _isLoading ? null : () {
                     setState(() => _isSignUp = !_isSignUp);

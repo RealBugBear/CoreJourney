@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter/material.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:corejourney/features/progress/domain/services/progress_service.dart';
 import 'package:corejourney/features/progress/domain/models/progress_entry.dart';
 import 'package:corejourney/core/database/database_service.dart';
@@ -304,6 +305,21 @@ void main() {
       expect(plan.window.start, const TimeOfDay(hour: 7, minute: 0));
     });
 
+    test('inside window near end schedules tomorrow when delay overflows', () {
+      final now = DateTime(2026, 2, 22, 8, 50);
+      final plan = progressService.buildReminderSchedulePlan(
+        now: now,
+        baseWindow: baseWindow,
+        completedToday: false,
+        lastActivity: null,
+        recentlyActiveThreshold: const Duration(hours: 10),
+        inWindowDelay: const Duration(minutes: 20),
+      );
+
+      expect(plan.startDate, DateTime(2026, 2, 23));
+      expect(plan.window.start, const TimeOfDay(hour: 7, minute: 0));
+    });
+
     test('at window start delays reminder today', () {
       final now = DateTime(2026, 2, 22, 7, 0);
       final plan = progressService.buildReminderSchedulePlan(
@@ -332,6 +348,25 @@ void main() {
 
       expect(plan.startDate, DateTime(2026, 2, 23));
       expect(plan.window.start, const TimeOfDay(hour: 7, minute: 0));
+    });
+
+    test('near midnight after window schedules tomorrow', () {
+      final lateWindow = HabitWindow(
+        start: const TimeOfDay(hour: 21, minute: 0),
+        end: const TimeOfDay(hour: 23, minute: 30),
+      );
+      final now = DateTime(2026, 2, 22, 23, 59);
+      final plan = progressService.buildReminderSchedulePlan(
+        now: now,
+        baseWindow: lateWindow,
+        completedToday: false,
+        lastActivity: null,
+        recentlyActiveThreshold: const Duration(hours: 10),
+        inWindowDelay: const Duration(minutes: 20),
+      );
+
+      expect(plan.startDate, DateTime(2026, 2, 23));
+      expect(plan.window.start, const TimeOfDay(hour: 21, minute: 0));
     });
   });
 
@@ -400,6 +435,93 @@ void main() {
       );
 
       expect(result, 7);
+    });
+  });
+
+  group('Reconnect Probe', () {
+    test('returns before/after queue and reminder state and triggers sync',
+        () async {
+      when(() => mockSync.getQueueStats()).thenAnswer(
+        (_) async => const SyncQueueStats(
+          pendingJobs: 3,
+          createJobs: 1,
+          updateJobs: 2,
+          deleteJobs: 0,
+          oldestJobAt: null,
+        ),
+      );
+      when(() => mockNotifications.hasScheduledDailyReminder())
+          .thenAnswer((_) async => false);
+      when(() => mockSync.syncPendingJobs()).thenAnswer((_) async {});
+      when(() => mockNotifications.cancelDailyRepeatingReminders())
+          .thenAnswer((_) async {});
+
+      final prefs = <String, Object>{
+        'daily_reminders_enabled': false,
+      };
+      SharedPreferences.setMockInitialValues(prefs);
+
+      var queueCall = 0;
+      when(() => mockSync.getQueueStats()).thenAnswer((_) async {
+        queueCall++;
+        if (queueCall == 1) {
+          return const SyncQueueStats(
+            pendingJobs: 3,
+            createJobs: 1,
+            updateJobs: 2,
+            deleteJobs: 0,
+            oldestJobAt: null,
+          );
+        }
+        return const SyncQueueStats(
+          pendingJobs: 0,
+          createJobs: 0,
+          updateJobs: 0,
+          deleteJobs: 0,
+          oldestJobAt: null,
+        );
+      });
+
+      var reminderCall = 0;
+      when(() => mockNotifications.hasScheduledDailyReminder())
+          .thenAnswer((_) async {
+        reminderCall++;
+        return reminderCall == 1;
+      });
+
+      final result = await progressService.runReconnectProbe();
+
+      expect(result.beforePendingJobs, 3);
+      expect(result.afterPendingJobs, 0);
+      expect(result.beforeReminderScheduled, isTrue);
+      expect(result.afterReminderScheduled, isFalse);
+      verify(() => mockSync.syncPendingJobs()).called(1);
+    });
+  });
+
+  group('Timezone Day Helpers', () {
+    test('startOfDay normalizes UTC input to local midnight', () {
+      final utc = DateTime.utc(2026, 2, 22, 23, 30);
+      final local = utc.toLocal();
+
+      final startOfDay = progressService.startOfDayForTesting(utc);
+
+      expect(startOfDay, DateTime(local.year, local.month, local.day));
+    });
+
+    test('isSameLocalDay matches local-calendar comparison for UTC inputs', () {
+      final a = DateTime.utc(2026, 2, 22, 23, 30);
+      final b = DateTime.utc(2026, 2, 23, 0, 30);
+
+      final aLocal = a.toLocal();
+      final bLocal = b.toLocal();
+      final expected = aLocal.year == bLocal.year &&
+          aLocal.month == bLocal.month &&
+          aLocal.day == bLocal.day;
+
+      final result = progressService.isSameLocalDayForTesting(a, b);
+
+      expect(result, expected);
     });
   });
 }

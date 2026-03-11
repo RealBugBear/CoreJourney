@@ -61,18 +61,35 @@ Future<BootstrapResult> bootstrapApp({String env = 'dev'}) async {
   // Get current config for initialization
   final config = AppConfig.current;
 
-  // Initialize Firebase (handle duplicate initialization gracefully)
+  // Initialize Firebase once. On some iOS startup paths the default app may
+  // already exist before Dart bootstrap.
   try {
-    await Firebase.initializeApp(
-      options: env == 'prod'
-        ? prod.DefaultFirebaseOptions.currentPlatform
-        : dev.DefaultFirebaseOptions.currentPlatform,
-    );
-    debugPrint('[Bootstrap] Firebase initialized');
-  } catch (e) {
-    // Firebase may already be initialized by native iOS/Android code
-    // This is okay, we can continue
-    debugPrint('[Bootstrap] Firebase already initialized: $e');
+    Firebase.app();
+    debugPrint('[Bootstrap] Firebase already initialized');
+  } catch (_) {
+    try {
+      await Firebase.initializeApp(
+        options: env == 'prod'
+            ? prod.DefaultFirebaseOptions.currentPlatform
+            : dev.DefaultFirebaseOptions.currentPlatform,
+      );
+      debugPrint('[Bootstrap] Firebase initialized');
+    } on FirebaseException catch (e) {
+      if (e.code == 'duplicate-app') {
+        debugPrint('[Bootstrap] Firebase already initialized (duplicate-app)');
+      } else {
+        rethrow;
+      }
+    } catch (e) {
+      final message = e.toString();
+      if (message.contains('duplicate-app') || message.contains('[DEFAULT]')) {
+        debugPrint(
+          '[Bootstrap] Firebase already initialized (duplicate-app, generic)',
+        );
+      } else {
+        rethrow;
+      }
+    }
   }
 
   // Initialize Logger (before other services so we can use it)
@@ -85,7 +102,8 @@ Future<BootstrapResult> bootstrapApp({String env = 'dev'}) async {
   // Initialize Crashlytics
   if (config.enableCrashReporting) {
     try {
-      FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
+      FlutterError.onError =
+          FirebaseCrashlytics.instance.recordFlutterFatalError;
       await FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(true);
       logger.info('Crashlytics enabled');
     } catch (e) {
@@ -114,7 +132,7 @@ Future<BootstrapResult> bootstrapApp({String env = 'dev'}) async {
     config: config,
   );
   await analytics.initialize();
-  
+
   // Initialize Database
   final database = DatabaseService();
   await database.init();
@@ -139,9 +157,12 @@ Future<BootstrapResult> bootstrapApp({String env = 'dev'}) async {
 
   // Initialize Notification Service
   final notificationService = NotificationService();
-  await notificationService.init();
-  await notificationService.requestPermissions();
-  logger.info('Notification service initialized');
+  try {
+    await notificationService.init().timeout(const Duration(seconds: 8));
+    logger.info('Notification service initialized');
+  } catch (e) {
+    logger.warning('Failed to initialize Notification service', error: e);
+  }
 
   logger.info('Bootstrap complete');
 

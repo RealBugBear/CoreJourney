@@ -6,10 +6,24 @@ import 'package:flutter_timezone/flutter_timezone.dart';
 
 import '../../features/progress/domain/models/user_preferences.dart';
 
+class ReminderDiagnostics {
+  final int totalPending;
+  final List<int> pendingIds;
+  final bool hasDailyReminder;
+
+  const ReminderDiagnostics({
+    required this.totalPending,
+    required this.pendingIds,
+    required this.hasDailyReminder,
+  });
+}
+
 class NotificationService {
   static final NotificationService _instance = NotificationService._internal();
   factory NotificationService() => _instance;
   NotificationService._internal();
+
+  static const int dailyReminderId = 1000;
 
   final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
       FlutterLocalNotificationsPlugin();
@@ -29,66 +43,65 @@ class NotificationService {
       requestSoundPermission: false,
     );
 
-    final InitializationSettings initializationSettings = InitializationSettings(
+    final InitializationSettings initializationSettings =
+        InitializationSettings(
       android: initializationSettingsAndroid,
       iOS: initializationSettingsDarwin,
     );
 
     await flutterLocalNotificationsPlugin.initialize(
       initializationSettings,
-      onDidReceiveNotificationResponse: (NotificationResponse notificationResponse) async {
+      onDidReceiveNotificationResponse:
+          (NotificationResponse notificationResponse) async {
         // Handle notification tap
       },
     );
   }
 
-  Future<void> requestPermissions() async {
-    await flutterLocalNotificationsPlugin
-        .resolvePlatformSpecificImplementation<
-            IOSFlutterLocalNotificationsPlugin>()
-        ?.requestPermissions(
-          alert: true,
-          badge: true,
-          sound: true,
-        );
+  Future<bool> requestPermissions() async {
+    final iosGranted = await flutterLocalNotificationsPlugin
+            .resolvePlatformSpecificImplementation<
+                IOSFlutterLocalNotificationsPlugin>()
+            ?.requestPermissions(
+              alert: true,
+              badge: true,
+              sound: true,
+            ) ??
+        true;
 
-    await flutterLocalNotificationsPlugin
-        .resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin>()
-        ?.requestNotificationsPermission();
+    final androidGranted = await flutterLocalNotificationsPlugin
+            .resolvePlatformSpecificImplementation<
+                AndroidFlutterLocalNotificationsPlugin>()
+            ?.requestNotificationsPermission() ??
+        true;
+
+    return iosGranted && androidGranted;
   }
 
   Future<void> scheduleDailyReminder(DateTime lastTrainingTime) async {
-    // Schedule for the next day at the same time
     final now = tz.TZDateTime.now(tz.local);
-    
-    // Convert lastTrainingTime to TZDateTime
-    // We want the time component from lastTrainingTime, but the date should be tomorrow relative to now
-    // Actually, simpler: just add 24 hours to the lastTrainingTime, but ensure it's in the future relative to now.
-    // If lastTrainingTime was just now, then lastTrainingTime + 24h is definitely in the future.
-    
-    // However, we want to be robust.
-    // Let's say we want to schedule it for "Tomorrow at HH:MM" where HH:MM comes from lastTrainingTime.
-    
-    var scheduledDate = tz.TZDateTime(
+    final scheduledLocal = computeNextDailyReminderDateForTesting(
+      now: now,
+      reminderTime: TimeOfDay(
+        hour: lastTrainingTime.hour,
+        minute: lastTrainingTime.minute,
+      ),
+    );
+    final scheduledDate = tz.TZDateTime(
       tz.local,
-      now.year,
-      now.month,
-      now.day,
-      lastTrainingTime.hour,
-      lastTrainingTime.minute,
+      scheduledLocal.year,
+      scheduledLocal.month,
+      scheduledLocal.day,
+      scheduledLocal.hour,
+      scheduledLocal.minute,
     );
 
-    // If the constructed time is in the past (e.g. training was at 8am, now it's 9am), add 1 day.
-    // But wait, the requirement is "after the last training".
-    // If I train at 8am today, I want a reminder at 8am tomorrow.
-    // So if I train now, I want a reminder in 24 hours.
-    
-    // Let's just use the time from lastTrainingTime and schedule it for tomorrow.
-    scheduledDate = scheduledDate.add(const Duration(days: 1));
+    // Keep this legacy entrypoint single-shot and aligned with the current
+    // one-reminder model.
+    await flutterLocalNotificationsPlugin.cancel(dailyReminderId);
 
     await flutterLocalNotificationsPlugin.zonedSchedule(
-      0,
+      dailyReminderId,
       'Zeit für dein Training!',
       'Halte deinen Streak und trainiere jetzt.',
       scheduledDate,
@@ -103,18 +116,23 @@ class NotificationService {
         iOS: DarwinNotificationDetails(),
       ),
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-      // uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
-      matchDateTimeComponents: DateTimeComponents.time, // This makes it repeat daily at this time
     );
   }
 
   Future<void> scheduleReminderWindow({
     required DateTime date,
     required HabitWindow window,
+    QuietHours? quietHours,
     int baseId = 100,
     String? message,
   }) async {
-    if (!_isWithinQuietHours(window, date)) {
+    final quiet = quietHours ??
+        const QuietHours(
+          start: TimeOfDay(hour: 22, minute: 0),
+          end: TimeOfDay(hour: 6, minute: 0),
+        );
+
+    if (!_isWithinQuietHours(window, quiet)) {
       final scheduledDate = tz.TZDateTime(
         tz.local,
         date.year,
@@ -141,26 +159,58 @@ class NotificationService {
         ),
         androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
       );
-
-      final failoverDate = scheduledDate.add(const Duration(minutes: 45));
-      await flutterLocalNotificationsPlugin.zonedSchedule(
-        baseId + 1,
-        'Kleiner Stups',
-        'Du kannst die Einheit noch heute erledigen. Nimm dir 15 Minuten!',
-        failoverDate,
-        const NotificationDetails(
-          android: AndroidNotificationDetails(
-            'daily_reminder_window_failover',
-            'Trainingsfenster Follow-up',
-            channelDescription: 'Zusätzliche Hinweise, wenn die erste Erinnerung nicht geöffnet wurde',
-            importance: Importance.defaultImportance,
-            priority: Priority.defaultPriority,
-          ),
-          iOS: DarwinNotificationDetails(),
-        ),
-        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-      );
     }
+  }
+
+  Future<void> scheduleDailyRepeatingWindow({
+    required HabitWindow window,
+    required QuietHours quietHours,
+    required DateTime firstDate,
+    String? message,
+  }) async {
+    final now = tz.TZDateTime.now(tz.local);
+    var start = tz.TZDateTime(
+      tz.local,
+      firstDate.year,
+      firstDate.month,
+      firstDate.day,
+      window.start.hour,
+      window.start.minute,
+    );
+
+    if (_isWithinQuietHours(window, quietHours)) {
+      return;
+    }
+
+    // Session 9: schedule only the next reminder (not an endless daily repeat)
+    // so reminders can be re-evaluated from current behavior and avoid spam.
+    if (!start.isAfter(now)) {
+      start = start.add(const Duration(days: 1));
+    }
+
+    await flutterLocalNotificationsPlugin.zonedSchedule(
+      dailyReminderId,
+      'Zeit für dein Training!',
+      message ?? 'Dein bevorzugtes Trainingsfenster hat begonnen.',
+      start,
+      const NotificationDetails(
+        android: AndroidNotificationDetails(
+          'daily_reminder_window',
+          'Trainingsfenster',
+          channelDescription: 'Erinnerungen innerhalb des Wunschzeitraums',
+          importance: Importance.max,
+          priority: Priority.high,
+        ),
+        iOS: DarwinNotificationDetails(),
+      ),
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+    );
+    debugPrint(
+      '[NotificationService] Scheduled daily reminder '
+      'id=$dailyReminderId at ${window.start.hour.toString().padLeft(2, '0')}:'
+      '${window.start.minute.toString().padLeft(2, '0')} '
+      'for=${start.toIso8601String()}',
+    );
   }
 
   Future<void> scheduleWeeklyTouchpoints({
@@ -263,17 +313,99 @@ class NotificationService {
     await flutterLocalNotificationsPlugin.cancel(baseId + 1);
   }
 
-  bool _isWithinQuietHours(HabitWindow window, DateTime date) {
-    final start = DateTime(date.year, date.month, date.day, window.start.hour, window.start.minute);
-    final end = DateTime(date.year, date.month, date.day, window.end.hour, window.end.minute);
+  Future<void> cancelDailyRepeatingReminders() async {
+    await flutterLocalNotificationsPlugin.cancel(dailyReminderId);
+    debugPrint(
+      '[NotificationService] Cancelled daily reminder id $dailyReminderId',
+    );
+  }
 
-    final quietStart = DateTime(date.year, date.month, date.day, 22);
-    final quietEnd = DateTime(date.year, date.month, date.day, 6);
+  bool _isWithinQuietHours(HabitWindow window, QuietHours quietHours) {
+    final windowRanges = _splitIntoDailyRanges(
+      _toMinuteOfDay(window.start),
+      _toMinuteOfDay(window.end),
+    );
+    final quietRanges = _splitIntoDailyRanges(
+      _toMinuteOfDay(quietHours.start),
+      _toMinuteOfDay(quietHours.end),
+    );
 
-    return start.isBefore(quietEnd) || end.isAfter(quietStart);
+    for (final w in windowRanges) {
+      for (final q in quietRanges) {
+        if (_rangesOverlap(w.$1, w.$2, q.$1, q.$2)) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  int _toMinuteOfDay(TimeOfDay t) => t.hour * 60 + t.minute;
+
+  List<(int, int)> _splitIntoDailyRanges(int startMinute, int endMinute) {
+    if (startMinute == endMinute) {
+      return const [(0, 24 * 60)];
+    }
+    if (startMinute < endMinute) {
+      return [(startMinute, endMinute)];
+    }
+    return [
+      (startMinute, 24 * 60),
+      (0, endMinute),
+    ];
+  }
+
+  bool _rangesOverlap(int aStart, int aEnd, int bStart, int bEnd) {
+    return aStart < bEnd && bStart < aEnd;
   }
 
   Future<void> cancelAll() async {
     await flutterLocalNotificationsPlugin.cancelAll();
+  }
+
+  @visibleForTesting
+  bool isWithinQuietHoursForTesting(
+    HabitWindow window,
+    QuietHours quietHours,
+  ) {
+    return _isWithinQuietHours(window, quietHours);
+  }
+
+  Future<bool> hasScheduledDailyReminder() async {
+    final pending =
+        await flutterLocalNotificationsPlugin.pendingNotificationRequests();
+    return pending.any((request) => request.id == dailyReminderId);
+  }
+
+  Future<ReminderDiagnostics> getReminderDiagnostics() async {
+    final pending =
+        await flutterLocalNotificationsPlugin.pendingNotificationRequests();
+    final ids = pending.map((request) => request.id).toList()..sort();
+    final hasDaily = ids.contains(dailyReminderId);
+    return ReminderDiagnostics(
+      totalPending: ids.length,
+      pendingIds: ids,
+      hasDailyReminder: hasDaily,
+    );
+  }
+
+  @visibleForTesting
+  DateTime computeNextDailyReminderDateForTesting({
+    required DateTime now,
+    required TimeOfDay reminderTime,
+  }) {
+    final localNow = now.toLocal();
+    var scheduled = DateTime(
+      localNow.year,
+      localNow.month,
+      localNow.day,
+      reminderTime.hour,
+      reminderTime.minute,
+    ).add(const Duration(days: 1));
+
+    if (!scheduled.isAfter(localNow)) {
+      scheduled = scheduled.add(const Duration(days: 1));
+    }
+    return scheduled;
   }
 }

@@ -7,6 +7,7 @@ class AnimatedProgressBar extends StatefulWidget {
   final int totalSteps;
   final Duration animationDuration;
   final bool compact; // New: for AppBar version
+  final bool minimal; // Visual-only (no text/emoji)
 
   const AnimatedProgressBar({
     super.key,
@@ -14,6 +15,7 @@ class AnimatedProgressBar extends StatefulWidget {
     required this.totalSteps,
     this.animationDuration = const Duration(milliseconds: 800),
     this.compact = false,
+    this.minimal = false,
   });
 
   @override
@@ -79,6 +81,31 @@ class _AnimatedProgressBarState extends State<AnimatedProgressBar>
     final theme = Theme.of(context);
     final progress = widget.currentStep / widget.totalSteps;
     
+    if (widget.minimal) {
+      return AnimatedBuilder(
+        animation: _progressAnimation,
+        builder: (context, child) {
+          return Container(
+            height: 8,
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.18),
+              borderRadius: BorderRadius.circular(99),
+            ),
+            child: FractionallySizedBox(
+              alignment: Alignment.centerLeft,
+              widthFactor: _progressAnimation.value.clamp(0, 1),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.9),
+                  borderRadius: BorderRadius.circular(99),
+                ),
+              ),
+            ),
+          );
+        },
+      );
+    }
+
     // Compact mode for AppBar
     if (widget.compact) {
       return SizedBox(

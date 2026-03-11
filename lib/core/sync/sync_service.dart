@@ -34,6 +34,7 @@ class SyncService {
   StreamSubscription? _connectivitySubscription;
   bool _isSyncing = false;
   Timer? _periodicSyncTimer;
+  DateTime? _permissionBlockedUntil;
 
   SyncService(
     this._db, {
@@ -76,6 +77,16 @@ class SyncService {
 
   Future<void> syncPendingJobs() async {
     if (_isSyncing || _firestore == null) return;
+
+    final blockedUntil = _permissionBlockedUntil;
+    final now = DateTime.now();
+    if (blockedUntil != null) {
+      if (now.isBefore(blockedUntil)) {
+        return;
+      }
+      _permissionBlockedUntil = null;
+    }
+
     _isSyncing = true;
 
     try {
@@ -89,14 +100,12 @@ class SyncService {
 
         debugPrint('[SyncService] Syncing ${jobs.length} jobs');
         var attemptedJob = false;
+        var droppedByRetryLimit = 0;
 
         for (final job in jobs) {
           if (job.retryCount >= 5) {
             attemptedJob = true;
-            debugPrint(
-              '[SyncService] Dropping job ${job.id} after retry limit '
-              '(collection=${job.collection}, docId=${job.docId})',
-            );
+            droppedByRetryLimit++;
             await _db.isar.writeTxn(() async {
               await _db.isar.syncJobs.delete(job.id);
             });
@@ -118,6 +127,20 @@ class SyncService {
               await _db.isar.syncJobs.delete(job.id);
             });
           } catch (e) {
+            if (_isPermissionDeniedError(e)) {
+              debugPrint(
+                '[SyncService] Permission denied for job ${job.id}; '
+                'pausing sync retries for 2 minutes.',
+              );
+              await _db.isar.writeTxn(() async {
+                job.lastAttempt = DateTime.now();
+                await _db.isar.syncJobs.put(job);
+              });
+              _permissionBlockedUntil =
+                  DateTime.now().add(const Duration(minutes: 2));
+              break;
+            }
+
             debugPrint('[SyncService] Job ${job.id} failed: $e');
             await _db.isar.writeTxn(() async {
               job.retryCount++;
@@ -129,6 +152,11 @@ class SyncService {
               }
             });
           }
+        }
+        if (droppedByRetryLimit > 0) {
+          debugPrint(
+            '[SyncService] Dropped $droppedByRetryLimit jobs after retry limit',
+          );
         }
 
         // Avoid busy-looping when all fetched jobs are still in backoff.
@@ -169,7 +197,7 @@ class SyncService {
           .collectionEqualTo(collection)
           .docIdEqualTo(docId)
           .findAll();
-      final hasPendingDelete = existingForDoc.any((j) => j.action == 'delete');
+      final hasPendingDelete = _hasPendingDelete(existingForDoc);
 
       if (action == 'delete') {
         if (existingForDoc.isNotEmpty) {
@@ -198,7 +226,7 @@ class SyncService {
 
       final nonDeleteJobs =
           existingForDoc.where((j) => j.action != 'delete').toList();
-      final hasPendingCreate = nonDeleteJobs.any((j) => j.action == 'create');
+      final hasPendingCreate = _hasPendingCreate(nonDeleteJobs);
 
       if (nonDeleteJobs.isEmpty) {
         if (existingForDoc.isNotEmpty) {
@@ -219,16 +247,16 @@ class SyncService {
 
       nonDeleteJobs.sort((a, b) => a.createdAt.compareTo(b.createdAt));
       final primary = nonDeleteJobs.first;
-      final mergedPayload = <String, dynamic>{};
-      for (final job in nonDeleteJobs) {
-        final decoded = jsonDecode(job.payload) as Map<String, dynamic>;
-        mergedPayload.addAll(decoded);
-      }
-      mergedPayload.addAll(payload);
+      final mergedPayload = _mergePayloads(
+        nonDeleteJobs.map((job) => job.payload),
+        payload,
+      );
 
       primary
-        ..action =
-            (hasPendingCreate || action == 'create') ? 'create' : 'update'
+        ..action = _resolveCoalescedAction(
+          hasPendingCreate: hasPendingCreate,
+          incomingAction: action,
+        )
         ..payload = jsonEncode(mergedPayload)
         ..lastAttempt = null
         ..retryCount = 0;
@@ -242,6 +270,64 @@ class SyncService {
     });
 
     syncPendingJobs();
+  }
+
+  @visibleForTesting
+  bool hasPendingDeleteForTesting(Iterable<SyncJob> jobs) {
+    return _hasPendingDelete(jobs);
+  }
+
+  @visibleForTesting
+  String resolveCoalescedActionForTesting({
+    required bool hasPendingCreate,
+    required String incomingAction,
+  }) {
+    return _resolveCoalescedAction(
+      hasPendingCreate: hasPendingCreate,
+      incomingAction: incomingAction,
+    );
+  }
+
+  @visibleForTesting
+  Map<String, dynamic> mergePayloadsForTesting(
+    Iterable<String> existingPayloadsJson,
+    Map<String, dynamic> incomingPayload,
+  ) {
+    return _mergePayloads(existingPayloadsJson, incomingPayload);
+  }
+
+  bool _hasPendingDelete(Iterable<SyncJob> jobs) {
+    return jobs.any((job) => job.action == 'delete');
+  }
+
+  bool _hasPendingCreate(Iterable<SyncJob> jobs) {
+    return jobs.any((job) => job.action == 'create');
+  }
+
+  String _resolveCoalescedAction({
+    required bool hasPendingCreate,
+    required String incomingAction,
+  }) {
+    return (hasPendingCreate || incomingAction == 'create')
+        ? 'create'
+        : 'update';
+  }
+
+  Map<String, dynamic> _mergePayloads(
+    Iterable<String> existingPayloadsJson,
+    Map<String, dynamic> incomingPayload,
+  ) {
+    final mergedPayload = <String, dynamic>{};
+    for (final payloadJson in existingPayloadsJson) {
+      final decoded = jsonDecode(payloadJson) as Map<String, dynamic>;
+      mergedPayload.addAll(decoded);
+    }
+    mergedPayload.addAll(incomingPayload);
+    return mergedPayload;
+  }
+
+  bool _isPermissionDeniedError(Object error) {
+    return error is FirebaseException && error.code == 'permission-denied';
   }
 
   Future<SyncQueueStats> getQueueStats() async {

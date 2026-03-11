@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../config/app_config.dart';
 import '../../features/auth/presentation/screens/login_screen.dart';
 import '../../features/dashboard/presentation/screens/dashboard_screen.dart';
+import '../navigation/route_observer.dart';
 import '../theme/app_theme.dart';
 import '../theme/theme_provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -21,7 +22,8 @@ class CoreJourneyApp extends ConsumerWidget {
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,
       themeMode: themeMode, // Reaktiv vom Provider
-      debugShowCheckedModeBanner: config.showDebugBanner, // Hidden in staging/prod
+      debugShowCheckedModeBanner: false,
+      navigatorObservers: [coreJourneyRouteObserver],
       home: StreamBuilder<User?>(
         stream: FirebaseAuth.instance.authStateChanges(),
         builder: (context, snapshot) {

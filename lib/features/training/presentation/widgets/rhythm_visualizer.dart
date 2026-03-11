@@ -30,6 +30,7 @@ class RhythmConfig {
 class RhythmVisualizer extends StatefulWidget {
   final RhythmConfig config;
   final bool autoplay;
+  final Duration autoplayDelay;
   final double height;
   final bool enableAudio;
 
@@ -37,6 +38,7 @@ class RhythmVisualizer extends StatefulWidget {
     super.key,
     required this.config,
     this.autoplay = false,
+    this.autoplayDelay = Duration.zero,
     this.height = 220,
     this.enableAudio = true,
   });
@@ -83,6 +85,19 @@ class _RhythmVisualizerState extends State<RhythmVisualizer>
     _move = const AlwaysStoppedAnimation(Offset(0, 0));
     _audioReady = _initAudio();
     _resetPositions();
+    if (widget.autoplay) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        if (widget.autoplayDelay > Duration.zero) {
+          Future<void>.delayed(widget.autoplayDelay, () {
+            if (!mounted) return;
+            _startNew();
+          });
+        } else {
+          _startNew();
+        }
+      });
+    }
   }
 
   @override
@@ -94,8 +109,7 @@ class _RhythmVisualizerState extends State<RhythmVisualizer>
       return;
     }
 
-    if (oldWidget.config.interval != widget.config.interval ||
-        oldWidget.config.repetitions != widget.config.repetitions ||
+    if (oldWidget.config.repetitions != widget.config.repetitions ||
         oldWidget.config.moveUp != widget.config.moveUp ||
         oldWidget.config.moveDown != widget.config.moveDown ||
         oldWidget.config.holdTop != widget.config.holdTop ||
@@ -339,6 +353,13 @@ class _RhythmVisualizerState extends State<RhythmVisualizer>
   }
 
   Duration _holdDurationForCurrent() {
+    if (widget.config.pattern == RhythmPattern.v) {
+      // V pattern should feel continuous: keep only a short initial settle,
+      // then remove endpoint pauses between moves.
+      return _segmentIndex == 0
+          ? const Duration(milliseconds: 350)
+          : Duration.zero;
+    }
     if (widget.config.pattern != RhythmPattern.i) return widget.config.interval;
     final anchors = _anchorsFor(widget.config.pattern);
     return _current == anchors.bottom
@@ -484,7 +505,7 @@ class _RhythmVisualizerState extends State<RhythmVisualizer>
           color: theme.colorScheme.primary,
         ),
         const SizedBox(height: 8),
-        TextButton.icon(
+        FilledButton.icon(
           onPressed: () {
             if (_runState == _RunState.running) {
               _pause();
@@ -502,7 +523,7 @@ class _RhythmVisualizerState extends State<RhythmVisualizer>
                 ? 'Pause'
                 : _runState == _RunState.paused
                     ? 'Weiter'
-                    : 'Start',
+                    : 'Neu starten',
           ),
         ),
       ],

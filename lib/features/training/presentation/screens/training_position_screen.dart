@@ -28,10 +28,14 @@ class TrainingPositionScreen extends ConsumerWidget {
           tooltip: 'Zurück',
         ),
         // Slim progress bar
-        title: AnimatedProgressBar(
-          currentStep: (exercise.exerciseNumber - 1) * 3 + 1,
-          totalSteps: 21,
-          compact: true,
+        title: Semantics(
+          label:
+              'Fortschritt ${((exercise.exerciseNumber - 1) * 3 + 1)} von 21 Schritten.',
+          child: AnimatedProgressBar(
+            currentStep: (exercise.exerciseNumber - 1) * 3 + 1,
+            totalSteps: 21,
+            compact: true,
+          ),
         ),
         centerTitle: true,
         actions: [
@@ -57,7 +61,8 @@ class TrainingPositionScreen extends ConsumerWidget {
         ),
         child: SafeArea(
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+            padding:
+                const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -68,7 +73,8 @@ class TrainingPositionScreen extends ConsumerWidget {
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
-                        color: theme.colorScheme.onPrimaryContainer.withOpacity(0.15),
+                        color: theme.colorScheme.onPrimaryContainer
+                            .withOpacity(0.15),
                         width: 2,
                       ),
                       boxShadow: [
@@ -87,6 +93,8 @@ class TrainingPositionScreen extends ConsumerWidget {
                         width: 260,
                         height: 260,
                         fit: BoxFit.contain,
+                        semanticLabel:
+                            'Übungsbild für Übung ${exercise.exerciseNumber}',
                         errorBuilder: (context, error, stackTrace) {
                           return Container(
                             width: 260,
@@ -103,12 +111,13 @@ class TrainingPositionScreen extends ConsumerWidget {
                     ),
                   ),
                 ),
-                
+
                 // Position Instructions - THE FOCUS!
                 Expanded(
                   child: ListView.separated(
                     itemCount: exercise.positionInstructions.length,
-                    separatorBuilder: (context, index) => const SizedBox(height: 24),
+                    separatorBuilder: (context, index) =>
+                        const SizedBox(height: 24),
                     padding: const EdgeInsets.symmetric(vertical: 8),
                     itemBuilder: (context, index) {
                       return Row(
@@ -129,7 +138,8 @@ class TrainingPositionScreen extends ConsumerWidget {
                               ),
                               boxShadow: [
                                 BoxShadow(
-                                  color: theme.colorScheme.primary.withOpacity(0.3),
+                                  color: theme.colorScheme.primary
+                                      .withOpacity(0.3),
                                   blurRadius: 4,
                                   spreadRadius: 1,
                                 ),
@@ -154,37 +164,44 @@ class TrainingPositionScreen extends ConsumerWidget {
                     },
                   ),
                 ),
-                
+
                 const SizedBox(height: 20),
-                
+
                 // Continue Button - Prominent
                 SizedBox(
                   width: double.infinity,
                   height: 56,
-                  child: FilledButton(
-                    onPressed: onContinue,
-                    style: FilledButton.styleFrom(
-                      backgroundColor: theme.colorScheme.primary,
-                      foregroundColor: theme.colorScheme.onPrimary,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      elevation: 2,
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Text(
-                          'Weiter zur Bewegung',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 0.5,
-                          ),
+                  child: Semantics(
+                    button: true,
+                    label: 'Weiter zur Bewegung',
+                    child: FilledButton(
+                      onPressed: onContinue,
+                      style: FilledButton.styleFrom(
+                        backgroundColor: theme.colorScheme.primary,
+                        foregroundColor: theme.colorScheme.onPrimary,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
                         ),
-                        const SizedBox(width: 10),
-                        const Icon(Icons.arrow_forward, size: 24),
-                      ],
+                        elevation: 2,
+                      ),
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: const [
+                            Text(
+                              'Weiter zur Bewegung',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                            SizedBox(width: 10),
+                            Icon(Icons.arrow_forward, size: 24),
+                          ],
+                        ),
+                      ),
                     ),
                   ),
                 ),

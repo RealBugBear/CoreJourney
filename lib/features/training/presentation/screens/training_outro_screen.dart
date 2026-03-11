@@ -14,7 +14,7 @@ class TrainingOutroScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return Scaffold(
       body: Container(
         decoration: BoxDecoration(
@@ -34,51 +34,54 @@ class TrainingOutroScreen extends StatelessWidget {
                 padding: const EdgeInsets.all(24.0),
                 child: ConstrainedBox(
                   constraints: BoxConstraints(
-                    minHeight: constraints.maxHeight - 48, // Screen height minus padding
+                    minHeight: constraints.maxHeight -
+                        48, // Screen height minus padding
                   ),
                   child: IntrinsicHeight(
                     child: Column(
                       children: [
                         const SizedBox(height: 16),
-                        
+
                         // Animated Trophy - Premium celebration
                         const AnimatedTrophy(size: 100),
-                        
+
                         const SizedBox(height: 24),
-                        
+
                         // Title - Bigger and more celebratory
                         Text(
                           'Herzlichen Glückwunsch!',
                           style: theme.textTheme.headlineLarge?.copyWith(
-                                color: theme.colorScheme.onPrimaryContainer,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 28,
-                              ),
+                            color: theme.colorScheme.onPrimaryContainer,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 28,
+                          ),
                           textAlign: TextAlign.center,
                         ),
-                        
+
                         const SizedBox(height: 12),
-                        
+
                         // Description
                         Text(
                           'Du hast dein heutiges Training\nerfolgreich abgeschlossen.',
                           style: theme.textTheme.titleMedium?.copyWith(
-                                color: theme.colorScheme.onPrimaryContainer.withOpacity(0.9),
-                                fontSize: 15,
-                                height: 1.3,
-                              ),
+                            color: theme.colorScheme.onPrimaryContainer
+                                .withOpacity(0.9),
+                            fontSize: 15,
+                            height: 1.3,
+                          ),
                           textAlign: TextAlign.center,
                         ),
-                        
+
                         const SizedBox(height: 24),
-                        
+
                         // Glassmorphic Stats Card - Premium look
                         PremiumGlassmorphicCard(
                           blur: 30,
                           opacity: 0.2,
                           borderRadius: 16,
                           padding: const EdgeInsets.all(20.0),
-                          borderColor: theme.colorScheme.onPrimaryContainer.withOpacity(0.2),
+                          borderColor: theme.colorScheme.onPrimaryContainer
+                              .withOpacity(0.2),
                           child: Column(
                             children: [
                               Text(
@@ -91,7 +94,8 @@ class TrainingOutroScreen extends StatelessWidget {
                               ),
                               const SizedBox(height: 16),
                               Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceAround,
                                 children: [
                                   _buildStat(
                                     context,
@@ -102,7 +106,8 @@ class TrainingOutroScreen extends StatelessWidget {
                                   Container(
                                     width: 1,
                                     height: 40,
-                                    color: theme.colorScheme.onPrimaryContainer.withOpacity(0.2),
+                                    color: theme.colorScheme.onPrimaryContainer
+                                        .withOpacity(0.2),
                                   ),
                                   _buildStat(
                                     context,
@@ -115,12 +120,13 @@ class TrainingOutroScreen extends StatelessWidget {
                             ],
                           ),
                         ),
-                        
+
                         const SizedBox(height: 20),
-                        
+
                         // Motivational Text - More elegant
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 10),
                           decoration: BoxDecoration(
                             color: theme.colorScheme.primary.withOpacity(0.15),
                             borderRadius: BorderRadius.circular(12),
@@ -142,44 +148,51 @@ class TrainingOutroScreen extends StatelessWidget {
                                 child: Text(
                                   'Weiter so! Regelmäßiges Training führt zum Erfolg.',
                                   style: theme.textTheme.bodySmall?.copyWith(
-                                        color: theme.colorScheme.onPrimaryContainer,
-                                        fontWeight: FontWeight.w600,
-                                        fontSize: 13,
-                                      ),
+                                    color: theme.colorScheme.onPrimaryContainer,
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 13,
+                                  ),
                                   textAlign: TextAlign.center,
                                 ),
                               ),
                             ],
                           ),
                         ),
-                        
+
                         const Spacer(),
-                        
+
                         // Finish Button - Premium and prominent
                         SizedBox(
                           width: double.infinity,
                           height: 54,
-                          child: FilledButton(
-                            onPressed: onFinish,
-                            style: FilledButton.styleFrom(
-                              backgroundColor: theme.colorScheme.primary,
-                              foregroundColor: theme.colorScheme.onPrimary,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16),
+                          child: Semantics(
+                            button: true,
+                            label: 'Zum Dashboard',
+                            child: FilledButton(
+                              onPressed: onFinish,
+                              style: FilledButton.styleFrom(
+                                backgroundColor: theme.colorScheme.primary,
+                                foregroundColor: theme.colorScheme.onPrimary,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                                elevation: 4,
                               ),
-                              elevation: 4,
-                            ),
-                            child: const Text(
-                              'Zum Dashboard',
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: 0.5,
+                              child: const FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: Text(
+                                  'Zum Dashboard',
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    letterSpacing: 0.5,
+                                  ),
+                                ),
                               ),
                             ),
                           ),
                         ),
-                        
+
                         const SizedBox(height: 16),
                       ],
                     ),
@@ -200,7 +213,7 @@ class TrainingOutroScreen extends StatelessWidget {
     String label,
   ) {
     final theme = Theme.of(context);
-    
+
     return Column(
       children: [
         Icon(
@@ -212,21 +225,20 @@ class TrainingOutroScreen extends StatelessWidget {
         Text(
           value,
           style: theme.textTheme.headlineMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-                fontSize: 28,
-                color: theme.colorScheme.onPrimaryContainer,
-              ),
+            fontWeight: FontWeight.bold,
+            fontSize: 28,
+            color: theme.colorScheme.onPrimaryContainer,
+          ),
         ),
         const SizedBox(height: 2),
         Text(
           label,
           style: theme.textTheme.bodySmall?.copyWith(
-                fontSize: 12,
-                color: theme.colorScheme.onPrimaryContainer.withOpacity(0.7),
-              ),
+            fontSize: 12,
+            color: theme.colorScheme.onPrimaryContainer.withOpacity(0.7),
+          ),
         ),
       ],
     );
   }
 }
-

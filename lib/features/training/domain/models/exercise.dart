@@ -36,10 +36,86 @@ class Exercise {
 
 // Complete 7 Moro Exercises
 const List<Exercise> exercises = [
-  // ÜBUNG 1 – Moro 1
+  // ÜBUNG 1 – Moro 5
+  Exercise(
+    id: 'ex5',
+    exerciseNumber: 1,
+    title: 'Moro 5',
+    positionInstructions: [
+      'Rückenlage',
+      'Beide Beine ausgestreckt',
+      'Arme ausgestreckt neben dem Körper, Handflächen am Boden',
+    ],
+    movementInstructions: [
+      'Nur ein Bein bewegt sich',
+      'Dieses Bein langsam in ca. drei Sekunden anheben und auf dem Schienbein des anderen Beins ablegen',
+      'Kurz halten',
+      'In drei Sekunden wieder zurück',
+      'Seitenwechsel',
+    ],
+    hints: [
+      'Das nicht bewegte Bein bleibt komplett ruhig und unverändert liegen',
+    ],
+    durationSeconds: 40,
+    repetitions: 3,
+    executionGuide: 'Bein anheben und auf dem Schienbein des anderen Beins ablegen.',
+    imagePath: 'assets/images/trainings/moro/moro5.png',
+  ),
+
+  // ÜBUNG 2 – Moro 3 – Halber Frosch
+  Exercise(
+    id: 'ex3',
+    exerciseNumber: 2,
+    title: 'Moro 3 – Halber Frosch',
+    positionInstructions: [
+      'Rückenlage',
+      'Beide Beine ausgestreckt',
+      'Neutrale Ausgangsposition',
+    ],
+    movementInstructions: [
+      'Ein Bein bewegt sich:',
+      'Fußsohle gleitet an der Innenseite des anderen Beins nach oben zum Körper, ca. drei Sekunden',
+      'Dann in drei Sekunden wieder vollständig zurück in die neutrale Position',
+      'Danach Seitenwechsel',
+    ],
+    hints: [
+      'Fußsohle bleibt während der gesamten Bewegung am anderen Bein anliegend',
+      'Bewegungsweite richtet sich nach diesem Kontakt',
+    ],
+    durationSeconds: 40,
+    repetitions: 3,
+    executionGuide: 'Fußsohle gleitet am anderen Bein entlang nach oben.',
+    imagePath: 'assets/images/trainings/moro/moro3.png',
+  ),
+
+  // ÜBUNG 3 – Moro 4 – Frosch
+  Exercise(
+    id: 'ex4',
+    exerciseNumber: 3,
+    title: 'Moro 4 – Frosch',
+    positionInstructions: [
+      'Rückenlage',
+      'Beide Beine ausgestreckt',
+      'Fußsohlen zusammenführen',
+    ],
+    movementInstructions: [
+      'Füße langsam drei Sekunden Richtung Körper führen',
+      'Knie gehen dabei nach außen',
+      'Füße anschließend drei Sekunden zurückführen',
+    ],
+    hints: [
+      'Range of Motion nur so weit, wie die Fußsohlen während der gesamten Bewegung eng aneinander bleiben',
+    ],
+    durationSeconds: 35,
+    repetitions: 3,
+    executionGuide: 'Füße zum Körper führen, Knie gehen nach außen.',
+    imagePath: 'assets/images/trainings/moro/moro4.png',
+  ),
+
+  // ÜBUNG 4 – Moro 1
   Exercise(
     id: 'ex1',
-    exerciseNumber: 1,
+    exerciseNumber: 4,
     title: 'Moro 1',
     positionInstructions: [
       'Rückenlage',
@@ -63,10 +139,10 @@ const List<Exercise> exercises = [
     imagePath: 'assets/images/trainings/moro/moro1.png',
   ),
 
-  // ÜBUNG 2 – Moro 2
+  // ÜBUNG 5 – Moro 2
   Exercise(
     id: 'ex2',
-    exerciseNumber: 2,
+    exerciseNumber: 5,
     title: 'Moro 2',
     positionInstructions: [
       'Rückenlage',
@@ -87,82 +163,6 @@ const List<Exercise> exercises = [
     repetitions: 3,
     executionGuide: 'Kopf und Oberkörper langsam anheben, Stirn Richtung Knie.',
     imagePath: 'assets/images/trainings/moro/moro2.png',
-  ),
-
-  // ÜBUNG 3 – Moro 3 – Halber Frosch
-  Exercise(
-    id: 'ex3',
-    exerciseNumber: 3,
-    title: 'Moro 3 – Halber Frosch',
-    positionInstructions: [
-      'Rückenlage',
-      'Beide Beine ausgestreckt',
-      'Neutrale Ausgangsposition',
-    ],
-    movementInstructions: [
-      'Ein Bein bewegt sich:',
-      'Fußsohle gleitet an der Innenseite des anderen Beins nach oben zum Körper, ca. drei Sekunden',
-      'Dann in drei Sekunden wieder vollständig zurück in die neutrale Position',
-      'Danach Seitenwechsel',
-    ],
-    hints: [
-      'Fußsohle bleibt während der gesamten Bewegung am anderen Bein anliegend',
-      'Bewegungsweite richtet sich nach diesem Kontakt',
-    ],
-    durationSeconds: 40,
-    repetitions: 3,
-    executionGuide: 'Fußsohle gleitet am anderen Bein entlang nach oben.',
-    imagePath: 'assets/images/trainings/moro/moro3.png',
-  ),
-
-  // ÜBUNG 4 – Moro 4 – Frosch
-  Exercise(
-    id: 'ex4',
-    exerciseNumber: 4,
-    title: 'Moro 4 – Frosch',
-    positionInstructions: [
-      'Rückenlage',
-      'Beide Beine ausgestreckt',
-      'Fußsohlen zusammenführen',
-    ],
-    movementInstructions: [
-      'Füße langsam drei Sekunden Richtung Körper führen',
-      'Knie gehen dabei nach außen',
-      'Füße anschließend drei Sekunden zurückführen',
-    ],
-    hints: [
-      'Range of Motion nur so weit, wie die Fußsohlen während der gesamten Bewegung eng aneinander bleiben',
-    ],
-    durationSeconds: 35,
-    repetitions: 3,
-    executionGuide: 'Füße zum Körper führen, Knie gehen nach außen.',
-    imagePath: 'assets/images/trainings/moro/moro4.png',
-  ),
-
-  // ÜBUNG 5 – Moro 5
-  Exercise(
-    id: 'ex5',
-    exerciseNumber: 5,
-    title: 'Moro 5',
-    positionInstructions: [
-      'Rückenlage',
-      'Beide Beine ausgestreckt',
-      'Arme ausgestreckt neben dem Körper, Handflächen am Boden',
-    ],
-    movementInstructions: [
-      'Nur ein Bein bewegt sich',
-      'Dieses Bein langsam in ca. drei Sekunden anheben und auf dem Schienbein des anderen Beins ablegen',
-      'Kurz halten',
-      'In drei Sekunden wieder zurück',
-      'Seitenwechsel',
-    ],
-    hints: [
-      'Das nicht bewegte Bein bleibt komplett ruhig und unverändert liegen',
-    ],
-    durationSeconds: 40,
-    repetitions: 3,
-    executionGuide: 'Bein anheben und auf dem Schienbein des anderen Beins ablegen.',
-    imagePath: 'assets/images/trainings/moro/moro5.png',
   ),
 
   // ÜBUNG 6 – Moro 6 / 6.1 – Isometrischer Gegendruck
