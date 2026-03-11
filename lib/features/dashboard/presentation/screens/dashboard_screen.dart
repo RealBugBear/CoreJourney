@@ -23,6 +23,11 @@ import '../../../profile/presentation/screens/profile_screen.dart';
 import '../../../progress/domain/models/golden_day_status.dart';
 import '../../../../core/navigation/route_observer.dart';
 
+const Color _moodSeriesColor = Color(0xFF5A9B84);
+const Color _energySeriesColor = Color(0xFF6E8FCB);
+const Color _stressSeriesColor = Color(0xFFC47A93);
+const Color _noteSeriesColor = Color(0xFFE0B867);
+
 class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({super.key});
 
@@ -448,7 +453,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final user = FirebaseAuth.instance.currentUser;
 
     return Scaffold(
       backgroundColor: theme.colorScheme.surfaceContainerHighest,
@@ -482,22 +486,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
 
           return SafeArea(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 18, 20, 18),
+              padding: const EdgeInsets.fromLTRB(20, 8, 20, 14),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _DashboardHeader(
-                    user: user,
-                    hasReachedGoldenDay: hasReachedGoldenDay,
-                    onProfileTap: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (context) => const ProfileScreen(),
-                        ),
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 8),
                   Expanded(
                     child: ConstrainedBox(
                       constraints: const BoxConstraints(maxWidth: 520),
@@ -511,6 +503,13 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                         notes: notes,
                         onAddNote: _handleAddManualNote,
                         onViewNotes: () => _showNotesSheet(scopedNotes),
+                        onProfileTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) => const ProfileScreen(),
+                            ),
+                          );
+                        },
                       ),
                     ),
                   ),
@@ -535,29 +534,13 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                     },
                   ),
                   const SizedBox(height: 10),
-                  Text(
-                    _selectedTrainingMode == TrainingMode.routine
-                        ? 'Direktstart in Übung 1'
-                        : 'Tutorial mit Schritt-für-Schritt Anleitung',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurface.withOpacity(0.7),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
                   _PrimaryActionButton(
                     label: hasReachedGoldenDay
                         ? 'Training erneut starten'
                         : 'Training starten',
                     onPressed: () => _handleStartTraining(context),
                   ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Kein Zeitfenster? Du kannst den Tag auch direkt abhaken.',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurface.withOpacity(0.66),
-                    ),
-                  ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 10),
                   SizedBox(
                     width: double.infinity,
                     height: 48,
@@ -1038,19 +1021,19 @@ class _NoteListTile extends StatelessWidget {
                 _NoteMetricChip(
                   label: 'Stimmung',
                   value: note.mood!,
-                  color: const Color(0xFF2E7D32),
+                  color: _moodSeriesColor,
                 ),
               if (note.energy != null)
                 _NoteMetricChip(
                   label: 'Energie',
                   value: note.energy!,
-                  color: const Color(0xFF1565C0),
+                  color: _energySeriesColor,
                 ),
               if (note.stress != null)
                 _NoteMetricChip(
                   label: 'Stress',
                   value: note.stress!,
-                  color: const Color(0xFFC62828),
+                  color: _stressSeriesColor,
                 ),
             ],
           ),
@@ -1098,39 +1081,6 @@ class _NoteMetricChip extends StatelessWidget {
   }
 }
 
-class _DashboardHeader extends StatelessWidget {
-  final User? user;
-  final bool hasReachedGoldenDay;
-  final VoidCallback onProfileTap;
-
-  const _DashboardHeader({
-    required this.user,
-    required this.hasReachedGoldenDay,
-    required this.onProfileTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Row(
-      children: [
-        const Spacer(),
-        IconButton(
-          icon: CircleAvatar(
-            radius: 18,
-            backgroundColor: theme.colorScheme.primary.withOpacity(0.08),
-            foregroundColor: theme.colorScheme.primary,
-            child: const Icon(Icons.person, size: 18),
-          ),
-          onPressed: onProfileTap,
-          tooltip: 'Profil',
-        ),
-      ],
-    );
-  }
-}
-
 class _DashboardData {
   final GoldenDayStatus? goldenDayStatus;
   final DashboardProgressSnapshot snapshot;
@@ -1159,6 +1109,7 @@ class _MinimalProgressCard extends StatelessWidget {
   final List<MoodCheckin> notes;
   final VoidCallback onAddNote;
   final VoidCallback onViewNotes;
+  final VoidCallback onProfileTap;
 
   const _MinimalProgressCard({
     required this.snapshot,
@@ -1170,6 +1121,7 @@ class _MinimalProgressCard extends StatelessWidget {
     required this.notes,
     required this.onAddNote,
     required this.onViewNotes,
+    required this.onProfileTap,
   });
 
   @override
@@ -1187,11 +1139,12 @@ class _MinimalProgressCard extends StatelessWidget {
         final availableHeight = constraints.maxHeight.isFinite
             ? constraints.maxHeight
             : MediaQuery.of(context).size.height;
-        final chartHeight = (availableHeight * 0.22).clamp(92.0, 152.0);
+        final chartHeight = (availableHeight * 0.27).clamp(124.0, 188.0);
 
         return Container(
           width: double.infinity,
           padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
+          clipBehavior: Clip.hardEdge,
           decoration: BoxDecoration(
             color: theme.colorScheme.surface,
             borderRadius: BorderRadius.circular(20),
@@ -1202,20 +1155,40 @@ class _MinimalProgressCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(999),
-                  color: theme.colorScheme.primary.withOpacity(0.10),
-                ),
-                child: Text(
-                  todayLabel,
-                  style: theme.textTheme.labelMedium?.copyWith(
-                    color: theme.colorScheme.primary,
-                    fontWeight: FontWeight.w700,
+              Row(
+                children: [
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(999),
+                      color: theme.colorScheme.primary.withOpacity(0.10),
+                    ),
+                    child: Text(
+                      todayLabel,
+                      style: theme.textTheme.labelMedium?.copyWith(
+                        color: theme.colorScheme.primary,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
                   ),
-                ),
+                  const Spacer(),
+                  IconButton(
+                    onPressed: onProfileTap,
+                    tooltip: 'Profil',
+                    icon: CircleAvatar(
+                      radius: 16,
+                      backgroundColor:
+                          theme.colorScheme.primary.withOpacity(0.10),
+                      foregroundColor: theme.colorScheme.primary,
+                      child: const Icon(Icons.person, size: 17),
+                    ),
+                    style: IconButton.styleFrom(
+                      minimumSize: const Size(36, 36),
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 12),
               Text(
@@ -1262,26 +1235,25 @@ class _MinimalProgressCard extends StatelessWidget {
                   ),
                   const SizedBox(width: 16),
                   _MinimalStat(
-                    label: 'Programm',
+                    label: 'Woche',
                     value: '$qualifiedWeeks / 4',
                   ),
                 ],
               ),
               const SizedBox(height: 12),
+              Text(
+                notes.isEmpty
+                    ? 'Befindensverlauf • ${_scopeLabel(moodScope)} • ${_rangeLabel(moodRangePreset)}'
+                    : 'Befindensverlauf • ${_scopeLabel(moodScope)} • ${_rangeLabel(moodRangePreset)} • ${notes.length} Notizen',
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: theme.colorScheme.onSurface.withOpacity(0.6),
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 6),
               Row(
+                mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  Expanded(
-                    child: Text(
-                      notes.isEmpty
-                          ? 'Befindensverlauf • ${_scopeLabel(moodScope)} • ${_rangeLabel(moodRangePreset)}'
-                          : 'Befindensverlauf • ${_scopeLabel(moodScope)} • ${_rangeLabel(moodRangePreset)} • ${notes.length} Notizen',
-                      style: theme.textTheme.labelSmall?.copyWith(
-                        color: theme.colorScheme.onSurface.withOpacity(0.6),
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 6),
                   FilledButton.tonalIcon(
                     onPressed: onAddNote,
                     icon: const Icon(Icons.edit_note, size: 16),
@@ -1305,7 +1277,7 @@ class _MinimalProgressCard extends StatelessWidget {
                   ),
                 ],
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 6),
               SizedBox(
                 height: chartHeight,
                 child: moodData.isEmpty
@@ -1360,75 +1332,78 @@ class _MoodTrendChart extends StatelessWidget {
         value == null ? '-' : value.toStringAsFixed(1);
 
     return Container(
+      clipBehavior: Clip.hardEdge,
       decoration: BoxDecoration(
         color: theme.colorScheme.surfaceContainerHighest.withOpacity(0.45),
         borderRadius: BorderRadius.circular(14),
       ),
       padding: const EdgeInsets.fromLTRB(8, 8, 8, 8),
-      child: Stack(
+      child: Column(
         children: [
-          Positioned.fill(
-            child: CustomPaint(
-              painter: _MoodTrendPainter(
-                data: data,
-                moodColor: const Color(0xFF2E7D32),
-                energyColor: const Color(0xFF1565C0),
-                stressColor: const Color(0xFFC62828),
-                axisColor: theme.colorScheme.onSurface.withOpacity(0.24),
+          Expanded(
+            child: Stack(
+              children: [
+                Positioned.fill(
+                  child: CustomPaint(
+                    painter: _MoodTrendPainter(
+                      data: data,
+                      moodColor: _moodSeriesColor,
+                      energyColor: _energySeriesColor,
+                      stressColor: _stressSeriesColor,
+                      axisColor: theme.colorScheme.onSurface.withOpacity(0.24),
+                    ),
+                    child: const SizedBox.expand(),
+                  ),
+                ),
+                Positioned(
+                  top: 0,
+                  right: 2,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 7,
+                        height: 7,
+                        decoration: const BoxDecoration(
+                          color: _noteSeriesColor,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        'Notizen',
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          fontWeight: FontWeight.w700,
+                          color: theme.colorScheme.onSurface.withOpacity(0.66),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              _MoodLegendItem(
+                label: 'Mood',
+                value: asText(latest?.avgMood),
+                color: _moodSeriesColor,
               ),
-              child: const SizedBox.expand(),
-            ),
-          ),
-          Positioned(
-            left: 2,
-            right: 2,
-            bottom: 0,
-            child: Row(
-              children: [
-                _MoodLegendItem(
-                  label: 'Mood',
-                  value: asText(latest?.avgMood),
-                  color: const Color(0xFF2E7D32),
-                ),
-                const SizedBox(width: 8),
-                _MoodLegendItem(
-                  label: 'Energy',
-                  value: asText(latest?.avgEnergy),
-                  color: const Color(0xFF1565C0),
-                ),
-                const SizedBox(width: 8),
-                _MoodLegendItem(
-                  label: 'Stress',
-                  value: asText(latest?.avgStress),
-                  color: const Color(0xFFC62828),
-                ),
-              ],
-            ),
-          ),
-          Positioned(
-            top: 0,
-            right: 2,
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 7,
-                  height: 7,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFFF9A825),
-                    shape: BoxShape.circle,
-                  ),
-                ),
-                const SizedBox(width: 4),
-                Text(
-                  'Notizen',
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    fontWeight: FontWeight.w700,
-                    color: theme.colorScheme.onSurface.withOpacity(0.66),
-                  ),
-                ),
-              ],
-            ),
+              const SizedBox(width: 8),
+              _MoodLegendItem(
+                label: 'Energy',
+                value: asText(latest?.avgEnergy),
+                color: _energySeriesColor,
+              ),
+              const SizedBox(width: 8),
+              _MoodLegendItem(
+                label: 'Stress',
+                value: asText(latest?.avgStress),
+                color: _stressSeriesColor,
+              ),
+            ],
           ),
         ],
       ),
@@ -1500,7 +1475,7 @@ class _MoodTrendPainter extends CustomPainter {
     const leftPad = 6.0;
     const rightPad = 6.0;
     const topPad = 8.0;
-    const bottomPad = 24.0;
+    const bottomPad = 16.0;
     final chartWidth = size.width - leftPad - rightPad;
     final chartHeight = size.height - topPad - bottomPad;
     if (chartWidth <= 0 || chartHeight <= 0) return;
@@ -1518,7 +1493,7 @@ class _MoodTrendPainter extends CustomPainter {
     }
 
     final noteMarkerFill = Paint()
-      ..color = const Color(0xFFF9A825)
+      ..color = _noteSeriesColor
       ..style = PaintingStyle.fill;
     final noteMarkerStroke = Paint()
       ..color = Colors.white.withOpacity(0.92)
@@ -1536,11 +1511,58 @@ class _MoodTrendPainter extends CustomPainter {
       canvas.drawCircle(Offset(x, y), radius, noteMarkerStroke);
     }
 
+    void drawMarker({
+      required Offset center,
+      required Color color,
+      required int shape,
+      required double radius,
+    }) {
+      final fill = Paint()
+        ..color = color
+        ..style = PaintingStyle.fill;
+      final stroke = Paint()
+        ..color = Colors.white.withOpacity(0.95)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.4;
+
+      switch (shape) {
+        case 0:
+          canvas.drawCircle(center, radius, fill);
+          canvas.drawCircle(center, radius, stroke);
+          break;
+        case 1:
+          final rect = Rect.fromCenter(
+            center: center,
+            width: radius * 2.2,
+            height: radius * 2.2,
+          );
+          canvas.drawRRect(
+            RRect.fromRectAndRadius(rect, const Radius.circular(2.5)),
+            fill,
+          );
+          canvas.drawRRect(
+            RRect.fromRectAndRadius(rect, const Radius.circular(2.5)),
+            stroke,
+          );
+          break;
+        default:
+          final path = Path()
+            ..moveTo(center.dx, center.dy - radius * 1.25)
+            ..lineTo(center.dx + radius * 1.05, center.dy)
+            ..lineTo(center.dx, center.dy + radius * 1.25)
+            ..lineTo(center.dx - radius * 1.05, center.dy)
+            ..close();
+          canvas.drawPath(path, fill);
+          canvas.drawPath(path, stroke);
+      }
+    }
+
     void drawSeries({
       required double? Function(MoodDailyAggregate) selector,
       required double? Function(MoodDailyAggregate) minSelector,
       required double? Function(MoodDailyAggregate) maxSelector,
       required Color color,
+      required int markerShape,
     }) {
       final points = <Offset>[];
       final lowerPoints = <Offset>[];
@@ -1624,19 +1646,29 @@ class _MoodTrendPainter extends CustomPainter {
         ..style = PaintingStyle.fill;
       canvas.drawPath(fillPath, fillPaint);
 
+      // White underlay separates crossings; colored overlay uses additive
+      // blending so overlapping series stay visible instead of fully covering.
+      final lineUnderlayPaint = Paint()
+        ..color = Colors.white.withOpacity(0.28)
+        ..strokeWidth = 4.6
+        ..style = PaintingStyle.stroke;
+      canvas.drawPath(linePath, lineUnderlayPaint);
+
       final linePaint = Paint()
         ..color = color
-        ..strokeWidth = 2.4
+        ..strokeWidth = 2.8
         ..style = PaintingStyle.stroke;
       canvas.drawPath(linePath, linePaint);
 
-      final pointPaint = Paint()
-        ..color = color
-        ..style = PaintingStyle.fill;
       for (var i = 0; i < points.length; i++) {
         final point = points[i];
         final pointRadius = entryCounts[i] > 1 ? 3.9 : 3.2;
-        canvas.drawCircle(point, pointRadius, pointPaint);
+        drawMarker(
+          center: point,
+          color: color,
+          shape: markerShape,
+          radius: pointRadius,
+        );
       }
     }
 
@@ -1645,18 +1677,21 @@ class _MoodTrendPainter extends CustomPainter {
       minSelector: (d) => d.minMood,
       maxSelector: (d) => d.maxMood,
       color: moodColor,
+      markerShape: 0,
     );
     drawSeries(
       selector: (d) => d.avgEnergy,
       minSelector: (d) => d.minEnergy,
       maxSelector: (d) => d.maxEnergy,
       color: energyColor,
+      markerShape: 1,
     );
     drawSeries(
       selector: (d) => d.avgStress,
       minSelector: (d) => d.minStress,
       maxSelector: (d) => d.maxStress,
       color: stressColor,
+      markerShape: 2,
     );
   }
 
