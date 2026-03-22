@@ -1,0 +1,129 @@
+{
+  "@@locale": "en",
+
+  "appTitle": "CoreJourney",
+  "@appTitle": { "description": "App title" },
+
+  "signIn": "Sign In",
+  "signUp": "Sign Up",
+  "signOut": "Sign Out",
+  "email": "Email",
+  "password": "Password",
+  "forgotPassword": "Forgot Password?",
+  "resetPassword": "Reset Password",
+  "passwordResetSent": "We've sent you a password reset email.",
+
+  "authErrorInvalidCredentials": "Email or password is incorrect.",
+  "authErrorEmailInUse": "This email address is already registered.",
+  "authErrorWeakPassword": "Password must be at least 8 characters.",
+
+  "dashboard": "Dashboard",
+  "startTraining": "Start Training",
+  "currentDay": "Day {day} of {total}",
+  "@currentDay": {
+    "placeholders": {
+      "day": { "type": "int" },
+      "total": { "type": "int" }
+    }
+  },
+  "dailyStreak": "Daily Streak",
+  "weeklyProgress": "{count} of {goal} this week",
+  "@weeklyProgress": {
+    "placeholders": {
+      "count": { "type": "int" },
+      "goal": { "type": "int" }
+    }
+  },
+  "goldenDay": "Golden Day",
+  "daysRemaining": "{days} days remaining",
+  "@daysRemaining": {
+    "placeholders": {
+      "days": { "type": "int" }
+    }
+  },
+
+  "trainingMode": "Training Mode",
+  "tutorialMode": "Tutorial",
+  "routineMode": "Routine",
+  "silentMode": "Silent",
+  "hapticMode": "Haptic",
+  "voiceCuesMode": "Voice & Cues",
+
+  "exercisePosition": "Starting Position",
+  "exerciseMovement": "Movement",
+  "exerciseHints": "Tips",
+  "exerciseReps": "{count} repetitions",
+  "@exerciseReps": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "sessionComplete": "Session Complete",
+  "sessionCompleteSubtitle": "Well done! You've completed your training for today.",
+
+  "moodCheckIn": "How are you feeling?",
+  "moodLabel": "Mood",
+  "energyLabel": "Energy",
+  "stressLabel": "Stress",
+  "moodSkip": "Skip",
+  "moodSubmit": "Save",
+  "moodChartEmpty": "Complete a training session to start tracking your mood.",
+
+  "intakeAssessmentTitle": "Initial Assessment",
+  "questionIsometricWithTrainer": "Have you received isometric activation from a trainer?",
+  "yes": "Yes",
+  "no": "No",
+  "durationRecommendation": "Recommended duration: {weeks} weeks",
+  "@durationRecommendation": {
+    "placeholders": {
+      "weeks": { "type": "int" }
+    }
+  },
+  "adjustDuration": "Adjust Duration",
+  "confirm": "Confirm",
+
+  "completionQuestionnaireTitle": "Block Complete?",
+  "completionQuestion": "Did you go through an intensified emotional or stressful time through the training, and were you able to confront these themes — learning that your emotional reaction does not always match reality — and begin to regulate yourself?",
+  "completionYes": "Yes, I'm ready",
+  "completionNotYet": "Not yet",
+
+  "packages": "Program",
+  "packageLocked": "Locked",
+  "packageCurrent": "Current",
+  "packageCompleted": "Completed",
+
+  "settings": "Settings",
+  "settingsTraining": "Training",
+  "settingsReminders": "Reminders",
+  "settingsLanguage": "Language",
+  "settingsTheme": "Appearance",
+  "settingsWeeklyGoal": "Weekly Goal",
+  "settingsChildAssist": "Child-Assist Mode",
+  "settingsConnectTrainer": "Connect to Trainer",
+
+  "reminderEnabled": "Reminders enabled",
+  "reminderWindow": "Reminder window",
+  "quietHours": "Quiet hours",
+
+  "disclaimer": "Health Notice",
+  "disclaimerText": "This training does not replace medical treatment. Please consult a doctor if you have health concerns. Listen to your body and take breaks when needed.",
+  "disclaimerAccept": "Understood, continue",
+
+  "errorGeneric": "Something went wrong. Please try again.",
+  "errorNoNetwork": "No internet connection.",
+  "retry": "Retry",
+  "cancel": "Cancel",
+  "done": "Done",
+  "next": "Next",
+  "back": "Back",
+  "save": "Save",
+  "close": "Close",
+
+  "trainerClients": "My Clients",
+  "trainerNoClients": "No clients linked yet. Generate an invite code and share it.",
+  "trainerInviteCode": "Invite Code",
+  "trainerGenerateCode": "Generate Code",
+  "trainerNotes": "Notes",
+  "connectToTrainer": "Connect to Trainer",
+  "enterInviteCode": "Enter invite code"
+}

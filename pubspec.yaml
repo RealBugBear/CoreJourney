@@ -1,0 +1,91 @@
+name: corejourney
+description: CoreJourney — Nervous System Training
+publish_to: none
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.3.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+
+  # State management
+  flutter_riverpod: ^2.5.1
+
+  # Navigation
+  go_router: ^14.0.0
+
+  # Backend — Supabase
+  supabase_flutter: ^2.5.0
+
+  # Local database — Drift (SQLite)
+  drift: ^2.18.0
+  drift_flutter: ^0.2.0
+  sqlite3_flutter_libs: ^0.5.0
+  path_provider: ^2.1.5
+
+  # Firebase — Analytics + Crashlytics + FCM only
+  firebase_core: ^3.15.2
+  firebase_analytics: ^11.0.1
+  firebase_crashlytics: ^4.0.3
+  firebase_messaging: ^15.0.0
+
+  # Payments — RevenueCat
+  purchases_flutter: ^7.0.0
+
+  # Video
+  video_player: ^2.9.1
+  flutter_cache_manager: ^3.4.1
+
+  # Audio + TTS + Haptics
+  audioplayers: ^6.5.1
+  flutter_tts: ^4.2.3
+  wakelock_plus: ^1.3.3
+
+  # Notifications
+  flutter_local_notifications: ^19.5.0
+  timezone: ^0.10.1
+  flutter_timezone: ^2.0.0
+
+  # Environment
+  flutter_dotenv: ^5.0.2
+
+  # Utilities
+  google_fonts: ^6.1.0
+  uuid: ^4.5.1
+  equatable: ^2.0.5
+  intl: ^0.20.2
+  connectivity_plus: ^6.0.3
+  shared_preferences: ^2.2.2
+  package_info_plus: ^8.0.0
+  logger: ^2.0.2+1
+  cupertino_icons: ^1.0.8
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  integration_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+  drift_dev: ^2.18.0
+  build_runner: ^2.4.6
+  mocktail: ^1.0.0
+  flutter_launcher_icons: ^0.14.4
+
+flutter:
+  uses-material-design: true
+  generate: true
+
+  assets:
+    - .env.dev
+    - .env.prod
+    - assets/images/trainings/moro/
+    - assets/sounds/
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/icon.png"

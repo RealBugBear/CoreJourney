@@ -1,0 +1,129 @@
+{
+  "@@locale": "de",
+
+  "appTitle": "CoreJourney",
+  "@appTitle": { "description": "App title" },
+
+  "signIn": "Anmelden",
+  "signUp": "Registrieren",
+  "signOut": "Abmelden",
+  "email": "E-Mail",
+  "password": "Passwort",
+  "forgotPassword": "Passwort vergessen?",
+  "resetPassword": "Passwort zurücksetzen",
+  "passwordResetSent": "Wir haben dir eine E-Mail zum Zurücksetzen des Passworts gesendet.",
+
+  "authErrorInvalidCredentials": "E-Mail oder Passwort ist falsch.",
+  "authErrorEmailInUse": "Diese E-Mail-Adresse ist bereits registriert.",
+  "authErrorWeakPassword": "Das Passwort muss mindestens 8 Zeichen lang sein.",
+
+  "dashboard": "Dashboard",
+  "startTraining": "Training starten",
+  "currentDay": "Tag {day} von {total}",
+  "@currentDay": {
+    "placeholders": {
+      "day": { "type": "int" },
+      "total": { "type": "int" }
+    }
+  },
+  "dailyStreak": "Tages-Streak",
+  "weeklyProgress": "{count} von {goal} diese Woche",
+  "@weeklyProgress": {
+    "placeholders": {
+      "count": { "type": "int" },
+      "goal": { "type": "int" }
+    }
+  },
+  "goldenDay": "Golden Day",
+  "daysRemaining": "{days} Tage verbleibend",
+  "@daysRemaining": {
+    "placeholders": {
+      "days": { "type": "int" }
+    }
+  },
+
+  "trainingMode": "Trainingsmodus",
+  "tutorialMode": "Tutorial",
+  "routineMode": "Routine",
+  "silentMode": "Silent",
+  "hapticMode": "Haptisch",
+  "voiceCuesMode": "Stimme & Cues",
+
+  "exercisePosition": "Ausgangsposition",
+  "exerciseMovement": "Bewegung",
+  "exerciseHints": "Hinweise",
+  "exerciseReps": "{count} Wiederholungen",
+  "@exerciseReps": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "sessionComplete": "Training abgeschlossen",
+  "sessionCompleteSubtitle": "Gut gemacht! Du hast dein Training für heute abgeschlossen.",
+
+  "moodCheckIn": "Wie geht es dir?",
+  "moodLabel": "Stimmung",
+  "energyLabel": "Energie",
+  "stressLabel": "Stress",
+  "moodSkip": "Überspringen",
+  "moodSubmit": "Speichern",
+  "moodChartEmpty": "Schließe eine Trainingseinheit ab, um deine Stimmung zu verfolgen.",
+
+  "intakeAssessmentTitle": "Erstes Assessment",
+  "questionIsometricWithTrainer": "Hast du eine isometrische Aktivierung mit einem Trainer erhalten?",
+  "yes": "Ja",
+  "no": "Nein",
+  "durationRecommendation": "Empfohlene Dauer: {weeks} Wochen",
+  "@durationRecommendation": {
+    "placeholders": {
+      "weeks": { "type": "int" }
+    }
+  },
+  "adjustDuration": "Dauer anpassen",
+  "confirm": "Bestätigen",
+
+  "completionQuestionnaireTitle": "Block abgeschlossen?",
+  "completionQuestion": "Hattest du durch das Training eine verstärkte emotionale oder stressige Zeit und konntest dich mit diesen Themen konfrontieren – zu erkennen, dass deine emotionale Reaktion nicht immer mit der Realität übereinstimmt – und anfangen dich zu regulieren?",
+  "completionYes": "Ja, ich bin bereit",
+  "completionNotYet": "Noch nicht",
+
+  "packages": "Programm",
+  "packageLocked": "Gesperrt",
+  "packageCurrent": "Aktuell",
+  "packageCompleted": "Abgeschlossen",
+
+  "settings": "Einstellungen",
+  "settingsTraining": "Training",
+  "settingsReminders": "Erinnerungen",
+  "settingsLanguage": "Sprache",
+  "settingsTheme": "Erscheinungsbild",
+  "settingsWeeklyGoal": "Wochenziel",
+  "settingsChildAssist": "Kinderunterstützung",
+  "settingsConnectTrainer": "Trainer verbinden",
+
+  "reminderEnabled": "Erinnerungen aktiviert",
+  "reminderWindow": "Erinnerungsfenster",
+  "quietHours": "Ruhezeiten",
+
+  "disclaimer": "Medizinischer Hinweis",
+  "disclaimerText": "Dieses Training ersetzt keine medizinische Behandlung. Bitte konsultiere einen Arzt, wenn du gesundheitliche Bedenken hast. Achte auf die Signale deines Körpers und mache Pausen, wenn nötig.",
+  "disclaimerAccept": "Verstanden, weiter",
+
+  "errorGeneric": "Etwas ist schiefgelaufen. Bitte versuche es erneut.",
+  "errorNoNetwork": "Keine Internetverbindung.",
+  "retry": "Erneut versuchen",
+  "cancel": "Abbrechen",
+  "done": "Fertig",
+  "next": "Weiter",
+  "back": "Zurück",
+  "save": "Speichern",
+  "close": "Schließen",
+
+  "trainerClients": "Meine Klienten",
+  "trainerNoClients": "Noch keine Klienten verknüpft. Generiere einen Einladungscode und teile ihn.",
+  "trainerInviteCode": "Einladungscode",
+  "trainerGenerateCode": "Code generieren",
+  "trainerNotes": "Notizen",
+  "connectToTrainer": "Mit Trainer verbinden",
+  "enterInviteCode": "Einladungscode eingeben"
+}
