@@ -133,11 +133,28 @@ class AppLocalizationsEn extends AppLocalizations {
       'Complete a training session to start tracking your mood.';
 
   @override
-  String get intakeAssessmentTitle => 'Initial Assessment';
+  String get intakeAssessmentTitle => 'Getting Started';
+
+  @override
+  String get intakeWelcomeTitle => 'Welcome to your Reflex Integration Program';
+
+  @override
+  String get intakeWelcomeBody =>
+      'CoreJourney guides you through the integration of prenatal reflexes — a process that can help transform deeply rooted physical and emotional patterns.';
+
+  @override
+  String get intakeTrainerTitle => 'Recommendation: Start with a Trainer';
+
+  @override
+  String get intakeTrainerBody =>
+      'We recommend beginning and accompanying this program with a certified trainer. A trainer carries out isometric activation training to specifically target the relevant reflexes. This targeted activation accelerates the integration process. Without it, the body typically takes longer to engage the reflexes sufficiently.';
+
+  @override
+  String get intakeQuestionLabel => 'One question about your start';
 
   @override
   String get questionIsometricWithTrainer =>
-      'Have you received isometric activation from a trainer?';
+      'Have you already completed isometric activation training with a trainer?';
 
   @override
   String get yes => 'Yes';
@@ -157,7 +174,27 @@ class AppLocalizationsEn extends AppLocalizations {
   String get confirm => 'Confirm';
 
   @override
-  String get completionQuestionnaireTitle => 'Block Complete?';
+  String get completionQuestionnaireTitle => 'Final Reflection';
+
+  @override
+  String get completionCelebrationTitle => 'Block Complete! ⭐';
+
+  @override
+  String get completionCelebrationSubtitle =>
+      'You\'ve completed an important step in your development. Well done.';
+
+  @override
+  String get completionNextPackage => 'Continue to next package';
+
+  @override
+  String get completionBackToDashboard => 'Back to Dashboard';
+
+  @override
+  String get completionExtendedTitle => 'One more week';
+
+  @override
+  String get completionExtendedSubtitle =>
+      'No problem — you have 7 more days. Keep going.';
 
   @override
   String get completionQuestion =>
@@ -215,6 +252,32 @@ class AppLocalizationsEn extends AppLocalizations {
   String get quietHours => 'Quiet hours';
 
   @override
+  String get reminderFrom => 'From';
+
+  @override
+  String get reminderTo => 'To';
+
+  @override
+  String get themeSystem => 'System';
+
+  @override
+  String get themeLight => 'Light';
+
+  @override
+  String get themeDark => 'Dark';
+
+  @override
+  String weeklyGoalSessions(int goal) {
+    return '$goal sessions/week';
+  }
+
+  @override
+  String get settingsFeedback => 'Training Feedback';
+
+  @override
+  String get settingsAccount => 'Account';
+
+  @override
   String get disclaimer => 'Health Notice';
 
   @override
@@ -255,21 +318,292 @@ class AppLocalizationsEn extends AppLocalizations {
   String get trainerClients => 'My Clients';
 
   @override
-  String get trainerNoClients =>
-      'No clients linked yet. Generate an invite code and share it.';
+  String get trainerNoClients => 'No clients linked yet.';
+
+  @override
+  String get trainerNoClientsHint =>
+      'Generate an invite code and share it with your client.';
 
   @override
   String get trainerInviteCode => 'Invite Code';
 
   @override
-  String get trainerGenerateCode => 'Generate Code';
+  String get trainerInviteCodeHint =>
+      'Share this code with your client. It can be used once.';
 
   @override
-  String get trainerNotes => 'Notes';
+  String get trainerGenerateCode => 'New Invite';
+
+  @override
+  String get trainerCopyCode => 'Copy Code';
+
+  @override
+  String get trainerCodeCopied => 'Code copied to clipboard.';
+
+  @override
+  String get trainerAtRisk => 'at risk';
+
+  @override
+  String trainerLastActive(int days) {
+    return '${days}d ago';
+  }
+
+  @override
+  String get trainerNotes => 'Trainer Notes';
+
+  @override
+  String get trainerNotesHint => 'Private notes about this client...';
+
+  @override
+  String get trainerNotesSaved => 'Notes saved.';
+
+  @override
+  String get trainerRecentSessions => 'Recent Sessions (30 days)';
+
+  @override
+  String get trainerNoSessions => 'No sessions in the last 30 days.';
+
+  @override
+  String get trainerView => 'Trainer View';
 
   @override
   String get connectToTrainer => 'Connect to Trainer';
 
   @override
   String get enterInviteCode => 'Enter invite code';
+
+  @override
+  String get connectToTrainerSuccess => 'Connected to trainer!';
+
+  @override
+  String get connectToTrainerError => 'Invalid or expired invite code.';
+
+  @override
+  String get loading => 'Loading...';
+
+  @override
+  String get skip => 'Skip';
+
+  @override
+  String dayNumber(int day) {
+    return 'Day $day';
+  }
+
+  @override
+  String weeksCount(int count) {
+    return '$count weeks';
+  }
+
+  @override
+  String daysCount(int count) {
+    return '$count days';
+  }
+
+  @override
+  String get thisWeek => 'This Week';
+
+  @override
+  String get journal => 'Journal';
+
+  @override
+  String get journalEmptyTitle => 'No entries yet.';
+
+  @override
+  String get journalEmptySubtitle =>
+      'Write down what you observe in your daily life — after each training or whenever you like.';
+
+  @override
+  String get journalEmptyHint =>
+      'Keep track of what changes in your daily life.';
+
+  @override
+  String get journalNewEntry => 'New Note';
+
+  @override
+  String get journalPostTrainingTitle => 'Changes in everyday life?';
+
+  @override
+  String get journalPostTrainingHint =>
+      'Have you noticed anything — in your sleep, your reactions, your body awareness?';
+
+  @override
+  String get journalPlaceholder => 'Write your observation here...';
+
+  @override
+  String get journalLoadFailed => 'Could not load entries.';
+
+  @override
+  String get moodHistory => 'Mood History';
+
+  @override
+  String get profile => 'Profile';
+
+  @override
+  String get completionBannerTitle => 'Block complete!';
+
+  @override
+  String get completionBannerSubtitle =>
+      'You\'ve reached your target date. Time for your final reflection.';
+
+  @override
+  String get settingsDataSync => 'Data & Sync';
+
+  @override
+  String get syncStatusOk => 'All synced';
+
+  @override
+  String syncStatusPending(int count) {
+    return '$count entries pending';
+  }
+
+  @override
+  String syncStatusFailed(int count) {
+    return '$count entries failed';
+  }
+
+  @override
+  String get syncInProgress => 'Syncing...';
+
+  @override
+  String get syncNow => 'Sync now';
+
+  @override
+  String get errorSaveFailed => 'Save failed. Please try again.';
+
+  @override
+  String get errorLoadFailed => 'Failed to load data.';
+
+  @override
+  String get errorLoadFailedInline => 'Failed to load';
+
+  @override
+  String get validationRequired => 'This field is required.';
+
+  @override
+  String get validationInvalidEmail => 'Please enter a valid email address.';
+
+  @override
+  String get validationPasswordTooShort =>
+      'Password must be at least 8 characters.';
+
+  @override
+  String profileVersion(String version) {
+    return 'Version $version';
+  }
+
+  @override
+  String get profileChangePassword => 'Change Password';
+
+  @override
+  String get profileChangePasswordSent => 'Password reset email sent.';
+
+  @override
+  String get profileDeleteAccount => 'Delete Account';
+
+  @override
+  String get profileDeleteAccountTitle => 'Delete Account?';
+
+  @override
+  String get profileDeleteAccountBody =>
+      'This permanently deletes your account and all your data. This cannot be undone.';
+
+  @override
+  String get profileDeleteAccountConfirm => 'Delete permanently';
+
+  @override
+  String get profileDeleteAccountSuccess => 'Account deleted.';
+
+  @override
+  String get profileDeleteAccountError =>
+      'Could not delete account. Please contact support.';
+
+  @override
+  String get trainerDashboard => 'Trainer Dashboard';
+
+  @override
+  String get trainerTabTrainees => 'Trainees';
+
+  @override
+  String get trainerTabCalendar => 'Calendar';
+
+  @override
+  String get trainerMyLink => 'My Invite Link';
+
+  @override
+  String get trainerCopyLink => 'Copy Link';
+
+  @override
+  String get trainerLinkCopied => 'Link copied.';
+
+  @override
+  String get trainerScheduleAppointment => 'Schedule';
+
+  @override
+  String get trainerBookNow => 'Book Now';
+
+  @override
+  String get trainerAppointmentMissing => 'Appointment Missing';
+
+  @override
+  String get trainerNoAppointments => 'No appointments scheduled.';
+
+  @override
+  String get appointmentSchedulerTitle => 'Book Appointment';
+
+  @override
+  String appointmentWith(String name) {
+    return 'Appointment with $name';
+  }
+
+  @override
+  String get appointmentSessionTitle => 'Isometric Partner Exercise';
+
+  @override
+  String get appointmentFreeSlotsTitle => 'Free slots (next 14 days):';
+
+  @override
+  String get appointmentBook => 'Book';
+
+  @override
+  String get appointmentOtherTime => 'Choose different time';
+
+  @override
+  String get appointmentLocationLabel => 'Location (optional)';
+
+  @override
+  String get appointmentNotesLabel => 'Note';
+
+  @override
+  String get appointmentConfirmButton => 'Book Appointment';
+
+  @override
+  String get appointmentLoadingSlots => 'Searching for free slots...';
+
+  @override
+  String get appointmentNoFreeSlots => 'No free slots found.';
+
+  @override
+  String get appointmentNoCalendars => 'No calendars found.';
+
+  @override
+  String get appointmentSelectCalendarTitle => 'Select Work Calendar';
+
+  @override
+  String get appointmentSelectCalendarSubtitle =>
+      'Select the calendar for CoreJourney appointments.';
+
+  @override
+  String get appointmentStatusPlanned => 'Planned';
+
+  @override
+  String get appointmentStatusConfirmed => 'Confirmed';
+
+  @override
+  String get appointmentStatusCancelled => 'Cancelled';
+
+  @override
+  String get appointmentStatusDone => 'Completed';
+
+  @override
+  String get appointmentOpenInCalendar => 'Open in Calendar';
 }

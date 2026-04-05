@@ -1,23 +1,184 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'dart:async';
+import 'dart:developer' as dev;
+import 'dart:io';
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'app.dart';
 import 'bootstrap/bootstrap.dart';
 import 'bootstrap/providers.dart';
 import 'config/app_config.dart';
 
-void main() async {
-  final bootstrap = await Bootstrap.initialize(
-    envFile: '.env.dev',
-    environment: AppEnvironment.development,
-  );
+// Write to TMPDIR (sandbox temp dir) — readable via devicectl without path_provider
+File? _dbgFile;
+void _dbg(String msg) {
+  dev.log(msg, name: 'cj');
+  try {
+    final f = _dbgFile ??= File('${Directory.systemTemp.path}/cj_launch.txt');
+    f.writeAsStringSync('$msg\n', mode: FileMode.append, flush: true);
+  } catch (_) {}
+}
 
-  bootstrap.syncService.start();
+void main() {
+  _dbg('main() entered');
+  runZonedGuarded(_main, (error, stack) {
+    _dbg('ZONE ERROR: $error');
+    debugPrint('ZONE ERROR: $error\n$stack');
+  });
+}
 
-  runApp(
-    ProviderScope(
-      overrides: bootstrapOverrides(bootstrap),
-      child: const CoreJourneyApp(),
-    ),
-  );
+Future<void> _main() async {
+  _dbg('_main() started');
+  if (Platform.isIOS) {
+    // iOS 26 beta: install the in-memory SharedPreferences store before
+    // ensureInitialized() triggers Flutter's plugin registrant.
+    // ignore: invalid_use_of_visible_for_testing_member
+    SharedPreferences.setMockInitialValues({});
+    _dbg('_main() installed SharedPreferences iOS mock');
+  }
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Make widget-tree build errors visible (text) instead of blank white screen.
+  ErrorWidget.builder = (FlutterErrorDetails details) {
+    return Material(
+      color: Colors.white,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Text(
+          'Error: ${details.exceptionAsString()}',
+          style: const TextStyle(color: Colors.red, fontSize: 13),
+        ),
+      ),
+    );
+  };
+
+  // Forward Flutter framework errors to the console.
+  FlutterError.onError = (FlutterErrorDetails details) {
+    FlutterError.presentError(details);
+    dev.log('FlutterError: ${details.exceptionAsString()}', name: 'cj');
+    debugPrint('FlutterError: ${details.exceptionAsString()}');
+  };
+
+  // Catch ALL unhandled Dart exceptions (including async, provider init, etc.)
+  // that would otherwise silently kill the isolate and show a blank screen.
+  PlatformDispatcher.instance.onError = (error, stack) {
+    dev.log('PLATFORM ERROR: $error\n$stack', name: 'cj');
+    debugPrint('FATAL UNHANDLED: $error\n$stack');
+    return true; // handled — prevents OS crash dialog
+  };
+
+  runApp(const _DevelopmentBootstrapApp());
+}
+
+class _DevelopmentBootstrapApp extends StatefulWidget {
+  const _DevelopmentBootstrapApp();
+
+  @override
+  State<_DevelopmentBootstrapApp> createState() =>
+      _DevelopmentBootstrapAppState();
+}
+
+class _DevelopmentBootstrapAppState extends State<_DevelopmentBootstrapApp> {
+  Widget? _app;
+  String _status = 'Starting DEV bootstrap...';
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    unawaited(_bootstrap());
+  }
+
+  Future<void> _bootstrap() async {
+    try {
+      _dbg('[_bootstrap] start');
+      _setStatus('Loading .env.dev');
+      _dbg('[_bootstrap] calling Bootstrap.initialize');
+      final bootstrap = await Bootstrap.initialize(
+        envFile: '.env.dev',
+        environment: AppEnvironment.development,
+      );
+      _dbg('[_bootstrap] Bootstrap.initialize returned');
+
+      _setStatus('Starting sync service');
+      bootstrap.syncService.start();
+      _dbg('[_bootstrap] syncService started');
+
+      if (!mounted) return;
+      _dbg('[_bootstrap] about to setState with CoreJourneyApp');
+      setState(() {
+        _app = ProviderScope(
+          overrides: bootstrapOverrides(bootstrap),
+          child: const CoreJourneyApp(),
+        );
+      });
+      _dbg('[_bootstrap] COMPLETE - app is running');
+    } catch (e, st) {
+      _dbg('[_bootstrap] CAUGHT ERROR: $e');
+      debugPrint('Bootstrap failed: $e\n$st');
+      if (!mounted) return;
+      setState(() {
+        _error = e.toString();
+      });
+    }
+  }
+
+  void _setStatus(String status) {
+    dev.log(status, name: 'cj');
+    if (!mounted) return;
+    setState(() {
+      _status = status;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_app != null) return _app!;
+
+    return MaterialApp(
+      home: Scaffold(
+        backgroundColor: const Color(0xFF1565C0),
+        body: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(
+                  _error == null ? Icons.sync : Icons.error_outline,
+                  color: Colors.white,
+                  size: 40,
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  _error == null ? 'CoreJourney DEV booting' : 'Bootstrap failed',
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  _error ?? _status,
+                  style: const TextStyle(
+                    fontFamily: 'monospace',
+                    fontSize: 13,
+                    color: Colors.white70,
+                  ),
+                ),
+                if (_error == null) ...[
+                  const SizedBox(height: 24),
+                  const LinearProgressIndicator(color: Colors.white),
+                ],
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }

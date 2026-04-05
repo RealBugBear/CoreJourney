@@ -1,8 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
 import '../config/app_config.dart';
 import '../core/database/app_database.dart';
+import '../core/notifications/notification_service.dart';
+import '../core/settings/settings_provider.dart';
 import '../core/sync/sync_service.dart';
+import '../core/sync/sync_status.dart';
 import 'bootstrap.dart';
 
 // These are overridden in main with real values from Bootstrap
@@ -18,8 +20,17 @@ final syncServiceProvider = Provider<SyncService>((ref) {
   throw UnimplementedError('syncServiceProvider must be overridden');
 });
 
+final syncStatusProvider = StreamProvider<SyncStatus>((ref) {
+  return ref.watch(syncServiceProvider).statusStream;
+});
+
+final notificationServiceProvider = Provider<NotificationService>((ref) {
+  return NotificationService.instance;
+});
+
 List<Override> bootstrapOverrides(Bootstrap bootstrap) => [
       appConfigProvider.overrideWithValue(bootstrap.config),
       databaseProvider.overrideWithValue(bootstrap.database),
       syncServiceProvider.overrideWithValue(bootstrap.syncService),
+      sharedPreferencesProvider.overrideWithValue(bootstrap.prefs),
     ];

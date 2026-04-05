@@ -4078,6 +4078,398 @@ class CompletionQuestionnairesTableCompanion
   }
 }
 
+class $JournalEntriesTableTable extends JournalEntriesTable
+    with TableInfo<$JournalEntriesTableTable, JournalEntriesTableData> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $JournalEntriesTableTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+      'id', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _userIdMeta = const VerificationMeta('userId');
+  @override
+  late final GeneratedColumn<String> userId = GeneratedColumn<String>(
+      'user_id', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _enrollmentIdMeta =
+      const VerificationMeta('enrollmentId');
+  @override
+  late final GeneratedColumn<String> enrollmentId = GeneratedColumn<String>(
+      'enrollment_id', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _contentMeta =
+      const VerificationMeta('content');
+  @override
+  late final GeneratedColumn<String> content = GeneratedColumn<String>(
+      'content', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _dayKeyMeta = const VerificationMeta('dayKey');
+  @override
+  late final GeneratedColumn<int> dayKey = GeneratedColumn<int>(
+      'day_key', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
+  static const VerificationMeta _createdAtMeta =
+      const VerificationMeta('createdAt');
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+      'created_at', aliasedName, false,
+      type: DriftSqlType.dateTime,
+      requiredDuringInsert: false,
+      defaultValue: currentDateAndTime);
+  static const VerificationMeta _needsSyncMeta =
+      const VerificationMeta('needsSync');
+  @override
+  late final GeneratedColumn<bool> needsSync = GeneratedColumn<bool>(
+      'needs_sync', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('CHECK ("needs_sync" IN (0, 1))'),
+      defaultValue: const Constant(true));
+  @override
+  List<GeneratedColumn> get $columns =>
+      [id, userId, enrollmentId, content, dayKey, createdAt, needsSync];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'journal_entries';
+  @override
+  VerificationContext validateIntegrity(
+      Insertable<JournalEntriesTableData> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('user_id')) {
+      context.handle(_userIdMeta,
+          userId.isAcceptableOrUnknown(data['user_id']!, _userIdMeta));
+    } else if (isInserting) {
+      context.missing(_userIdMeta);
+    }
+    if (data.containsKey('enrollment_id')) {
+      context.handle(
+          _enrollmentIdMeta,
+          enrollmentId.isAcceptableOrUnknown(
+              data['enrollment_id']!, _enrollmentIdMeta));
+    }
+    if (data.containsKey('content')) {
+      context.handle(_contentMeta,
+          content.isAcceptableOrUnknown(data['content']!, _contentMeta));
+    } else if (isInserting) {
+      context.missing(_contentMeta);
+    }
+    if (data.containsKey('day_key')) {
+      context.handle(_dayKeyMeta,
+          dayKey.isAcceptableOrUnknown(data['day_key']!, _dayKeyMeta));
+    } else if (isInserting) {
+      context.missing(_dayKeyMeta);
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(_createdAtMeta,
+          createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta));
+    }
+    if (data.containsKey('needs_sync')) {
+      context.handle(_needsSyncMeta,
+          needsSync.isAcceptableOrUnknown(data['needs_sync']!, _needsSyncMeta));
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  JournalEntriesTableData map(Map<String, dynamic> data,
+      {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return JournalEntriesTableData(
+      id: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}id'])!,
+      userId: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}user_id'])!,
+      enrollmentId: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}enrollment_id']),
+      content: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}content'])!,
+      dayKey: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}day_key'])!,
+      createdAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
+      needsSync: attachedDatabase.typeMapping
+          .read(DriftSqlType.bool, data['${effectivePrefix}needs_sync'])!,
+    );
+  }
+
+  @override
+  $JournalEntriesTableTable createAlias(String alias) {
+    return $JournalEntriesTableTable(attachedDatabase, alias);
+  }
+}
+
+class JournalEntriesTableData extends DataClass
+    implements Insertable<JournalEntriesTableData> {
+  final String id;
+  final String userId;
+  final String? enrollmentId;
+  final String content;
+  final int dayKey;
+  final DateTime createdAt;
+  final bool needsSync;
+  const JournalEntriesTableData(
+      {required this.id,
+      required this.userId,
+      this.enrollmentId,
+      required this.content,
+      required this.dayKey,
+      required this.createdAt,
+      required this.needsSync});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['user_id'] = Variable<String>(userId);
+    if (!nullToAbsent || enrollmentId != null) {
+      map['enrollment_id'] = Variable<String>(enrollmentId);
+    }
+    map['content'] = Variable<String>(content);
+    map['day_key'] = Variable<int>(dayKey);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    map['needs_sync'] = Variable<bool>(needsSync);
+    return map;
+  }
+
+  JournalEntriesTableCompanion toCompanion(bool nullToAbsent) {
+    return JournalEntriesTableCompanion(
+      id: Value(id),
+      userId: Value(userId),
+      enrollmentId: enrollmentId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(enrollmentId),
+      content: Value(content),
+      dayKey: Value(dayKey),
+      createdAt: Value(createdAt),
+      needsSync: Value(needsSync),
+    );
+  }
+
+  factory JournalEntriesTableData.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return JournalEntriesTableData(
+      id: serializer.fromJson<String>(json['id']),
+      userId: serializer.fromJson<String>(json['userId']),
+      enrollmentId: serializer.fromJson<String?>(json['enrollmentId']),
+      content: serializer.fromJson<String>(json['content']),
+      dayKey: serializer.fromJson<int>(json['dayKey']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      needsSync: serializer.fromJson<bool>(json['needsSync']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'userId': serializer.toJson<String>(userId),
+      'enrollmentId': serializer.toJson<String?>(enrollmentId),
+      'content': serializer.toJson<String>(content),
+      'dayKey': serializer.toJson<int>(dayKey),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+      'needsSync': serializer.toJson<bool>(needsSync),
+    };
+  }
+
+  JournalEntriesTableData copyWith(
+          {String? id,
+          String? userId,
+          Value<String?> enrollmentId = const Value.absent(),
+          String? content,
+          int? dayKey,
+          DateTime? createdAt,
+          bool? needsSync}) =>
+      JournalEntriesTableData(
+        id: id ?? this.id,
+        userId: userId ?? this.userId,
+        enrollmentId:
+            enrollmentId.present ? enrollmentId.value : this.enrollmentId,
+        content: content ?? this.content,
+        dayKey: dayKey ?? this.dayKey,
+        createdAt: createdAt ?? this.createdAt,
+        needsSync: needsSync ?? this.needsSync,
+      );
+  JournalEntriesTableData copyWithCompanion(JournalEntriesTableCompanion data) {
+    return JournalEntriesTableData(
+      id: data.id.present ? data.id.value : this.id,
+      userId: data.userId.present ? data.userId.value : this.userId,
+      enrollmentId: data.enrollmentId.present
+          ? data.enrollmentId.value
+          : this.enrollmentId,
+      content: data.content.present ? data.content.value : this.content,
+      dayKey: data.dayKey.present ? data.dayKey.value : this.dayKey,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      needsSync: data.needsSync.present ? data.needsSync.value : this.needsSync,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('JournalEntriesTableData(')
+          ..write('id: $id, ')
+          ..write('userId: $userId, ')
+          ..write('enrollmentId: $enrollmentId, ')
+          ..write('content: $content, ')
+          ..write('dayKey: $dayKey, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('needsSync: $needsSync')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+      id, userId, enrollmentId, content, dayKey, createdAt, needsSync);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is JournalEntriesTableData &&
+          other.id == this.id &&
+          other.userId == this.userId &&
+          other.enrollmentId == this.enrollmentId &&
+          other.content == this.content &&
+          other.dayKey == this.dayKey &&
+          other.createdAt == this.createdAt &&
+          other.needsSync == this.needsSync);
+}
+
+class JournalEntriesTableCompanion
+    extends UpdateCompanion<JournalEntriesTableData> {
+  final Value<String> id;
+  final Value<String> userId;
+  final Value<String?> enrollmentId;
+  final Value<String> content;
+  final Value<int> dayKey;
+  final Value<DateTime> createdAt;
+  final Value<bool> needsSync;
+  final Value<int> rowid;
+  const JournalEntriesTableCompanion({
+    this.id = const Value.absent(),
+    this.userId = const Value.absent(),
+    this.enrollmentId = const Value.absent(),
+    this.content = const Value.absent(),
+    this.dayKey = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.needsSync = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  JournalEntriesTableCompanion.insert({
+    required String id,
+    required String userId,
+    this.enrollmentId = const Value.absent(),
+    required String content,
+    required int dayKey,
+    this.createdAt = const Value.absent(),
+    this.needsSync = const Value.absent(),
+    this.rowid = const Value.absent(),
+  })  : id = Value(id),
+        userId = Value(userId),
+        content = Value(content),
+        dayKey = Value(dayKey);
+  static Insertable<JournalEntriesTableData> custom({
+    Expression<String>? id,
+    Expression<String>? userId,
+    Expression<String>? enrollmentId,
+    Expression<String>? content,
+    Expression<int>? dayKey,
+    Expression<DateTime>? createdAt,
+    Expression<bool>? needsSync,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (userId != null) 'user_id': userId,
+      if (enrollmentId != null) 'enrollment_id': enrollmentId,
+      if (content != null) 'content': content,
+      if (dayKey != null) 'day_key': dayKey,
+      if (createdAt != null) 'created_at': createdAt,
+      if (needsSync != null) 'needs_sync': needsSync,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  JournalEntriesTableCompanion copyWith(
+      {Value<String>? id,
+      Value<String>? userId,
+      Value<String?>? enrollmentId,
+      Value<String>? content,
+      Value<int>? dayKey,
+      Value<DateTime>? createdAt,
+      Value<bool>? needsSync,
+      Value<int>? rowid}) {
+    return JournalEntriesTableCompanion(
+      id: id ?? this.id,
+      userId: userId ?? this.userId,
+      enrollmentId: enrollmentId ?? this.enrollmentId,
+      content: content ?? this.content,
+      dayKey: dayKey ?? this.dayKey,
+      createdAt: createdAt ?? this.createdAt,
+      needsSync: needsSync ?? this.needsSync,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (userId.present) {
+      map['user_id'] = Variable<String>(userId.value);
+    }
+    if (enrollmentId.present) {
+      map['enrollment_id'] = Variable<String>(enrollmentId.value);
+    }
+    if (content.present) {
+      map['content'] = Variable<String>(content.value);
+    }
+    if (dayKey.present) {
+      map['day_key'] = Variable<int>(dayKey.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (needsSync.present) {
+      map['needs_sync'] = Variable<bool>(needsSync.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('JournalEntriesTableCompanion(')
+          ..write('id: $id, ')
+          ..write('userId: $userId, ')
+          ..write('enrollmentId: $enrollmentId, ')
+          ..write('content: $content, ')
+          ..write('dayKey: $dayKey, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('needsSync: $needsSync, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -4094,6 +4486,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
       $IntakeAssessmentsTableTable(this);
   late final $CompletionQuestionnairesTableTable completionQuestionnairesTable =
       $CompletionQuestionnairesTableTable(this);
+  late final $JournalEntriesTableTable journalEntriesTable =
+      $JournalEntriesTableTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -4105,7 +4499,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         moodCheckinsTable,
         syncJobsTable,
         intakeAssessmentsTable,
-        completionQuestionnairesTable
+        completionQuestionnairesTable,
+        journalEntriesTable
       ];
 }
 
@@ -6009,6 +6404,215 @@ typedef $$CompletionQuestionnairesTableTableProcessedTableManager
         ),
         CompletionQuestionnairesTableData,
         PrefetchHooks Function()>;
+typedef $$JournalEntriesTableTableCreateCompanionBuilder
+    = JournalEntriesTableCompanion Function({
+  required String id,
+  required String userId,
+  Value<String?> enrollmentId,
+  required String content,
+  required int dayKey,
+  Value<DateTime> createdAt,
+  Value<bool> needsSync,
+  Value<int> rowid,
+});
+typedef $$JournalEntriesTableTableUpdateCompanionBuilder
+    = JournalEntriesTableCompanion Function({
+  Value<String> id,
+  Value<String> userId,
+  Value<String?> enrollmentId,
+  Value<String> content,
+  Value<int> dayKey,
+  Value<DateTime> createdAt,
+  Value<bool> needsSync,
+  Value<int> rowid,
+});
+
+class $$JournalEntriesTableTableFilterComposer
+    extends Composer<_$AppDatabase, $JournalEntriesTableTable> {
+  $$JournalEntriesTableTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get userId => $composableBuilder(
+      column: $table.userId, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get enrollmentId => $composableBuilder(
+      column: $table.enrollmentId, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get content => $composableBuilder(
+      column: $table.content, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get dayKey => $composableBuilder(
+      column: $table.dayKey, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get needsSync => $composableBuilder(
+      column: $table.needsSync, builder: (column) => ColumnFilters(column));
+}
+
+class $$JournalEntriesTableTableOrderingComposer
+    extends Composer<_$AppDatabase, $JournalEntriesTableTable> {
+  $$JournalEntriesTableTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get userId => $composableBuilder(
+      column: $table.userId, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get enrollmentId => $composableBuilder(
+      column: $table.enrollmentId,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get content => $composableBuilder(
+      column: $table.content, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get dayKey => $composableBuilder(
+      column: $table.dayKey, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<bool> get needsSync => $composableBuilder(
+      column: $table.needsSync, builder: (column) => ColumnOrderings(column));
+}
+
+class $$JournalEntriesTableTableAnnotationComposer
+    extends Composer<_$AppDatabase, $JournalEntriesTableTable> {
+  $$JournalEntriesTableTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get userId =>
+      $composableBuilder(column: $table.userId, builder: (column) => column);
+
+  GeneratedColumn<String> get enrollmentId => $composableBuilder(
+      column: $table.enrollmentId, builder: (column) => column);
+
+  GeneratedColumn<String> get content =>
+      $composableBuilder(column: $table.content, builder: (column) => column);
+
+  GeneratedColumn<int> get dayKey =>
+      $composableBuilder(column: $table.dayKey, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<bool> get needsSync =>
+      $composableBuilder(column: $table.needsSync, builder: (column) => column);
+}
+
+class $$JournalEntriesTableTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $JournalEntriesTableTable,
+    JournalEntriesTableData,
+    $$JournalEntriesTableTableFilterComposer,
+    $$JournalEntriesTableTableOrderingComposer,
+    $$JournalEntriesTableTableAnnotationComposer,
+    $$JournalEntriesTableTableCreateCompanionBuilder,
+    $$JournalEntriesTableTableUpdateCompanionBuilder,
+    (
+      JournalEntriesTableData,
+      BaseReferences<_$AppDatabase, $JournalEntriesTableTable,
+          JournalEntriesTableData>
+    ),
+    JournalEntriesTableData,
+    PrefetchHooks Function()> {
+  $$JournalEntriesTableTableTableManager(
+      _$AppDatabase db, $JournalEntriesTableTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$JournalEntriesTableTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$JournalEntriesTableTableOrderingComposer(
+                  $db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$JournalEntriesTableTableAnnotationComposer(
+                  $db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<String> id = const Value.absent(),
+            Value<String> userId = const Value.absent(),
+            Value<String?> enrollmentId = const Value.absent(),
+            Value<String> content = const Value.absent(),
+            Value<int> dayKey = const Value.absent(),
+            Value<DateTime> createdAt = const Value.absent(),
+            Value<bool> needsSync = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              JournalEntriesTableCompanion(
+            id: id,
+            userId: userId,
+            enrollmentId: enrollmentId,
+            content: content,
+            dayKey: dayKey,
+            createdAt: createdAt,
+            needsSync: needsSync,
+            rowid: rowid,
+          ),
+          createCompanionCallback: ({
+            required String id,
+            required String userId,
+            Value<String?> enrollmentId = const Value.absent(),
+            required String content,
+            required int dayKey,
+            Value<DateTime> createdAt = const Value.absent(),
+            Value<bool> needsSync = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              JournalEntriesTableCompanion.insert(
+            id: id,
+            userId: userId,
+            enrollmentId: enrollmentId,
+            content: content,
+            dayKey: dayKey,
+            createdAt: createdAt,
+            needsSync: needsSync,
+            rowid: rowid,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ));
+}
+
+typedef $$JournalEntriesTableTableProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    $JournalEntriesTableTable,
+    JournalEntriesTableData,
+    $$JournalEntriesTableTableFilterComposer,
+    $$JournalEntriesTableTableOrderingComposer,
+    $$JournalEntriesTableTableAnnotationComposer,
+    $$JournalEntriesTableTableCreateCompanionBuilder,
+    $$JournalEntriesTableTableUpdateCompanionBuilder,
+    (
+      JournalEntriesTableData,
+      BaseReferences<_$AppDatabase, $JournalEntriesTableTable,
+          JournalEntriesTableData>
+    ),
+    JournalEntriesTableData,
+    PrefetchHooks Function()>;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -6030,4 +6634,6 @@ class $AppDatabaseManager {
       get completionQuestionnairesTable =>
           $$CompletionQuestionnairesTableTableTableManager(
               _db, _db.completionQuestionnairesTable);
+  $$JournalEntriesTableTableTableManager get journalEntriesTable =>
+      $$JournalEntriesTableTableTableManager(_db, _db.journalEntriesTable);
 }

@@ -1,5 +1,5 @@
-import 'package:firebase_crashlytics/firebase_crashlytics.dart';
-import 'package:flutter/foundation.dart';
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -8,25 +8,57 @@ import 'bootstrap/bootstrap.dart';
 import 'bootstrap/providers.dart';
 import 'config/app_config.dart';
 
-void main() async {
-  final bootstrap = await Bootstrap.initialize(
-    envFile: '.env.prod',
-    environment: AppEnvironment.production,
-  );
+void main() {
+  runZonedGuarded(_main, (error, stack) {
+    // Swallow zone errors silently in production — no stack traces exposed.
+    debugPrint('Zone error: $error');
+  });
+}
 
-  // Route all uncaught errors to Crashlytics in production
-  FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
-  PlatformDispatcher.instance.onError = (error, stack) {
-    FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
-    return true;
+Future<void> _main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  FlutterError.onError = (details) {
+    FlutterError.presentError(details);
   };
 
-  bootstrap.syncService.start();
+  try {
+    final bootstrap = await Bootstrap.initialize(
+      envFile: '.env.prod',
+      environment: AppEnvironment.production,
+    );
 
-  runApp(
-    ProviderScope(
-      overrides: bootstrapOverrides(bootstrap),
-      child: const CoreJourneyApp(),
-    ),
-  );
+    bootstrap.syncService.start();
+
+    runApp(
+      ProviderScope(
+        overrides: bootstrapOverrides(bootstrap),
+        child: const CoreJourneyApp(),
+      ),
+    );
+  } catch (e) {
+    // Generic error screen — no internal details exposed.
+    runApp(const _StartupErrorApp());
+  }
+}
+
+class _StartupErrorApp extends StatelessWidget {
+  const _StartupErrorApp();
+
+  @override
+  Widget build(BuildContext context) {
+    return const MaterialApp(
+      home: Scaffold(
+        body: Center(
+          child: Padding(
+            padding: EdgeInsets.all(32),
+            child: Text(
+              'CoreJourney could not start. Please restart the app or reinstall.',
+              textAlign: TextAlign.center,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }

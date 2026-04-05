@@ -1,0 +1,246 @@
+import 'package:flutter/material.dart';
+import 'package:video_player/video_player.dart';
+
+import '../../../../core/theme/app_colors.dart';
+import '../../../../l10n/app_localizations.dart';
+import '../../domain/models/exercise.dart';
+
+class ExerciseVideoWidget extends StatefulWidget {
+  final Exercise exercise;
+  final VoidCallback onReady;
+
+  const ExerciseVideoWidget({
+    super.key,
+    required this.exercise,
+    required this.onReady,
+  });
+
+  @override
+  State<ExerciseVideoWidget> createState() => _ExerciseVideoWidgetState();
+}
+
+class _ExerciseVideoWidgetState extends State<ExerciseVideoWidget> {
+  VideoPlayerController? _controller;
+  bool _videoFailed = false;
+  bool _initialized = false;
+  bool _isPlaying = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _initVideo();
+  }
+
+  Future<void> _initVideo() async {
+    final path = widget.exercise.videoPath;
+    if (path == null) {
+      setState(() => _videoFailed = true);
+      return;
+    }
+
+    try {
+      final controller = VideoPlayerController.asset(path);
+      await controller.initialize();
+      controller.setLooping(true);
+
+      if (!mounted) {
+        controller.dispose();
+        return;
+      }
+
+      setState(() {
+        _controller = controller;
+        _initialized = true;
+      });
+
+      // Auto-play
+      controller.play();
+      setState(() => _isPlaying = true);
+    } catch (e) {
+      if (mounted) setState(() => _videoFailed = true);
+    }
+  }
+
+  void _togglePlay() {
+    final controller = _controller;
+    if (controller == null) return;
+    setState(() {
+      if (controller.value.isPlaying) {
+        controller.pause();
+        _isPlaying = false;
+      } else {
+        controller.play();
+        _isPlaying = true;
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller?.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final locale = Localizations.localeOf(context).languageCode;
+
+    return Padding(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _StepLabel(label: 'Video'),
+          const SizedBox(height: 16),
+          Text(
+            widget.exercise.title(locale),
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 22,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 24),
+
+          Expanded(
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(16),
+              child: _buildVideoArea(),
+            ),
+          ),
+          const SizedBox(height: 24),
+
+          ElevatedButton(
+            onPressed: widget.onReady,
+            style: ElevatedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(vertical: 18),
+              backgroundColor: AppColors.primary,
+            ),
+            child: Text(l10n.next,
+                style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w600)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildVideoArea() {
+    if (_videoFailed || widget.exercise.videoPath == null) {
+      return _FallbackImage(exercise: widget.exercise);
+    }
+
+    if (!_initialized || _controller == null) {
+      return Stack(
+        alignment: Alignment.center,
+        children: [
+          Image.asset(widget.exercise.imagePath, fit: BoxFit.cover),
+          Container(color: Colors.black54),
+          const CircularProgressIndicator(color: AppColors.primary),
+        ],
+      );
+    }
+
+    return GestureDetector(
+      onTap: _togglePlay,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          AspectRatio(
+            aspectRatio: _controller!.value.aspectRatio,
+            child: VideoPlayer(_controller!),
+          ),
+          // Play/pause overlay — fades after tap
+          AnimatedOpacity(
+            opacity: _isPlaying ? 0.0 : 1.0,
+            duration: const Duration(milliseconds: 300),
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.black.withValues(alpha: 0.3),
+                shape: BoxShape.circle,
+              ),
+              padding: const EdgeInsets.all(16),
+              child: Icon(
+                _isPlaying ? Icons.pause : Icons.play_arrow,
+                color: Colors.white,
+                size: 48,
+              ),
+            ),
+          ),
+          // Progress bar at bottom
+          Positioned(
+            bottom: 0,
+            left: 0,
+            right: 0,
+            child: VideoProgressIndicator(
+              _controller!,
+              allowScrubbing: true,
+              colors: const VideoProgressColors(
+                playedColor: AppColors.primary,
+                backgroundColor: Colors.white24,
+                bufferedColor: Colors.white38,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _FallbackImage extends StatelessWidget {
+  final Exercise exercise;
+  const _FallbackImage({required this.exercise});
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        Image.asset(exercise.imagePath, fit: BoxFit.contain),
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.black.withValues(alpha: 0.4),
+            borderRadius: BorderRadius.circular(16),
+          ),
+        ),
+        const Icon(Icons.play_circle_outline, color: Colors.white54, size: 64),
+        const Positioned(
+          bottom: 16,
+          child: Text(
+            'Video wird vorbereitet...',
+            style: TextStyle(color: Colors.white70, fontSize: 13),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _StepLabel extends StatelessWidget {
+  final String label;
+  const _StepLabel({required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+          decoration: BoxDecoration(
+            border: Border.all(color: AppColors.primary),
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Text(
+            label,
+            style: const TextStyle(
+              color: AppColors.primaryLight,
+              fontWeight: FontWeight.w600,
+              fontSize: 12,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}

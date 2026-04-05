@@ -1,3 +1,31 @@
+// ── Rhythm types ──────────────────────────────────────────────────────────────
+
+enum RhythmType {
+  /// Counted phases (e.g. 3 s up, 1 s hold, 3 s down). Used for Moro 1–5.
+  phased,
+
+  /// Hold N seconds with countdown, then rest M seconds. Used for Moro 6–7,
+  /// Spinal Galant and TLR exercises.
+  holdRest,
+}
+
+/// One timed phase within a phased exercise.
+class ExercisePhase {
+  final String labelDe;
+  final String labelEn;
+  final int durationSeconds;
+
+  const ExercisePhase({
+    required this.labelDe,
+    required this.labelEn,
+    required this.durationSeconds,
+  });
+
+  String label(String locale) => locale == 'de' ? labelDe : labelEn;
+}
+
+// ── Exercise model ────────────────────────────────────────────────────────────
+
 class Exercise {
   final String id;
   final String packageId;
@@ -15,8 +43,24 @@ class Exercise {
   final int durationSeconds;
   final int repetitions;
   final String imagePath;
-  final String? videoPath; // Supabase Storage path e.g. 'moro/moro_1.mp4'
+  final String? videoPath;
   final String? audioCuePath;
+
+  // ── Rhythm config ──────────────────────────────────────────────────────────
+  final RhythmType rhythmType;
+  /// Phase sequence for [RhythmType.phased].
+  final List<ExercisePhase> phases;
+  /// Whether to announce "Wechsel" / "Switch" between reps (side-switching).
+  final bool hasRepSwitch;
+  /// Action word spoken at the start of each hold (e.g. "Spannung", "Halten").
+  final String holdCueDe;
+  final String holdCueEn;
+  /// Seconds to hold per rep for [RhythmType.holdRest].
+  final int holdSeconds;
+  /// Seconds to rest between reps for [RhythmType.holdRest].
+  final int restSeconds;
+  /// Announce "Armkreuz wechseln" at the midpoint rep (e.g. Moro 6 + 7).
+  final bool halfwaySwitch;
 
   const Exercise({
     required this.id,
@@ -37,6 +81,15 @@ class Exercise {
     required this.imagePath,
     this.videoPath,
     this.audioCuePath,
+    // Rhythm defaults — works for all holdRest exercises without explicit config
+    this.rhythmType = RhythmType.holdRest,
+    this.phases = const [],
+    this.hasRepSwitch = false,
+    this.holdCueDe = 'Halten',
+    this.holdCueEn = 'Hold',
+    this.holdSeconds = 7,
+    this.restSeconds = 3,
+    this.halfwaySwitch = false,
   });
 
   String title(String locale) => locale == 'de' ? titleDe : titleEn;
@@ -49,9 +102,51 @@ class Exercise {
       locale == 'de' ? executionGuideDe : executionGuideEn;
 }
 
+// ── Shared phase sets ─────────────────────────────────────────────────────────
+
+/// Standard 3-3 lift: up 3 s, hold 1 s, down 3 s  (Moro 3, 5)
+const _phasesUpHoldDown = [
+  ExercisePhase(labelDe: 'Hoch', labelEn: 'Up', durationSeconds: 3),
+  ExercisePhase(labelDe: 'Halten', labelEn: 'Hold', durationSeconds: 1),
+  ExercisePhase(labelDe: 'Runter', labelEn: 'Down', durationSeconds: 3),
+];
+
+/// 3-3 slide: up 3 s, down 3 s  (Moro 3 – same visual but no explicit hold)
+const _phasesUpDown = [
+  ExercisePhase(labelDe: 'Hoch', labelEn: 'Up', durationSeconds: 3),
+  ExercisePhase(labelDe: 'Runter', labelEn: 'Down', durationSeconds: 3),
+];
+
+/// 3-3 frog: in 3 s, out 3 s  (Moro 4)
+const _phasesInOut = [
+  ExercisePhase(labelDe: 'Ran', labelEn: 'In', durationSeconds: 3),
+  ExercisePhase(labelDe: 'Zurück', labelEn: 'Back', durationSeconds: 3),
+];
+
+/// 4-phase knees: right 3 s, centre 3 s, left 3 s, centre 3 s  (Moro 1)
+const _phasesKnees = [
+  ExercisePhase(labelDe: 'Rechts', labelEn: 'Right', durationSeconds: 3),
+  ExercisePhase(labelDe: 'Mitte', labelEn: 'Centre', durationSeconds: 3),
+  ExercisePhase(labelDe: 'Links', labelEn: 'Left', durationSeconds: 3),
+  ExercisePhase(labelDe: 'Mitte', labelEn: 'Centre', durationSeconds: 3),
+];
+
+/// Roll-up: exhale cue 1 s, roll up 3 s, hold 1 s, lower 2 s  (Moro 2)
+const _phasesRollUp = [
+  ExercisePhase(labelDe: 'Ausatmen', labelEn: 'Exhale', durationSeconds: 1),
+  ExercisePhase(labelDe: 'Hochrollen', labelEn: 'Roll up', durationSeconds: 3),
+  ExercisePhase(labelDe: 'Halten', labelEn: 'Hold', durationSeconds: 1),
+  ExercisePhase(labelDe: 'Ablegen', labelEn: 'Lower', durationSeconds: 2),
+];
+
+/// Breathing: inhale 3 s, exhale 4 s  (TLR 4)
+const _phasesBreathing = [
+  ExercisePhase(labelDe: 'Einatmen', labelEn: 'Inhale', durationSeconds: 3),
+  ExercisePhase(labelDe: 'Ausatmen', labelEn: 'Exhale', durationSeconds: 4),
+];
+
 // ============================================================================
-// MORO PACKAGE — 7 exercises (static fallback content)
-// Primary source: Supabase 'exercises' table. This list is the offline fallback.
+// MORO PACKAGE — 7 exercises
 // ============================================================================
 
 const List<Exercise> moroExercises = [
@@ -86,18 +181,17 @@ const List<Exercise> moroExercises = [
       'Return in three seconds',
       'Switch sides',
     ],
-    hintsDe: [
-      'Das nicht bewegte Bein bleibt komplett ruhig und unverändert liegen',
-    ],
-    hintsEn: [
-      'The non-moving leg remains completely still',
-    ],
+    hintsDe: ['Das nicht bewegte Bein bleibt komplett ruhig und unverändert liegen'],
+    hintsEn: ['The non-moving leg remains completely still'],
     executionGuideDe: 'Bein anheben und auf dem Schienbein des anderen Beins ablegen.',
     executionGuideEn: 'Raise leg and rest it on the shin of the other leg.',
     durationSeconds: 40,
     repetitions: 3,
     imagePath: 'assets/images/trainings/moro/moro5.png',
-    videoPath: 'moro/moro_5.mp4',
+    videoPath: 'assets/videos/moro/moro_5.mov',
+    rhythmType: RhythmType.phased,
+    phases: _phasesUpHoldDown,
+    hasRepSwitch: true,
   ),
 
   // Exercise 2 of 7 — Moro 3 – Halber Frosch
@@ -142,7 +236,10 @@ const List<Exercise> moroExercises = [
     durationSeconds: 40,
     repetitions: 3,
     imagePath: 'assets/images/trainings/moro/moro3.png',
-    videoPath: 'moro/moro_3.mp4',
+    videoPath: 'assets/videos/moro/moro_3.mov',
+    rhythmType: RhythmType.phased,
+    phases: _phasesUpDown,
+    hasRepSwitch: true,
   ),
 
   // Exercise 3 of 7 — Moro 4 – Frosch
@@ -172,18 +269,16 @@ const List<Exercise> moroExercises = [
       'Knees open outward',
       'Return feet over three seconds',
     ],
-    hintsDe: [
-      'Range of Motion nur so weit, wie die Fußsohlen während der gesamten Bewegung eng aneinander bleiben',
-    ],
-    hintsEn: [
-      'Only move as far as the soles of the feet can remain together throughout',
-    ],
+    hintsDe: ['Range of Motion nur so weit, wie die Fußsohlen während der gesamten Bewegung eng aneinander bleiben'],
+    hintsEn: ['Only move as far as the soles of the feet can remain together throughout'],
     executionGuideDe: 'Füße zum Körper führen, Knie gehen nach außen.',
     executionGuideEn: 'Bring feet toward the body, knees open outward.',
     durationSeconds: 35,
     repetitions: 3,
     imagePath: 'assets/images/trainings/moro/moro4.png',
-    videoPath: 'moro/moro_4.mp4', // placeholder video
+    rhythmType: RhythmType.phased,
+    phases: _phasesInOut,
+    hasRepSwitch: false,
   ),
 
   // Exercise 4 of 7 — Moro 1
@@ -230,7 +325,10 @@ const List<Exercise> moroExercises = [
     durationSeconds: 45,
     repetitions: 3,
     imagePath: 'assets/images/trainings/moro/moro1.png',
-    videoPath: 'moro/moro_1.mp4',
+    videoPath: 'assets/videos/moro/moro_1.mov',
+    rhythmType: RhythmType.phased,
+    phases: _phasesKnees,
+    hasRepSwitch: false,
   ),
 
   // Exercise 5 of 7 — Moro 2
@@ -275,7 +373,10 @@ const List<Exercise> moroExercises = [
     durationSeconds: 30,
     repetitions: 3,
     imagePath: 'assets/images/trainings/moro/moro2.png',
-    videoPath: 'moro/moro_2.mp4',
+    videoPath: 'assets/videos/moro/moro_2.mov',
+    rhythmType: RhythmType.phased,
+    phases: _phasesRollUp,
+    hasRepSwitch: false,
   ),
 
   // Exercise 6 of 7 — Moro 6 – Isometrischer Gegendruck
@@ -313,18 +414,20 @@ const List<Exercise> moroExercises = [
       'Switch arm cross',
       'Three more repetitions',
     ],
-    hintsDe: [
-      'Spannung gleichmäßig halten, nicht ruckartig',
-    ],
-    hintsEn: [
-      'Maintain even tension, no jerking',
-    ],
+    hintsDe: ['Spannung gleichmäßig halten, nicht ruckartig'],
+    hintsEn: ['Maintain even tension, no jerking'],
     executionGuideDe: 'Gegendruck aufbauen. Sieben Sekunden ausatmen.',
     executionGuideEn: 'Build counterpressure. Exhale for seven seconds.',
     durationSeconds: 90,
     repetitions: 6,
     imagePath: 'assets/images/trainings/moro/moro6.png',
-    videoPath: 'moro/moro_6.mp4',
+    videoPath: 'assets/videos/moro/moro_6.mov',
+    rhythmType: RhythmType.holdRest,
+    holdCueDe: 'Spannung',
+    holdCueEn: 'Tension',
+    holdSeconds: 7,
+    restSeconds: 3,
+    halfwaySwitch: true,
   ),
 
   // Exercise 7 of 7 — Moro 7 – Überkreuzter Gegendruck
@@ -362,17 +465,392 @@ const List<Exercise> moroExercises = [
       'Six repetitions',
       'Switch arm cross after three repetitions',
     ],
-    hintsDe: [
-      'Bewegung bleibt klein; Fokus auf kontrollierter Spannung',
-    ],
-    hintsEn: [
-      'Movement stays small; focus on controlled tension',
-    ],
+    hintsDe: ['Bewegung bleibt klein; Fokus auf kontrollierter Spannung'],
+    hintsEn: ['Movement stays small; focus on controlled tension'],
     executionGuideDe: 'Beine und Hände arbeiten gegeneinander. Sieben Sekunden ausatmen.',
     executionGuideEn: 'Legs and hands work against each other. Exhale for seven seconds.',
     durationSeconds: 90,
     repetitions: 6,
     imagePath: 'assets/images/trainings/moro/moro7.png',
-    videoPath: 'moro/moro_7.mp4',
+    videoPath: 'assets/videos/moro/moro_7.mov',
+    rhythmType: RhythmType.holdRest,
+    holdCueDe: 'Spannung',
+    holdCueEn: 'Tension',
+    holdSeconds: 7,
+    restSeconds: 3,
+    halfwaySwitch: true,
+  ),
+];
+
+// ============================================================================
+// SPINALER GALANT + AMPHIBIEN — 4 Übungen  (all holdRest 7-3)
+// ============================================================================
+
+const List<Exercise> spinalGalantExercises = [
+  Exercise(
+    id: 'sg_ex1',
+    packageId: 'spinal_galant',
+    sequenceNumber: 1,
+    titleDe: 'Körperschaukeln',
+    titleEn: 'Body Rocking',
+    positionInstructionsDe: [
+      'Rückenlage',
+      'Füße aufstellen, Knie gebeugt',
+      'Arme locker neben dem Körper',
+    ],
+    positionInstructionsEn: [
+      'Lie on your back',
+      'Feet placed, knees bent',
+      'Arms relaxed alongside the body',
+    ],
+    movementInstructionsDe: [
+      'Mit den Füßen abstemmen und den Körper sanft vor und zurück schaukeln',
+      'Der Kopf rollt dabei entspannt mit',
+      '7 Sekunden halten, 3 Sekunden Pause',
+      '6 Wiederholungen',
+    ],
+    movementInstructionsEn: [
+      'Push gently with the feet and rock the body forward and back',
+      'The head rolls along relaxed',
+      'Hold 7 seconds, 3 seconds rest',
+      '6 repetitions',
+    ],
+    executionGuideDe: 'Körper sanft schaukeln, Kopf rollt mit.',
+    executionGuideEn: 'Rock body gently, head rolls along.',
+    durationSeconds: 7,
+    repetitions: 6,
+    imagePath: 'assets/images/trainings/spinal_galant/1spin.jpeg',
+    holdCueDe: 'Schaukeln',
+    holdCueEn: 'Rock',
+  ),
+
+  Exercise(
+    id: 'sg_ex2',
+    packageId: 'spinal_galant',
+    sequenceNumber: 2,
+    titleDe: 'Hüftschaukeln',
+    titleEn: 'Hip Rocking',
+    positionInstructionsDe: [
+      'Rückenlage oder auf dem Boden sitzend',
+      'Finger nicht verschränken',
+    ],
+    positionInstructionsEn: [
+      'Lie on your back or sit on the floor',
+      'Do not interlace fingers',
+    ],
+    movementInstructionsDe: [
+      'Den Po langsam hin und her schaukeln',
+      'Finger dabei nicht verschränken',
+      '7 Sekunden pro Seite halten, 3 Sekunden Pause',
+      '6 Wiederholungen',
+    ],
+    movementInstructionsEn: [
+      'Gently rock the hips side to side',
+      'Do not interlace fingers',
+      'Hold 7 seconds per side, 3 seconds rest',
+      '6 repetitions',
+    ],
+    executionGuideDe: 'Po sanft hin und her schaukeln.',
+    executionGuideEn: 'Gently rock hips side to side.',
+    durationSeconds: 7,
+    repetitions: 6,
+    imagePath: 'assets/images/trainings/spinal_galant/2spin.jpeg',
+    holdCueDe: 'Schaukeln',
+    holdCueEn: 'Rock',
+  ),
+
+  Exercise(
+    id: 'sg_ex3',
+    packageId: 'spinal_galant',
+    sequenceNumber: 3,
+    titleDe: 'Einseitiger Frosch (Bauchlage)',
+    titleEn: 'One-Legged Frog (Prone)',
+    positionInstructionsDe: [
+      'Bauchlage',
+      'Ein Bein in Froschposition seitlich anwinkeln',
+      'Finger nicht verschränken',
+    ],
+    positionInstructionsEn: [
+      'Lie on your stomach',
+      'One leg bent to the side in frog position',
+      'Do not interlace fingers',
+    ],
+    movementInstructionsDe: [
+      'Position halten',
+      'Finger nicht verschränken',
+      '7 Sekunden halten, 3 Sekunden Pause',
+      '6 Wiederholungen',
+    ],
+    movementInstructionsEn: [
+      'Hold the position',
+      'Do not interlace fingers',
+      'Hold 7 seconds, 3 seconds rest',
+      '6 repetitions',
+    ],
+    executionGuideDe: 'Position halten. Finger nicht verschränken.',
+    executionGuideEn: 'Hold position. Do not interlace fingers.',
+    durationSeconds: 7,
+    repetitions: 6,
+    imagePath: 'assets/images/trainings/spinal_galant/3spin.jpeg',
+    holdCueDe: 'Halten',
+    holdCueEn: 'Hold',
+  ),
+
+  Exercise(
+    id: 'sg_ex4',
+    packageId: 'spinal_galant',
+    sequenceNumber: 4,
+    titleDe: 'Hüftrotation (Bauchlage)',
+    titleEn: 'Hip Rotation (Prone)',
+    positionInstructionsDe: [
+      'Bauchlage',
+      'Arme im rechten Winkel neben dem Kopf, in Linie mit dem Körper',
+      'Bei Bedarf ein Kissen unter den Po legen',
+    ],
+    positionInstructionsEn: [
+      'Lie on your stomach',
+      'Arms at right angles beside the head, in line with the body',
+      'Place a pillow under the hips if needed',
+    ],
+    movementInstructionsDe: [
+      'Hüfte langsam rotieren',
+      'Arme bleiben im rechten Winkel neben dem Kopf',
+      'Die Hüftrotation ist wichtig — auf die Qualität achten',
+      '7 Sekunden halten, 3 Sekunden Pause',
+      '6 Wiederholungen',
+    ],
+    movementInstructionsEn: [
+      'Slowly rotate the hips',
+      'Arms stay at right angles beside the head',
+      'Hip rotation is key — focus on quality',
+      'Hold 7 seconds, 3 seconds rest',
+      '6 repetitions',
+    ],
+    hintsDe: ['Wenn die Übung zu schwer ist oder Schmerzen auftreten: Kissen unter den Po legen'],
+    hintsEn: ['If too difficult or painful: place a pillow under the hips to reduce the load'],
+    executionGuideDe: 'Hüfte rotieren. Arme im rechten Winkel.',
+    executionGuideEn: 'Rotate hips. Arms at right angles.',
+    durationSeconds: 7,
+    repetitions: 6,
+    imagePath: 'assets/images/trainings/spinal_galant/4spin.jpeg',
+    holdCueDe: 'Drehen',
+    holdCueEn: 'Rotate',
+  ),
+];
+
+// ============================================================================
+// TLR — TONISCHER LABIRINTH REFLEX — 5 Übungen
+// ============================================================================
+
+const List<Exercise> tlrExercises = [
+  Exercise(
+    id: 'tlr_ex1',
+    packageId: 'tlr',
+    sequenceNumber: 1,
+    titleDe: 'Kopf mitschaukeln',
+    titleEn: 'Head Rolling',
+    positionInstructionsDe: [
+      'Rückenlage',
+      'Basisposition einnehmen',
+      'Arme locker neben dem Körper',
+    ],
+    positionInstructionsEn: [
+      'Lie on your back',
+      'Take basic position',
+      'Arms relaxed alongside the body',
+    ],
+    movementInstructionsDe: [
+      'Körper sanft schaukeln',
+      'Kopf rollt beim Schaukeln entspannt mit',
+      '7 Sekunden halten, 3 Sekunden Pause',
+      '6 Wiederholungen',
+    ],
+    movementInstructionsEn: [
+      'Gently rock the body',
+      'Head rolls along relaxed during rocking',
+      'Hold 7 seconds, 3 seconds rest',
+      '6 repetitions',
+    ],
+    executionGuideDe: 'Körper schaukeln, Kopf rollt entspannt mit.',
+    executionGuideEn: 'Rock body, head rolls along relaxed.',
+    durationSeconds: 7,
+    repetitions: 6,
+    imagePath: 'assets/images/trainings/tlr/tlr1.jpeg',
+    holdCueDe: 'Schaukeln',
+    holdCueEn: 'Rock',
+  ),
+
+  Exercise(
+    id: 'tlr_ex2',
+    packageId: 'tlr',
+    sequenceNumber: 2,
+    titleDe: 'Über-Kopf-Rollen',
+    titleEn: 'Over-Head Roll',
+    positionInstructionsDe: [
+      'Vierfüßlerstand oder Kniestand',
+      'Meistes Gewicht auf den Händen',
+      'Kopf hängt locker',
+    ],
+    positionInstructionsEn: [
+      'All-fours or kneeling position',
+      'Most weight on the hands',
+      'Head hangs loose',
+    ],
+    movementInstructionsDe: [
+      'Nasenspitze beginnt die Bewegung',
+      'Langsam vorschieben bis das Kinn auf der Brust ist',
+      'Das ist ein Über-den-Kopf-Rollen',
+      'Langsame Ausführung, etwa 2 Wiederholungen pro Durchgang',
+      '7 Sekunden, 3 Sekunden Pause, 6 Wiederholungen',
+    ],
+    movementInstructionsEn: [
+      'Nose tip initiates the movement',
+      'Slowly roll forward until chin is on chest',
+      'This is a rolling-over-the-head movement',
+      'Slow execution, about 2 rolls per set',
+      '7 seconds, 3 seconds rest, 6 repetitions',
+    ],
+    hintsDe: [
+      'Meistes Gewicht auf den Händen lassen, um den Kopf zu schonen',
+      'Bei Nackenproblemen: diese Übung nicht durchführen',
+    ],
+    hintsEn: [
+      'Keep most weight on the hands to protect the neck',
+      'With neck problems: do not perform this exercise',
+    ],
+    executionGuideDe: 'Nasenspitze führt. Langsam über den Kopf rollen.',
+    executionGuideEn: 'Nose leads. Slowly roll over the head.',
+    durationSeconds: 7,
+    repetitions: 6,
+    imagePath: 'assets/images/trainings/tlr/tlr2.jpeg',
+    holdCueDe: 'Rollen',
+    holdCueEn: 'Roll',
+  ),
+
+  Exercise(
+    id: 'tlr_ex3',
+    packageId: 'tlr',
+    sequenceNumber: 3,
+    titleDe: 'Situp-Position halten',
+    titleEn: 'Hold Sit-Up Position',
+    positionInstructionsDe: [
+      'Rückenlage',
+      'Beine angewinkelt, Füße am Boden',
+      'Arme zur Unterstützung bereit',
+    ],
+    positionInstructionsEn: [
+      'Lie on your back',
+      'Legs bent, feet on floor',
+      'Arms ready to support',
+    ],
+    movementInstructionsDe: [
+      'Kleinmachen: Oberkörper hochrollen wie bei einem Situp',
+      'Die Situp-Position halten',
+      'Rumpfmuskulatur aktiv einsetzen',
+      'Arme nur zur leichten Unterstützung nutzen',
+      '7 Sekunden halten, 3 Sekunden Pause, 6 Wiederholungen',
+    ],
+    movementInstructionsEn: [
+      'Curl up: roll upper body up as in a sit-up',
+      'Hold the sit-up position',
+      'Actively engage core muscles',
+      'Use arms only for light support',
+      'Hold 7 seconds, 3 seconds rest, 6 repetitions',
+    ],
+    executionGuideDe: 'Hochrollen und Position halten. Rumpf aktiv.',
+    executionGuideEn: 'Roll up and hold position. Core active.',
+    durationSeconds: 7,
+    repetitions: 6,
+    imagePath: 'assets/images/trainings/tlr/tlr3.jpeg',
+    holdCueDe: 'Halten',
+    holdCueEn: 'Hold',
+  ),
+
+  // TLR 4 — breathing rhythm (inhale 3 s / exhale 4 s)
+  Exercise(
+    id: 'tlr_ex4',
+    packageId: 'tlr',
+    sequenceNumber: 4,
+    titleDe: 'Kopf heben und fallen lassen',
+    titleEn: 'Head Lift and Drop',
+    positionInstructionsDe: [
+      'Rückenlage',
+      'Weiches flaches Kissen oder gefaltete Decke unter den Kopf legen',
+      'Auf einem Bett wird kein Kissen benötigt',
+    ],
+    positionInstructionsEn: [
+      'Lie on your back',
+      'Place a soft flat pillow or folded blanket under the head',
+      'No pillow needed when lying on a bed',
+    ],
+    movementInstructionsDe: [
+      'Beim Einatmen den Kopf leicht anheben',
+      'Beim Ausatmen den Kopf fallen lassen',
+      'Nicht das Kinn auf die Brust — Abstand halten, Kopf nach oben',
+      'Bewegung im Nacken ist wichtig',
+      '7 Sekunden, 3 Sekunden Pause, 6 Wiederholungen',
+    ],
+    movementInstructionsEn: [
+      'While inhaling, gently lift the head',
+      'While exhaling, let the head drop',
+      'Do not press chin to chest — keep distance, head points up',
+      'Movement in the neck is important',
+      '7 seconds, 3 seconds rest, 6 repetitions',
+    ],
+    hintsDe: [
+      'Kinn nicht auf die Brust legen — Abstand zwischen Kinn und Körper halten',
+      'Bewegung soll im Nacken spürbar sein',
+    ],
+    hintsEn: [
+      'Do not press chin to chest — maintain distance',
+      'Movement should be felt in the neck',
+    ],
+    executionGuideDe: 'Einatmen: Kopf heben. Ausatmen: fallen lassen.',
+    executionGuideEn: 'Inhale: lift head. Exhale: let drop.',
+    durationSeconds: 7,
+    repetitions: 6,
+    imagePath: 'assets/images/trainings/tlr/tlr4.jpeg',
+    rhythmType: RhythmType.phased,
+    phases: _phasesBreathing,
+    hasRepSwitch: false,
+  ),
+
+  Exercise(
+    id: 'tlr_ex5',
+    packageId: 'tlr',
+    sequenceNumber: 5,
+    titleDe: 'Bein-Fahrradfahren',
+    titleEn: 'Leg Cycling',
+    positionInstructionsDe: [
+      'Rückenlage',
+      'Basisposition einnehmen — auf die Grundposition achten',
+      'Beine in der Luft',
+    ],
+    positionInstructionsEn: [
+      'Lie on your back',
+      'Take basic position — pay attention to fundamentals',
+      'Legs in the air',
+    ],
+    movementInstructionsDe: [
+      'Mit den Füßen in der Luft Fahrrad fahren',
+      'Große, langsame Bewegungen',
+      '7 Sekunden aktiv fahren, 3 Sekunden Pause',
+      'In der Pause: Beine einfach still in der Luft halten',
+      '6 Wiederholungen',
+    ],
+    movementInstructionsEn: [
+      'Cycle with feet in the air',
+      'Large, slow movements',
+      '7 seconds active cycling, 3 seconds rest',
+      'During rest: simply hold legs still in the air',
+      '6 repetitions',
+    ],
+    executionGuideDe: 'Langsam Fahrradfahren in der Luft. Große Bewegungen.',
+    executionGuideEn: 'Slowly cycle in the air. Large movements.',
+    durationSeconds: 7,
+    repetitions: 6,
+    imagePath: 'assets/images/trainings/tlr/tlr5.jpeg',
+    holdCueDe: 'Fahren',
+    holdCueEn: 'Cycle',
   ),
 ];

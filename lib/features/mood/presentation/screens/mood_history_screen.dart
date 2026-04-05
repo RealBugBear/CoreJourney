@@ -1,16 +1,21 @@
 import 'package:flutter/material.dart';
 
 import '../../../../l10n/app_localizations.dart';
+import '../widgets/mood_chart_widget.dart';
 
 class MoodHistoryScreen extends StatelessWidget {
   const MoodHistoryScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.moodCheckIn)),
-      body: Center(child: Text(l10n.moodChartEmpty)),
+      appBar: AppBar(title: Text(AppLocalizations.of(context).moodHistory)),
+      body: const SafeArea(
+        child: SingleChildScrollView(
+          padding: EdgeInsets.all(20),
+          child: MoodChartWidget(),
+        ),
+      ),
     );
   }
 }

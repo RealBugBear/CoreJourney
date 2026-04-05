@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../features/auth/presentation/screens/login_screen.dart';
+import '../../features/consent/presentation/screens/consent_screen.dart';
 import '../../features/dashboard/presentation/screens/dashboard_screen.dart';
 import '../../features/assessment/presentation/screens/intake_assessment_screen.dart';
 import '../../features/assessment/presentation/screens/duration_recommendation_screen.dart';
@@ -15,26 +16,58 @@ import '../../features/settings/presentation/screens/settings_screen.dart';
 import '../../features/profile/presentation/screens/profile_screen.dart';
 import '../../features/trainer/presentation/screens/trainer_clients_screen.dart';
 import '../../features/trainer/presentation/screens/trainer_client_detail_screen.dart';
+import '../../features/trainer/presentation/screens/trainer_dashboard_screen.dart';
+import '../../features/trainer/presentation/screens/appointment_scheduler_screen.dart';
+import '../../features/trainer/presentation/screens/appointment_proposal_screen.dart';
+import '../../features/trainer/domain/models/trainer_client.dart';
+import '../../features/journal/presentation/screens/journal_screen.dart';
+import '../../features/dev_tools/presentation/screens/dev_tools_screen.dart';
 
 // Route name constants
 class Routes {
   static const login = '/login';
+  static const devTools = '/dev-tools';
+  static const consent = '/consent';
   static const dashboard = '/dashboard';
   static const intakeAssessment = '/intake-assessment';
   static const durationRecommendation = '/intake-assessment/duration';
   static const completionQuestionnaire = '/completion-questionnaire';
   static const trainingSession = '/training/session';
   static const moodHistory = '/mood/history';
+  static const journal = '/journal';
   static const packages = '/packages';
   static const settings = '/settings';
   static const profile = '/profile';
   static const trainerClients = '/trainer/clients';
   static const trainerClientDetail = '/trainer/clients/:clientId';
+  static const trainerDashboard = '/trainer/dashboard';
+  static const appointmentScheduler = '/trainer/appointment/:clientId';
+  static const appointmentProposals = '/appointments/proposals';
+}
+
+/// Bridges a Stream into a [Listenable] so GoRouter can react to auth changes.
+class _StreamRefreshListenable extends ChangeNotifier {
+  _StreamRefreshListenable(Stream<dynamic> stream) {
+    _sub = stream.listen((_) => notifyListeners());
+  }
+  late final dynamic _sub;
+
+  @override
+  void dispose() {
+    _sub.cancel();
+    super.dispose();
+  }
 }
 
 final routerProvider = Provider<GoRouter>((ref) {
+  final authRefresh = _StreamRefreshListenable(
+    Supabase.instance.client.auth.onAuthStateChange,
+  );
+  ref.onDispose(authRefresh.dispose);
+
   return GoRouter(
-    initialLocation: Routes.dashboard,
+    initialLocation: Routes.login,
+    refreshListenable: authRefresh,
     redirect: (context, state) {
       final user = Supabase.instance.client.auth.currentUser;
       final isOnLogin = state.matchedLocation == Routes.login;
@@ -48,6 +81,11 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: Routes.login,
         name: 'login',
         builder: (context, state) => const LoginScreen(),
+      ),
+      GoRoute(
+        path: Routes.consent,
+        name: 'consent',
+        builder: (context, state) => const ConsentScreen(),
       ),
       GoRoute(
         path: Routes.dashboard,
@@ -67,17 +105,28 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: Routes.completionQuestionnaire,
         name: 'completion-questionnaire',
-        builder: (context, state) => const CompletionQuestionnaireScreen(),
+        builder: (context, state) {
+          final enrollmentId = state.extra as String? ?? '';
+          return CompletionQuestionnaireScreen(enrollmentId: enrollmentId);
+        },
       ),
       GoRoute(
         path: Routes.trainingSession,
         name: 'training-session',
-        builder: (context, state) => const TrainingSessionScreen(),
+        builder: (context, state) {
+          final packageId = state.extra as String? ?? 'moro';
+          return TrainingSessionScreen(packageId: packageId);
+        },
       ),
       GoRoute(
         path: Routes.moodHistory,
         name: 'mood-history',
         builder: (context, state) => const MoodHistoryScreen(),
+      ),
+      GoRoute(
+        path: Routes.journal,
+        name: 'journal',
+        builder: (context, state) => const JournalScreen(),
       ),
       GoRoute(
         path: Routes.packages,
@@ -106,6 +155,40 @@ final routerProvider = Provider<GoRouter>((ref) {
           final clientId = state.pathParameters['clientId']!;
           return TrainerClientDetailScreen(clientId: clientId);
         },
+      ),
+      GoRoute(
+        path: Routes.trainerDashboard,
+        name: 'trainer-dashboard',
+        builder: (context, state) => const TrainerDashboardScreen(),
+      ),
+      GoRoute(
+        path: Routes.appointmentScheduler,
+        name: 'appointment-scheduler',
+        builder: (context, state) {
+          final clientId = state.pathParameters['clientId']!;
+          final client = state.extra as TrainerClient?;
+          // Fallback minimal client if navigated without extra
+          return AppointmentSchedulerScreen(
+            client: client ??
+                TrainerClient(
+                  relationshipId: '',
+                  clientId: clientId,
+                  displayName: 'Trainee',
+                  currentDay: 1,
+                  dailyStreak: 0,
+                ),
+          );
+        },
+      ),
+      GoRoute(
+        path: Routes.appointmentProposals,
+        name: 'appointment-proposals',
+        builder: (context, state) => const AppointmentProposalScreen(),
+      ),
+      GoRoute(
+        path: Routes.devTools,
+        name: 'dev-tools',
+        builder: (context, state) => const DevToolsScreen(),
       ),
     ],
     errorBuilder: (context, state) => Scaffold(

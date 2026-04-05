@@ -43,6 +43,7 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+/android/key.properties
 
 # Environment files (contain secrets)
 .env.dev
@@ -51,3 +52,7 @@ app.*.map.json
 
 # Supabase functions local secrets
 supabase/.env
+
+# Local source video files are too large for normal Git history.
+assets/VIdeos/1 Moro/*.MOV
+assets/VIdeos/moro/*.mov

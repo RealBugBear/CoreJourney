@@ -329,13 +329,43 @@ abstract class AppLocalizations {
   /// No description provided for @intakeAssessmentTitle.
   ///
   /// In de, this message translates to:
-  /// **'Erstes Assessment'**
+  /// **'Programmstart'**
   String get intakeAssessmentTitle;
+
+  /// No description provided for @intakeWelcomeTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Willkommen in deinem Reflexintegrations-Programm'**
+  String get intakeWelcomeTitle;
+
+  /// No description provided for @intakeWelcomeBody.
+  ///
+  /// In de, this message translates to:
+  /// **'CoreJourney begleitet dich bei der Integration pränataler Reflexe — ein Prozess, der dabei helfen kann, tief verwurzelte körperliche und emotionale Muster zu transformieren.'**
+  String get intakeWelcomeBody;
+
+  /// No description provided for @intakeTrainerTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Empfehlung: Mit Trainer starten'**
+  String get intakeTrainerTitle;
+
+  /// No description provided for @intakeTrainerBody.
+  ///
+  /// In de, this message translates to:
+  /// **'Wir empfehlen, das Programm mit einem zertifizierten Trainer zu beginnen und begleiten zu lassen. Ein Trainer führt isometrisches Aktivierungstraining durch, das die betreffenden Reflexe gezielt anspricht. Diese gezielte Aktivierung beschleunigt den Integrationsprozess. Ohne sie braucht der Körper in der Regel länger, bis die Reflexe ausreichend angesprochen werden.'**
+  String get intakeTrainerBody;
+
+  /// No description provided for @intakeQuestionLabel.
+  ///
+  /// In de, this message translates to:
+  /// **'Eine Frage zu deinem Start'**
+  String get intakeQuestionLabel;
 
   /// No description provided for @questionIsometricWithTrainer.
   ///
   /// In de, this message translates to:
-  /// **'Hast du eine isometrische Aktivierung mit einem Trainer erhalten?'**
+  /// **'Hast du bereits isometrisches Aktivierungstraining mit einem Trainer durchgeführt?'**
   String get questionIsometricWithTrainer;
 
   /// No description provided for @yes.
@@ -371,8 +401,44 @@ abstract class AppLocalizations {
   /// No description provided for @completionQuestionnaireTitle.
   ///
   /// In de, this message translates to:
-  /// **'Block abgeschlossen?'**
+  /// **'Abschlussreflexion'**
   String get completionQuestionnaireTitle;
+
+  /// No description provided for @completionCelebrationTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Block abgeschlossen! ⭐'**
+  String get completionCelebrationTitle;
+
+  /// No description provided for @completionCelebrationSubtitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Du hast einen wichtigen Schritt in deiner Entwicklung abgeschlossen. Gut gemacht.'**
+  String get completionCelebrationSubtitle;
+
+  /// No description provided for @completionNextPackage.
+  ///
+  /// In de, this message translates to:
+  /// **'Weiter zum nächsten Paket'**
+  String get completionNextPackage;
+
+  /// No description provided for @completionBackToDashboard.
+  ///
+  /// In de, this message translates to:
+  /// **'Zum Dashboard'**
+  String get completionBackToDashboard;
+
+  /// No description provided for @completionExtendedTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Noch eine Woche'**
+  String get completionExtendedTitle;
+
+  /// No description provided for @completionExtendedSubtitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Kein Problem — du hast 7 weitere Tage. Mach weiter so.'**
+  String get completionExtendedSubtitle;
 
   /// No description provided for @completionQuestion.
   ///
@@ -482,6 +548,54 @@ abstract class AppLocalizations {
   /// **'Ruhezeiten'**
   String get quietHours;
 
+  /// No description provided for @reminderFrom.
+  ///
+  /// In de, this message translates to:
+  /// **'Von'**
+  String get reminderFrom;
+
+  /// No description provided for @reminderTo.
+  ///
+  /// In de, this message translates to:
+  /// **'Bis'**
+  String get reminderTo;
+
+  /// No description provided for @themeSystem.
+  ///
+  /// In de, this message translates to:
+  /// **'System'**
+  String get themeSystem;
+
+  /// No description provided for @themeLight.
+  ///
+  /// In de, this message translates to:
+  /// **'Hell'**
+  String get themeLight;
+
+  /// No description provided for @themeDark.
+  ///
+  /// In de, this message translates to:
+  /// **'Dunkel'**
+  String get themeDark;
+
+  /// No description provided for @weeklyGoalSessions.
+  ///
+  /// In de, this message translates to:
+  /// **'{goal} Einheiten/Woche'**
+  String weeklyGoalSessions(int goal);
+
+  /// No description provided for @settingsFeedback.
+  ///
+  /// In de, this message translates to:
+  /// **'Trainings-Feedback'**
+  String get settingsFeedback;
+
+  /// No description provided for @settingsAccount.
+  ///
+  /// In de, this message translates to:
+  /// **'Konto'**
+  String get settingsAccount;
+
   /// No description provided for @disclaimer.
   ///
   /// In de, this message translates to:
@@ -563,8 +677,14 @@ abstract class AppLocalizations {
   /// No description provided for @trainerNoClients.
   ///
   /// In de, this message translates to:
-  /// **'Noch keine Klienten verknüpft. Generiere einen Einladungscode und teile ihn.'**
+  /// **'Noch keine Klienten verknüpft.'**
   String get trainerNoClients;
+
+  /// No description provided for @trainerNoClientsHint.
+  ///
+  /// In de, this message translates to:
+  /// **'Erstelle einen Einladungscode und teile ihn mit deinem Klienten.'**
+  String get trainerNoClientsHint;
 
   /// No description provided for @trainerInviteCode.
   ///
@@ -572,17 +692,77 @@ abstract class AppLocalizations {
   /// **'Einladungscode'**
   String get trainerInviteCode;
 
+  /// No description provided for @trainerInviteCodeHint.
+  ///
+  /// In de, this message translates to:
+  /// **'Teile diesen Code mit deinem Klienten. Er kann einmalig verwendet werden.'**
+  String get trainerInviteCodeHint;
+
   /// No description provided for @trainerGenerateCode.
   ///
   /// In de, this message translates to:
-  /// **'Code generieren'**
+  /// **'Einladung erstellen'**
   String get trainerGenerateCode;
+
+  /// No description provided for @trainerCopyCode.
+  ///
+  /// In de, this message translates to:
+  /// **'Code kopieren'**
+  String get trainerCopyCode;
+
+  /// No description provided for @trainerCodeCopied.
+  ///
+  /// In de, this message translates to:
+  /// **'Code in die Zwischenablage kopiert.'**
+  String get trainerCodeCopied;
+
+  /// No description provided for @trainerAtRisk.
+  ///
+  /// In de, this message translates to:
+  /// **'Risiko'**
+  String get trainerAtRisk;
+
+  /// No description provided for @trainerLastActive.
+  ///
+  /// In de, this message translates to:
+  /// **'Vor {days} Tag(en)'**
+  String trainerLastActive(int days);
 
   /// No description provided for @trainerNotes.
   ///
   /// In de, this message translates to:
-  /// **'Notizen'**
+  /// **'Trainer-Notizen'**
   String get trainerNotes;
+
+  /// No description provided for @trainerNotesHint.
+  ///
+  /// In de, this message translates to:
+  /// **'Private Notizen zu diesem Klienten...'**
+  String get trainerNotesHint;
+
+  /// No description provided for @trainerNotesSaved.
+  ///
+  /// In de, this message translates to:
+  /// **'Notizen gespeichert.'**
+  String get trainerNotesSaved;
+
+  /// No description provided for @trainerRecentSessions.
+  ///
+  /// In de, this message translates to:
+  /// **'Letzte Einheiten (30 Tage)'**
+  String get trainerRecentSessions;
+
+  /// No description provided for @trainerNoSessions.
+  ///
+  /// In de, this message translates to:
+  /// **'Keine Einheiten in den letzten 30 Tagen.'**
+  String get trainerNoSessions;
+
+  /// No description provided for @trainerView.
+  ///
+  /// In de, this message translates to:
+  /// **'Trainer-Ansicht'**
+  String get trainerView;
 
   /// No description provided for @connectToTrainer.
   ///
@@ -595,6 +775,432 @@ abstract class AppLocalizations {
   /// In de, this message translates to:
   /// **'Einladungscode eingeben'**
   String get enterInviteCode;
+
+  /// No description provided for @connectToTrainerSuccess.
+  ///
+  /// In de, this message translates to:
+  /// **'Mit Trainer verbunden!'**
+  String get connectToTrainerSuccess;
+
+  /// No description provided for @connectToTrainerError.
+  ///
+  /// In de, this message translates to:
+  /// **'Ungültiger oder abgelaufener Einladungscode.'**
+  String get connectToTrainerError;
+
+  /// No description provided for @loading.
+  ///
+  /// In de, this message translates to:
+  /// **'Lädt...'**
+  String get loading;
+
+  /// No description provided for @skip.
+  ///
+  /// In de, this message translates to:
+  /// **'Überspringen'**
+  String get skip;
+
+  /// No description provided for @dayNumber.
+  ///
+  /// In de, this message translates to:
+  /// **'Tag {day}'**
+  String dayNumber(int day);
+
+  /// No description provided for @weeksCount.
+  ///
+  /// In de, this message translates to:
+  /// **'{count} Wochen'**
+  String weeksCount(int count);
+
+  /// No description provided for @daysCount.
+  ///
+  /// In de, this message translates to:
+  /// **'{count} Tage'**
+  String daysCount(int count);
+
+  /// No description provided for @thisWeek.
+  ///
+  /// In de, this message translates to:
+  /// **'Diese Woche'**
+  String get thisWeek;
+
+  /// No description provided for @journal.
+  ///
+  /// In de, this message translates to:
+  /// **'Tagebuch'**
+  String get journal;
+
+  /// No description provided for @journalEmptyTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Noch keine Einträge.'**
+  String get journalEmptyTitle;
+
+  /// No description provided for @journalEmptySubtitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Schreib auf, was du in deinem Alltag beobachtest — nach jedem Training oder wann immer du möchtest.'**
+  String get journalEmptySubtitle;
+
+  /// No description provided for @journalEmptyHint.
+  ///
+  /// In de, this message translates to:
+  /// **'Halte fest, was sich in deinem Alltag verändert.'**
+  String get journalEmptyHint;
+
+  /// No description provided for @journalNewEntry.
+  ///
+  /// In de, this message translates to:
+  /// **'Neue Notiz'**
+  String get journalNewEntry;
+
+  /// No description provided for @journalPostTrainingTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Veränderungen im Alltag?'**
+  String get journalPostTrainingTitle;
+
+  /// No description provided for @journalPostTrainingHint.
+  ///
+  /// In de, this message translates to:
+  /// **'Hast du etwas bemerkt — in deinem Schlaf, deinen Reaktionen, deinem Körpergefühl?'**
+  String get journalPostTrainingHint;
+
+  /// No description provided for @journalPlaceholder.
+  ///
+  /// In de, this message translates to:
+  /// **'Schreib hier deine Beobachtung...'**
+  String get journalPlaceholder;
+
+  /// No description provided for @journalLoadFailed.
+  ///
+  /// In de, this message translates to:
+  /// **'Einträge konnten nicht geladen werden.'**
+  String get journalLoadFailed;
+
+  /// No description provided for @moodHistory.
+  ///
+  /// In de, this message translates to:
+  /// **'Stimmungsverlauf'**
+  String get moodHistory;
+
+  /// No description provided for @profile.
+  ///
+  /// In de, this message translates to:
+  /// **'Profil'**
+  String get profile;
+
+  /// No description provided for @completionBannerTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Block abgeschlossen!'**
+  String get completionBannerTitle;
+
+  /// No description provided for @completionBannerSubtitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Du hast dein Zieldatum erreicht. Jetzt zur Abschlussreflexion.'**
+  String get completionBannerSubtitle;
+
+  /// No description provided for @settingsDataSync.
+  ///
+  /// In de, this message translates to:
+  /// **'Daten & Sync'**
+  String get settingsDataSync;
+
+  /// No description provided for @syncStatusOk.
+  ///
+  /// In de, this message translates to:
+  /// **'Alles synchronisiert'**
+  String get syncStatusOk;
+
+  /// No description provided for @syncStatusPending.
+  ///
+  /// In de, this message translates to:
+  /// **'{count} Einträge ausstehend'**
+  String syncStatusPending(int count);
+
+  /// No description provided for @syncStatusFailed.
+  ///
+  /// In de, this message translates to:
+  /// **'{count} Einträge fehlgeschlagen'**
+  String syncStatusFailed(int count);
+
+  /// No description provided for @syncInProgress.
+  ///
+  /// In de, this message translates to:
+  /// **'Synchronisiert...'**
+  String get syncInProgress;
+
+  /// No description provided for @syncNow.
+  ///
+  /// In de, this message translates to:
+  /// **'Jetzt sync'**
+  String get syncNow;
+
+  /// No description provided for @errorSaveFailed.
+  ///
+  /// In de, this message translates to:
+  /// **'Speichern fehlgeschlagen. Bitte erneut versuchen.'**
+  String get errorSaveFailed;
+
+  /// No description provided for @errorLoadFailed.
+  ///
+  /// In de, this message translates to:
+  /// **'Daten konnten nicht geladen werden.'**
+  String get errorLoadFailed;
+
+  /// No description provided for @errorLoadFailedInline.
+  ///
+  /// In de, this message translates to:
+  /// **'Fehler beim Laden'**
+  String get errorLoadFailedInline;
+
+  /// No description provided for @validationRequired.
+  ///
+  /// In de, this message translates to:
+  /// **'Dieses Feld ist erforderlich.'**
+  String get validationRequired;
+
+  /// No description provided for @validationInvalidEmail.
+  ///
+  /// In de, this message translates to:
+  /// **'Bitte gib eine gültige E-Mail-Adresse ein.'**
+  String get validationInvalidEmail;
+
+  /// No description provided for @validationPasswordTooShort.
+  ///
+  /// In de, this message translates to:
+  /// **'Das Passwort muss mindestens 8 Zeichen lang sein.'**
+  String get validationPasswordTooShort;
+
+  /// No description provided for @profileVersion.
+  ///
+  /// In de, this message translates to:
+  /// **'Version {version}'**
+  String profileVersion(String version);
+
+  /// No description provided for @profileChangePassword.
+  ///
+  /// In de, this message translates to:
+  /// **'Passwort ändern'**
+  String get profileChangePassword;
+
+  /// No description provided for @profileChangePasswordSent.
+  ///
+  /// In de, this message translates to:
+  /// **'Passwort-Reset-E-Mail wurde gesendet.'**
+  String get profileChangePasswordSent;
+
+  /// No description provided for @profileDeleteAccount.
+  ///
+  /// In de, this message translates to:
+  /// **'Konto löschen'**
+  String get profileDeleteAccount;
+
+  /// No description provided for @profileDeleteAccountTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Konto löschen?'**
+  String get profileDeleteAccountTitle;
+
+  /// No description provided for @profileDeleteAccountBody.
+  ///
+  /// In de, this message translates to:
+  /// **'Dein Konto und alle deine Daten werden dauerhaft gelöscht. Dies kann nicht rückgängig gemacht werden.'**
+  String get profileDeleteAccountBody;
+
+  /// No description provided for @profileDeleteAccountConfirm.
+  ///
+  /// In de, this message translates to:
+  /// **'Dauerhaft löschen'**
+  String get profileDeleteAccountConfirm;
+
+  /// No description provided for @profileDeleteAccountSuccess.
+  ///
+  /// In de, this message translates to:
+  /// **'Konto gelöscht.'**
+  String get profileDeleteAccountSuccess;
+
+  /// No description provided for @profileDeleteAccountError.
+  ///
+  /// In de, this message translates to:
+  /// **'Konto konnte nicht gelöscht werden. Bitte kontaktiere den Support.'**
+  String get profileDeleteAccountError;
+
+  /// No description provided for @trainerDashboard.
+  ///
+  /// In de, this message translates to:
+  /// **'Trainer-Dashboard'**
+  String get trainerDashboard;
+
+  /// No description provided for @trainerTabTrainees.
+  ///
+  /// In de, this message translates to:
+  /// **'Trainees'**
+  String get trainerTabTrainees;
+
+  /// No description provided for @trainerTabCalendar.
+  ///
+  /// In de, this message translates to:
+  /// **'Kalender'**
+  String get trainerTabCalendar;
+
+  /// No description provided for @trainerMyLink.
+  ///
+  /// In de, this message translates to:
+  /// **'Mein Einladungslink'**
+  String get trainerMyLink;
+
+  /// No description provided for @trainerCopyLink.
+  ///
+  /// In de, this message translates to:
+  /// **'Link kopieren'**
+  String get trainerCopyLink;
+
+  /// No description provided for @trainerLinkCopied.
+  ///
+  /// In de, this message translates to:
+  /// **'Link kopiert.'**
+  String get trainerLinkCopied;
+
+  /// No description provided for @trainerScheduleAppointment.
+  ///
+  /// In de, this message translates to:
+  /// **'Planen'**
+  String get trainerScheduleAppointment;
+
+  /// No description provided for @trainerBookNow.
+  ///
+  /// In de, this message translates to:
+  /// **'Jetzt buchen'**
+  String get trainerBookNow;
+
+  /// No description provided for @trainerAppointmentMissing.
+  ///
+  /// In de, this message translates to:
+  /// **'Termin fehlt'**
+  String get trainerAppointmentMissing;
+
+  /// No description provided for @trainerNoAppointments.
+  ///
+  /// In de, this message translates to:
+  /// **'Keine Termine geplant.'**
+  String get trainerNoAppointments;
+
+  /// No description provided for @appointmentSchedulerTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Termin buchen'**
+  String get appointmentSchedulerTitle;
+
+  /// No description provided for @appointmentWith.
+  ///
+  /// In de, this message translates to:
+  /// **'Termin mit {name}'**
+  String appointmentWith(String name);
+
+  /// No description provided for @appointmentSessionTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Isometrische Partnerübung'**
+  String get appointmentSessionTitle;
+
+  /// No description provided for @appointmentFreeSlotsTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Freie Zeiten (nächste 14 Tage):'**
+  String get appointmentFreeSlotsTitle;
+
+  /// No description provided for @appointmentBook.
+  ///
+  /// In de, this message translates to:
+  /// **'Buchen'**
+  String get appointmentBook;
+
+  /// No description provided for @appointmentOtherTime.
+  ///
+  /// In de, this message translates to:
+  /// **'Andere Zeit wählen'**
+  String get appointmentOtherTime;
+
+  /// No description provided for @appointmentLocationLabel.
+  ///
+  /// In de, this message translates to:
+  /// **'Ort (optional)'**
+  String get appointmentLocationLabel;
+
+  /// No description provided for @appointmentNotesLabel.
+  ///
+  /// In de, this message translates to:
+  /// **'Notiz'**
+  String get appointmentNotesLabel;
+
+  /// No description provided for @appointmentConfirmButton.
+  ///
+  /// In de, this message translates to:
+  /// **'Termin buchen'**
+  String get appointmentConfirmButton;
+
+  /// No description provided for @appointmentLoadingSlots.
+  ///
+  /// In de, this message translates to:
+  /// **'Freie Zeiten werden gesucht...'**
+  String get appointmentLoadingSlots;
+
+  /// No description provided for @appointmentNoFreeSlots.
+  ///
+  /// In de, this message translates to:
+  /// **'Keine freien Zeitfenster gefunden.'**
+  String get appointmentNoFreeSlots;
+
+  /// No description provided for @appointmentNoCalendars.
+  ///
+  /// In de, this message translates to:
+  /// **'Keine Kalender gefunden.'**
+  String get appointmentNoCalendars;
+
+  /// No description provided for @appointmentSelectCalendarTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Arbeitskalender wählen'**
+  String get appointmentSelectCalendarTitle;
+
+  /// No description provided for @appointmentSelectCalendarSubtitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Wähle den Kalender für CoreJourney-Termine.'**
+  String get appointmentSelectCalendarSubtitle;
+
+  /// No description provided for @appointmentStatusPlanned.
+  ///
+  /// In de, this message translates to:
+  /// **'Geplant'**
+  String get appointmentStatusPlanned;
+
+  /// No description provided for @appointmentStatusConfirmed.
+  ///
+  /// In de, this message translates to:
+  /// **'Bestätigt'**
+  String get appointmentStatusConfirmed;
+
+  /// No description provided for @appointmentStatusCancelled.
+  ///
+  /// In de, this message translates to:
+  /// **'Abgesagt'**
+  String get appointmentStatusCancelled;
+
+  /// No description provided for @appointmentStatusDone.
+  ///
+  /// In de, this message translates to:
+  /// **'Abgeschlossen'**
+  String get appointmentStatusDone;
+
+  /// No description provided for @appointmentOpenInCalendar.
+  ///
+  /// In de, this message translates to:
+  /// **'Im Kalender öffnen'**
+  String get appointmentOpenInCalendar;
 }
 
 class _AppLocalizationsDelegate
