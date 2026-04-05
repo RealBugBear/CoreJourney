@@ -43,12 +43,16 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+/android/key.properties
 
-# Environment files (contain sensitive credentials)
+# Environment files (contain secrets)
 .env.dev
 .env.prod
+.env
 
-# Generated code
-*.g.dart
-*.freezed.dart
+# Supabase functions local secrets
+supabase/.env
 
+# Local source video files are too large for normal Git history.
+assets/VIdeos/1 Moro/*.MOV
+assets/VIdeos/moro/*.mov

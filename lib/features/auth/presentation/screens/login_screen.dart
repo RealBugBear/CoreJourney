@@ -1,8 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../../../core/navigation/app_router.dart';
+import '../../../../core/settings/settings_provider.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../../../l10n/app_localizations.dart';
+import '../../../consent/presentation/providers/consent_provider.dart';
 import '../providers/auth_provider.dart';
+
+// RFC 5322-lite email pattern — catches obvious typos without being overly strict.
+final _emailRegex = RegExp(r'^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$');
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -12,226 +20,302 @@ class LoginScreen extends ConsumerStatefulWidget {
 }
 
 class _LoginScreenState extends ConsumerState<LoginScreen> {
+  final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  bool _isLoading = false;
+  final _passwordConfirmController = TextEditingController();
+  final _emailFocusNode = FocusNode();
+  final _passwordFocusNode = FocusNode();
+  final _passwordConfirmFocusNode = FocusNode();
+
   bool _isSignUp = false;
+  bool _showPasswordReset = false;
+  bool _obscurePassword = true;
+  bool _obscurePasswordConfirm = true;
+  // Only show inline errors after the first submit attempt.
+  bool _submitted = false;
 
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
+    _passwordConfirmController.dispose();
+    _emailFocusNode.dispose();
+    _passwordFocusNode.dispose();
+    _passwordConfirmFocusNode.dispose();
     super.dispose();
   }
 
+  String? _validateEmail(String? value) {
+    final l10n = AppLocalizations.of(context);
+    final v = value?.trim() ?? '';
+    if (v.isEmpty) return l10n.validationRequired;
+    if (!_emailRegex.hasMatch(v)) return l10n.validationInvalidEmail;
+    return null;
+  }
+
+  String? _validatePassword(String? value) {
+    final l10n = AppLocalizations.of(context);
+    final v = value ?? '';
+    if (v.isEmpty) return l10n.validationRequired;
+    if (_isSignUp && v.length < 8) return l10n.validationPasswordTooShort;
+    return null;
+  }
+
+  String? _validatePasswordConfirm(String? value) {
+    final l10n = AppLocalizations.of(context);
+    final isDE = l10n.localeName == 'de';
+    if ((value ?? '').isEmpty) return l10n.validationRequired;
+    if (value != _passwordController.text) {
+      return isDE ? 'Passwörter stimmen nicht überein.' : 'Passwords do not match.';
+    }
+    return null;
+  }
+
   Future<void> _submit() async {
-    if (_emailController.text.trim().isEmpty || _passwordController.text.isEmpty) {
-      _showError('Bitte fülle alle Felder aus');
-      return;
+    setState(() => _submitted = true);
+    if (!(_formKey.currentState?.validate() ?? false)) return;
+
+    final email = _emailController.text.trim();
+    final password = _passwordController.text;
+    final notifier = ref.read(authNotifierProvider.notifier);
+
+    if (_isSignUp) {
+      await notifier.signUp(email: email, password: password);
+    } else {
+      await notifier.signIn(email: email, password: password);
     }
 
-    setState(() => _isLoading = true);
-    
-    try {
-      final repo = ref.read(authRepositoryProvider);
-      if (_isSignUp) {
-        await repo.signUpWithEmail(
-          _emailController.text.trim(),
-          _passwordController.text,
-        );
-      } else {
-        await repo.signInWithEmail(
-          _emailController.text.trim(),
-          _passwordController.text,
-        );
+    if (mounted) {
+      final authState = ref.read(authNotifierProvider);
+      if (!authState.hasError) {
+        // Invalidate consent cache so the new user's consent state is checked fresh.
+        ref.invalidate(hasConsentedProvider);
+        context.go(Routes.dashboard);
       }
-    } catch (e) {
-      if (mounted) {
-        _showError(_isSignUp ? 'Registrierung fehlgeschlagen: $e' : 'Login fehlgeschlagen: $e');
-      }
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
     }
   }
 
-  Future<void> _handleForgotPassword() async {
-    final initialEmail = _emailController.text.trim();
-    final emailController = TextEditingController(text: initialEmail);
-    final messenger = ScaffoldMessenger.of(context);
+  Future<void> _sendPasswordReset() async {
+    setState(() => _submitted = true);
+    if (!(_formKey.currentState?.validate() ?? false)) return;
 
-    final shouldSend = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) {
-        return AlertDialog(
-          title: const Text('Passwort zurücksetzen'),
-          content: TextField(
-            controller: emailController,
-            decoration: const InputDecoration(
-              labelText: 'E-Mail',
-              hintText: 'name@example.com',
-            ),
-            keyboardType: TextInputType.emailAddress,
-            autofocus: true,
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(false),
-              child: const Text('Abbrechen'),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.of(dialogContext).pop(true),
-              child: const Text('Link senden'),
-            ),
-          ],
-        );
-      },
-    );
+    final email = _emailController.text.trim();
+    await ref.read(authNotifierProvider.notifier).sendPasswordReset(email: email);
 
-    if (shouldSend != true) {
-      emailController.dispose();
-      return;
-    }
-
-    final email = emailController.text.trim();
-    emailController.dispose();
-
-    if (email.isEmpty) {
-      _showError('Bitte gib eine E-Mail ein');
-      return;
-    }
-
-    setState(() => _isLoading = true);
-    try {
-      final repo = ref.read(authRepositoryProvider);
-      await repo.sendPasswordResetEmail(email);
-      if (!mounted) return;
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text('Reset-Link wurde an $email gesendet'),
-        ),
+    if (mounted) {
+      setState(() => _showPasswordReset = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(AppLocalizations.of(context).passwordResetSent)),
       );
-    } on FirebaseAuthException catch (e) {
-      if (!mounted) return;
-      final message = switch (e.code) {
-        'invalid-email' => 'Die E-Mail-Adresse ist ungültig.',
-        'user-not-found' => 'Für diese E-Mail gibt es kein Konto.',
-        'too-many-requests' =>
-          'Zu viele Versuche. Bitte später erneut versuchen.',
-        _ => e.message ?? e.code,
-      };
-      _showError('Passwort-Reset fehlgeschlagen: $message');
-    } catch (e) {
-      if (!mounted) return;
-      _showError('Passwort-Reset fehlgeschlagen: $e');
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
     }
   }
 
-  void _showError(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
+  void _clearErrorAndRebuild() {
+    ref.read(authNotifierProvider.notifier).clearError();
   }
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
+    final authState = ref.watch(authNotifierProvider);
+    final isLoading = authState.isLoading;
+
+    final currentLang = ref.watch(settingsProvider).languageCode;
 
     return Scaffold(
       body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24.0),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 48),
+          child: Form(
+            key: _formKey,
+            autovalidateMode: _submitted
+                ? AutovalidateMode.onUserInteraction
+                : AutovalidateMode.disabled,
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Icon(
-                  Icons.accessibility_new,
-                  size: 80,
-                  color: theme.colorScheme.primary,
-                ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 32),
                 Text(
-                  'CoreJourney',
-                  style: theme.textTheme.headlineLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Pränatales Reflextraining',
-                  style: theme.textTheme.bodyLarge?.copyWith(
-                    color: Colors.grey[600],
-                  ),
+                  l10n.appTitle,
+                  style: Theme.of(context).textTheme.headlineLarge?.copyWith(
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.primary,
+                      ),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 48),
-                TextField(
+
+                // Email field
+                TextFormField(
                   controller: _emailController,
-                  decoration: InputDecoration(
-                    labelText: 'Email',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    prefixIcon: const Icon(Icons.email),
-                  ),
+                  focusNode: _emailFocusNode,
                   keyboardType: TextInputType.emailAddress,
-                  enabled: !_isLoading,
+                  autocorrect: false,
+                  textInputAction: _showPasswordReset
+                      ? TextInputAction.done
+                      : TextInputAction.next,
+                  decoration: InputDecoration(
+                    labelText: l10n.email,
+                    border: const OutlineInputBorder(),
+                  ),
+                  validator: _validateEmail,
+                  onChanged: (_) => _clearErrorAndRebuild(),
+                  onFieldSubmitted: (_) {
+                    if (_showPasswordReset) {
+                      _sendPasswordReset();
+                    } else {
+                      _passwordFocusNode.requestFocus();
+                    }
+                  },
                 ),
                 const SizedBox(height: 16),
-                TextField(
-                  controller: _passwordController,
-                  decoration: InputDecoration(
-                    labelText: 'Passwort',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    prefixIcon: const Icon(Icons.lock),
-                  ),
-                  obscureText: true,
-                  enabled: !_isLoading,
-                  onSubmitted: (_) => _submit(),
-                ),
-                const SizedBox(height: 24),
-                if (_isLoading)
-                  const Center(child: CircularProgressIndicator())
-                else
-                  ElevatedButton(
-                    onPressed: _submit,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: theme.colorScheme.primary,
-                      foregroundColor: Colors.white,
-                      minimumSize: const Size(double.infinity, 56),
-                    ),
-                    child: Text(
-                      _isSignUp ? 'Registrieren' : 'Anmelden',
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
+
+                // Password field (hidden in password reset mode)
+                if (!_showPasswordReset) ...[
+                  TextFormField(
+                    controller: _passwordController,
+                    focusNode: _passwordFocusNode,
+                    obscureText: _obscurePassword,
+                    textInputAction: _isSignUp
+                        ? TextInputAction.next
+                        : TextInputAction.done,
+                    decoration: InputDecoration(
+                      labelText: l10n.password,
+                      border: const OutlineInputBorder(),
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          _obscurePassword
+                              ? Icons.visibility_outlined
+                              : Icons.visibility_off_outlined,
+                        ),
+                        onPressed: () =>
+                            setState(() => _obscurePassword = !_obscurePassword),
                       ),
                     ),
+                    validator: _validatePassword,
+                    onChanged: (_) => _clearErrorAndRebuild(),
+                    onFieldSubmitted: (_) {
+                      if (_isSignUp) {
+                        _passwordConfirmFocusNode.requestFocus();
+                      } else {
+                        _submit();
+                      }
+                    },
                   ),
+                  const SizedBox(height: 16),
+
+                  // Password confirm — only during sign-up
+                  if (_isSignUp) ...[
+                    TextFormField(
+                      controller: _passwordConfirmController,
+                      focusNode: _passwordConfirmFocusNode,
+                      obscureText: _obscurePasswordConfirm,
+                      textInputAction: TextInputAction.done,
+                      decoration: InputDecoration(
+                        labelText: l10n.localeName == 'de'
+                            ? 'Passwort bestätigen'
+                            : 'Confirm password',
+                        border: const OutlineInputBorder(),
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            _obscurePasswordConfirm
+                                ? Icons.visibility_outlined
+                                : Icons.visibility_off_outlined,
+                          ),
+                          onPressed: () => setState(() =>
+                              _obscurePasswordConfirm =
+                                  !_obscurePasswordConfirm),
+                        ),
+                      ),
+                      validator: _validatePasswordConfirm,
+                      onChanged: (_) => _clearErrorAndRebuild(),
+                      onFieldSubmitted: (_) => _submit(),
+                    ),
+                    const SizedBox(height: 8),
+                  ],
+                ],
+
+                // Server-side auth error (shown below fields, above button)
+                if (authState.hasError) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    _localizeAuthError(authState.error.toString(), l10n),
+                    style: TextStyle(color: AppColors.error, fontSize: 14),
+                  ),
+                  const SizedBox(height: 8),
+                ],
+
+                const SizedBox(height: 24),
+
+                // Primary button
+                ElevatedButton(
+                  onPressed: isLoading
+                      ? null
+                      : (_showPasswordReset ? _sendPasswordReset : _submit),
+                  child: isLoading
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : Text(_showPasswordReset
+                          ? l10n.resetPassword
+                          : (_isSignUp ? l10n.signUp : l10n.signIn)),
+                ),
                 const SizedBox(height: 16),
+
+                // Toggle sign in / sign up
+                if (!_showPasswordReset)
+                  TextButton(
+                    onPressed: () {
+                      setState(() {
+                        _isSignUp = !_isSignUp;
+                        _submitted = false;
+                        _obscurePassword = true;
+                        _obscurePasswordConfirm = true;
+                      });
+                      _passwordConfirmController.clear();
+                      _formKey.currentState?.reset();
+                      ref.read(authNotifierProvider.notifier).clearError();
+                    },
+                    child: Text(_isSignUp ? l10n.signIn : l10n.signUp),
+                  ),
+
+                // Forgot password toggle
                 if (!_isSignUp)
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: TextButton(
-                      onPressed: _isLoading ? null : _handleForgotPassword,
-                      child: const Text('Passwort vergessen?'),
+                  TextButton(
+                    onPressed: () {
+                      setState(() {
+                        _showPasswordReset = !_showPasswordReset;
+                        _submitted = false;
+                      });
+                      _formKey.currentState?.reset();
+                      ref.read(authNotifierProvider.notifier).clearError();
+                    },
+                    child: Text(
+                      _showPasswordReset ? l10n.cancel : l10n.forgotPassword,
                     ),
                   ),
-                if (!_isSignUp) const SizedBox(height: 4),
-                TextButton(
-                  onPressed: _isLoading ? null : () {
-                    setState(() => _isSignUp = !_isSignUp);
-                  },
-                  child: Text(
-                    _isSignUp
-                        ? 'Bereits ein Konto? Anmelden'
-                        : 'Noch kein Konto? Registrieren',
+
+                // Language toggle — always visible so non-German speakers can switch
+                const SizedBox(height: 32),
+                SegmentedButton<String>(
+                  segments: const [
+                    ButtonSegment(value: 'de', label: Text('🇩🇪 Deutsch')),
+                    ButtonSegment(value: 'en', label: Text('🇬🇧 English')),
+                  ],
+                  selected: {currentLang},
+                  onSelectionChanged: (s) =>
+                      ref.read(settingsProvider.notifier).setLanguage(s.first),
+                  style: SegmentedButton.styleFrom(
+                    selectedBackgroundColor: AppColors.primary,
+                    selectedForegroundColor: Colors.white,
+                    textStyle:
+                        const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
                   ),
                 ),
               ],
@@ -240,5 +324,20 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         ),
       ),
     );
+  }
+
+  String _localizeAuthError(String error, AppLocalizations l10n) {
+    if (error.contains('invalid_credentials') ||
+        error.contains('Invalid login')) {
+      return l10n.authErrorInvalidCredentials;
+    }
+    if (error.contains('already registered') ||
+        error.contains('already been registered')) {
+      return l10n.authErrorEmailInUse;
+    }
+    if (error.contains('weak') || error.contains('password')) {
+      return l10n.authErrorWeakPassword;
+    }
+    return l10n.errorGeneric;
   }
 }

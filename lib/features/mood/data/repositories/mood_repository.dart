@@ -1,249 +1,203 @@
-import 'package:isar/isar.dart';
+import 'package:drift/drift.dart' as drift;
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 
-import '../../../../core/database/database_service.dart';
+import '../../../../core/database/app_database.dart';
 import '../../../../core/sync/sync_service.dart';
-import '../../domain/models/mood_checkin.dart';
+import '../../../../core/time/app_clock.dart';
+import '../../domain/models/mood_daily_aggregate.dart';
 
-class MoodDailyAggregate {
-  final DateTime day;
-  final double? avgMood;
-  final double? minMood;
-  final double? maxMood;
-  final double? avgEnergy;
-  final double? minEnergy;
-  final double? maxEnergy;
-  final double? avgStress;
-  final double? minStress;
-  final double? maxStress;
-  final int entriesCount;
-  final int noteCount;
-
-  const MoodDailyAggregate({
-    required this.day,
-    required this.avgMood,
-    required this.minMood,
-    required this.maxMood,
-    required this.avgEnergy,
-    required this.minEnergy,
-    required this.maxEnergy,
-    required this.avgStress,
-    required this.minStress,
-    required this.maxStress,
-    required this.entriesCount,
-    required this.noteCount,
-  });
-}
+const _uuid = Uuid();
 
 class MoodRepository {
-  final DatabaseService _db;
-  final SyncService _sync;
-  final String _userId;
+  final AppDatabase _db;
+  final SyncService _syncService;
+  final AppClock _clock;
 
-  MoodRepository(this._db, this._sync, this._userId);
+  MoodRepository(this._db, this._syncService, this._clock);
 
-  Future<MoodCheckin> createCheckin({
-    required String packageId,
-    required MoodCheckinSource source,
-    DateTime? recordedAt,
-    String? sessionId,
+  String? get _userId => Supabase.instance.client.auth.currentUser?.id;
+
+  Future<List<MoodCheckinsTableData>> getCheckinsInRange({
+    required String enrollmentId,
+    required DateTime from,
+    required DateTime to,
+  }) async {
+    final userId = _userId;
+    if (userId == null) return [];
+
+    return (_db.select(_db.moodCheckinsTable)
+          ..where((t) =>
+              t.userId.equals(userId) &
+              t.enrollmentId.equals(enrollmentId) &
+              t.recordedAt.isBiggerOrEqualValue(from) &
+              t.recordedAt.isSmallerOrEqualValue(to))
+          ..orderBy([(t) => drift.OrderingTerm.asc(t.recordedAt)]))
+        .get();
+  }
+
+  Future<List<MoodCheckinsTableData>> getNotesInRange({
+    required String enrollmentId,
+    required DateTime from,
+    required DateTime to,
+  }) async {
+    final userId = _userId;
+    if (userId == null) return [];
+
+    return (_db.select(_db.moodCheckinsTable)
+          ..where((t) =>
+              t.userId.equals(userId) &
+              t.enrollmentId.equals(enrollmentId) &
+              t.recordedAt.isBiggerOrEqualValue(from) &
+              t.recordedAt.isSmallerOrEqualValue(to) &
+              t.note.isNotNull() &
+              t.note.isNotValue(''))
+          ..orderBy([(t) => drift.OrderingTerm.desc(t.recordedAt)]))
+        .get();
+  }
+
+  Future<List<MoodDailyAggregate>> getDailyAggregatesInRange({
+    required String enrollmentId,
+    required DateTime from,
+    required DateTime to,
+  }) async {
+    final checkins = await getCheckinsInRange(
+      enrollmentId: enrollmentId,
+      from: from,
+      to: to,
+    );
+
+    final grouped = <int, List<MoodCheckinsTableData>>{};
+    for (final checkin in checkins) {
+      grouped.putIfAbsent(checkin.dayKey, () => []).add(checkin);
+    }
+
+    final dayKeys = grouped.keys.toList()..sort();
+    return dayKeys.map((dayKey) {
+      final values = grouped[dayKey]!;
+      return MoodDailyAggregate(
+        dayKey: dayKey,
+        day: DateTime(1970).add(Duration(days: dayKey)),
+        mood: _avg(values.map((e) => e.mood)),
+        energy: _avg(values.map((e) => e.energy)),
+        stress: _avg(values.map((e) => e.stress)),
+      );
+    }).toList();
+  }
+
+  Future<void> createCheckin({
+    required String enrollmentId,
+    int? mood,
+    int? energy,
+    int? stress,
+    String? note,
+    required String source,
+  }) async {
+    final userId = _userId;
+    if (userId == null) return;
+
+    final now = _clock.now();
+    final id = _uuid.v4();
+    final dayKey = now.difference(DateTime(1970)).inDays;
+    final normalizedNote = _normalizeNote(note);
+
+    await _db.into(_db.moodCheckinsTable).insert(
+          MoodCheckinsTableCompanion.insert(
+            id: id,
+            userId: userId,
+            enrollmentId: enrollmentId,
+            recordedAt: now,
+            dayKey: dayKey,
+            mood: drift.Value(mood),
+            energy: drift.Value(energy),
+            stress: drift.Value(stress),
+            note: drift.Value(normalizedNote),
+            source: source,
+          ),
+        );
+
+    await _syncService.enqueueUpsert(
+      tableName: 'mood_checkins',
+      recordId: id,
+      payload: {
+        'id': id,
+        'user_id': userId,
+        'enrollment_id': enrollmentId,
+        'recorded_at': now.toIso8601String(),
+        'day_key': dayKey,
+        'mood': mood,
+        'energy': energy,
+        'stress': stress,
+        'note': normalizedNote,
+        'source': source,
+      },
+    );
+  }
+
+  Future<void> updateCheckin({
+    required String id,
     int? mood,
     int? energy,
     int? stress,
     String? note,
   }) async {
-    final timestamp = recordedAt ?? DateTime.now();
-    final normalizedDay =
-        DateTime(timestamp.year, timestamp.month, timestamp.day);
-    final entry = MoodCheckin()
-      ..userId = _userId
-      ..packageId = packageId
-      ..recordedAt = timestamp
-      ..dayKey = normalizedDay.millisecondsSinceEpoch
-      ..sessionId = sessionId
-      ..mood = _normalizeScore(mood)
-      ..energy = _normalizeScore(energy)
-      ..stress = _normalizeScore(stress)
-      ..note = _normalizeNote(note)
-      ..source = source
-      ..firestoreId = const Uuid().v4()
-      ..needsSync = true;
+    final userId = _userId;
+    if (userId == null) return;
 
-    await _db.isar.writeTxn(() async {
-      await _db.isar.moodCheckins.put(entry);
-    });
+    final normalizedNote = _normalizeNote(note);
 
-    await _sync.addJob(
-      collection: 'moodCheckins',
-      docId: entry.firestoreId,
-      action: 'create',
-      payload: _toSyncPayload(entry),
+    await (_db.update(_db.moodCheckinsTable)..where((t) => t.id.equals(id)))
+        .write(
+      MoodCheckinsTableCompanion(
+        mood: drift.Value(mood),
+        energy: drift.Value(energy),
+        stress: drift.Value(stress),
+        note: drift.Value(normalizedNote),
+        needsSync: const drift.Value(true),
+      ),
     );
 
-    return entry;
-  }
+    final updated = await (_db.select(_db.moodCheckinsTable)
+          ..where((t) => t.id.equals(id))
+          ..limit(1))
+        .getSingleOrNull();
+    if (updated == null) return;
 
-  Future<void> updateCheckin(MoodCheckin entry) async {
-    entry.mood = _normalizeScore(entry.mood);
-    entry.energy = _normalizeScore(entry.energy);
-    entry.stress = _normalizeScore(entry.stress);
-    entry.note = _normalizeNote(entry.note);
-    entry.needsSync = true;
-
-    await _db.isar.writeTxn(() async {
-      await _db.isar.moodCheckins.put(entry);
-    });
-
-    await _sync.addJob(
-      collection: 'moodCheckins',
-      docId: entry.firestoreId,
-      action: 'update',
-      payload: _toSyncPayload(entry),
-    );
-  }
-
-  Future<void> deleteCheckin(MoodCheckin entry) async {
-    await _db.isar.writeTxn(() async {
-      await _db.isar.moodCheckins.delete(entry.id);
-    });
-
-    await _sync.addJob(
-      collection: 'moodCheckins',
-      docId: entry.firestoreId,
-      action: 'delete',
+    await _syncService.enqueueUpsert(
+      tableName: 'mood_checkins',
+      recordId: id,
       payload: {
-        'deletedAt': DateTime.now().toIso8601String(),
+        'id': id,
+        'user_id': userId,
+        'enrollment_id': updated.enrollmentId,
+        'session_id': updated.sessionId,
+        'recorded_at': updated.recordedAt.toIso8601String(),
+        'day_key': updated.dayKey,
+        'mood': updated.mood,
+        'energy': updated.energy,
+        'stress': updated.stress,
+        'note': updated.note,
+        'source': updated.source,
       },
     );
   }
 
-  Future<List<MoodCheckin>> getCheckinsInRange({
-    required DateTime fromInclusive,
-    required DateTime toExclusive,
-    String? packageId,
-  }) async {
-    final query = _db.isar.moodCheckins
-        .filter()
-        .userIdEqualTo(_userId)
-        .recordedAtBetween(fromInclusive, toExclusive);
-
-    if (packageId != null && packageId.isNotEmpty) {
-      return query.packageIdEqualTo(packageId).sortByRecordedAt().findAll();
-    }
-    return query.sortByRecordedAt().findAll();
+  Future<void> deleteCheckin({required String id}) async {
+    await (_db.delete(_db.moodCheckinsTable)..where((t) => t.id.equals(id)))
+        .go();
+    await _syncService.enqueueDelete(tableName: 'mood_checkins', recordId: id);
   }
 
-  Future<List<MoodCheckin>> getNotesInRange({
-    required DateTime fromInclusive,
-    required DateTime toExclusive,
-    String? packageId,
-  }) async {
-    final items = await getCheckinsInRange(
-      fromInclusive: fromInclusive,
-      toExclusive: toExclusive,
-      packageId: packageId,
-    );
-    return items
-        .where((entry) => entry.note != null && entry.note!.trim().isNotEmpty)
-        .toList(growable: false);
-  }
-
-  Future<List<MoodDailyAggregate>> getDailyAggregatesInRange({
-    required DateTime fromInclusive,
-    required DateTime toExclusive,
-    String? packageId,
-  }) async {
-    final items = await getCheckinsInRange(
-      fromInclusive: fromInclusive,
-      toExclusive: toExclusive,
-      packageId: packageId,
-    );
-    final byDay = <int, List<MoodCheckin>>{};
-    for (final item in items) {
-      byDay.putIfAbsent(item.dayKey, () => <MoodCheckin>[]).add(item);
-    }
-
-    final keys = byDay.keys.toList()..sort();
-    final aggregates = <MoodDailyAggregate>[];
-    for (final dayKey in keys) {
-      final dailyItems = byDay[dayKey]!;
-      aggregates.add(
-        MoodDailyAggregate(
-          day: DateTime.fromMillisecondsSinceEpoch(dayKey),
-          avgMood: _averageScore(dailyItems, (entry) => entry.mood),
-          minMood: _minScore(dailyItems, (entry) => entry.mood),
-          maxMood: _maxScore(dailyItems, (entry) => entry.mood),
-          avgEnergy: _averageScore(dailyItems, (entry) => entry.energy),
-          minEnergy: _minScore(dailyItems, (entry) => entry.energy),
-          maxEnergy: _maxScore(dailyItems, (entry) => entry.energy),
-          avgStress: _averageScore(dailyItems, (entry) => entry.stress),
-          minStress: _minScore(dailyItems, (entry) => entry.stress),
-          maxStress: _maxScore(dailyItems, (entry) => entry.stress),
-          entriesCount: dailyItems.length,
-          noteCount: dailyItems
-              .where((entry) =>
-                  entry.note != null && entry.note!.trim().isNotEmpty)
-              .length,
-        ),
-      );
-    }
-    return aggregates;
-  }
-
-  int? _normalizeScore(int? value) {
-    if (value == null) return null;
-    return value.clamp(1, 5);
-  }
-
-  String? _normalizeNote(String? note) {
-    final trimmed = note?.trim();
+  String? _normalizeNote(String? input) {
+    final trimmed = input?.trim();
     if (trimmed == null || trimmed.isEmpty) return null;
     return trimmed;
   }
 
-  double? _averageScore(
-    List<MoodCheckin> values,
-    int? Function(MoodCheckin entry) selector,
-  ) {
-    final scores =
-        values.map(selector).whereType<int>().toList(growable: false);
-    if (scores.isEmpty) return null;
-    final sum = scores.reduce((a, b) => a + b);
-    return sum / scores.length;
-  }
-
-  double? _minScore(
-    List<MoodCheckin> values,
-    int? Function(MoodCheckin entry) selector,
-  ) {
-    final scores =
-        values.map(selector).whereType<int>().toList(growable: false);
-    if (scores.isEmpty) return null;
-    return scores.reduce((a, b) => a < b ? a : b).toDouble();
-  }
-
-  double? _maxScore(
-    List<MoodCheckin> values,
-    int? Function(MoodCheckin entry) selector,
-  ) {
-    final scores =
-        values.map(selector).whereType<int>().toList(growable: false);
-    if (scores.isEmpty) return null;
-    return scores.reduce((a, b) => a > b ? a : b).toDouble();
-  }
-
-  Map<String, dynamic> _toSyncPayload(MoodCheckin entry) {
-    return {
-      'userId': entry.userId,
-      'packageId': entry.packageId,
-      'recordedAt': entry.recordedAt.toIso8601String(),
-      'dayKey': entry.dayKey,
-      'sessionId': entry.sessionId,
-      'mood': entry.mood,
-      'energy': entry.energy,
-      'stress': entry.stress,
-      'note': entry.note,
-      'source': entry.source.name,
-    };
+  double? _avg(Iterable<int?> values) {
+    final nonNull = values.whereType<int>().toList();
+    if (nonNull.isEmpty) return null;
+    final sum = nonNull.reduce((a, b) => a + b);
+    return sum / nonNull.length;
   }
 }

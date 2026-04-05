@@ -1,34 +1,22 @@
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter/foundation.dart';
 
-class AppClock {
-  static const String overrideKey = 'debug_time_override_ms';
+// Provides the app's notion of "now". In production this stays unshifted.
+class AppClock extends ChangeNotifier {
+  Duration _offset = Duration.zero;
 
-  final SharedPreferences? _prefs;
+  Duration get offset => _offset;
 
-  AppClock([this._prefs]);
+  DateTime now() => DateTime.now().add(_offset);
 
-  DateTime now() {
-    final ms = _prefs?.getInt(overrideKey);
-    if (ms != null) {
-      return DateTime.fromMillisecondsSinceEpoch(ms);
-    }
-    return DateTime.now();
+  void setOffset(Duration offset) {
+    if (_offset == offset) return;
+    _offset = offset;
+    notifyListeners();
   }
 
-  DateTime? get overrideNow {
-    final ms = _prefs?.getInt(overrideKey);
-    if (ms == null) return null;
-    return DateTime.fromMillisecondsSinceEpoch(ms);
-  }
-
-  Future<void> setOverride(DateTime? value) async {
-    final prefs = _prefs;
-    if (prefs == null) return;
-    if (value == null) {
-      await prefs.remove(overrideKey);
-      return;
-    }
-    await prefs.setInt(overrideKey, value.millisecondsSinceEpoch);
+  void reset() {
+    if (_offset == Duration.zero) return;
+    _offset = Duration.zero;
+    notifyListeners();
   }
 }
-

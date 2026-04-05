@@ -2,354 +2,190 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
 
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:connectivity_plus/connectivity_plus.dart';
-import 'package:flutter/foundation.dart';
-import 'package:isar/isar.dart';
+import 'package:drift/drift.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:uuid/uuid.dart';
 
-import '../database/database_service.dart';
-import 'models/sync_job.dart';
+import '../database/app_database.dart';
+import '../logging/app_logger.dart';
+import 'connectivity_service.dart';
+import 'sync_status.dart';
+import '../../features/trainer/domain/services/trainer_notification_service.dart';
 
-class SyncQueueStats {
-  final int pendingJobs;
-  final int createJobs;
-  final int updateJobs;
-  final int deleteJobs;
-  final DateTime? oldestJobAt;
-
-  const SyncQueueStats({
-    required this.pendingJobs,
-    required this.createJobs,
-    required this.updateJobs,
-    required this.deleteJobs,
-    required this.oldestJobAt,
-  });
-}
+const _uuid = Uuid();
 
 class SyncService {
-  final DatabaseService _db;
-  final FirebaseFirestore? _firestore;
-  final Connectivity _connectivity;
-
-  StreamSubscription? _connectivitySubscription;
+  final AppDatabase _db;
+  Timer? _periodicTimer;
   bool _isSyncing = false;
-  Timer? _periodicSyncTimer;
-  DateTime? _permissionBlockedUntil;
+  DateTime? _lastSyncAt;
 
-  SyncService(
-    this._db, {
-    FirebaseFirestore? firestore,
-    Connectivity? connectivity,
-  })  : _firestore = firestore,
-        _connectivity = connectivity ?? Connectivity();
+  final _statusController = StreamController<SyncStatus>.broadcast();
+  Stream<SyncStatus> get statusStream => _statusController.stream;
 
-  void init() {
-    // Skip sync initialization if Firebase is not configured
-    if (_firestore == null) {
-      debugPrint(
-          '[SyncService] Firebase not configured - running in offline mode');
-      return;
-    }
+  SyncService(this._db);
 
-    // Listen to connectivity changes
-    _connectivitySubscription =
-        _connectivity.onConnectivityChanged.listen((results) {
-      if (results.any((r) => r != ConnectivityResult.none)) {
-        debugPrint('[SyncService] Online - triggering sync');
-        syncPendingJobs();
-      }
-    });
-
-    // Periodic sync every 5 minutes
-    _periodicSyncTimer = Timer.periodic(
+  void start() {
+    _periodicTimer = Timer.periodic(
       const Duration(minutes: 5),
-      (_) => syncPendingJobs(),
+      (_) => drain(),
     );
-
-    // Initial sync after 2 seconds
-    Future.delayed(const Duration(seconds: 2), syncPendingJobs);
+    // Emit initial status on start
+    _emitStatus();
   }
 
-  void dispose() {
-    _connectivitySubscription?.cancel();
-    _periodicSyncTimer?.cancel();
+  void stop() {
+    _periodicTimer?.cancel();
+    _statusController.close();
   }
 
-  Future<void> syncPendingJobs() async {
-    if (_isSyncing || _firestore == null) return;
+  Future<void> drain() async {
+    if (_isSyncing) return;
+    if (!await ConnectivityService.isConnected()) return;
 
-    final blockedUntil = _permissionBlockedUntil;
-    final now = DateTime.now();
-    if (blockedUntil != null) {
-      if (now.isBefore(blockedUntil)) {
-        return;
-      }
-      _permissionBlockedUntil = null;
-    }
+    final client = Supabase.instance.client;
+    if (client.auth.currentUser == null) return;
 
     _isSyncing = true;
-
+    _emitStatus();
     try {
-      while (true) {
-        final jobs = await _db.isar.syncJobs
-            .where()
-            .sortByCreatedAt()
-            .limit(50)
-            .findAll();
-        if (jobs.isEmpty) break;
-
-        debugPrint('[SyncService] Syncing ${jobs.length} jobs');
-        var attemptedJob = false;
-        var droppedByRetryLimit = 0;
-
-        for (final job in jobs) {
-          if (job.retryCount >= 5) {
-            attemptedJob = true;
-            droppedByRetryLimit++;
-            await _db.isar.writeTxn(() async {
-              await _db.isar.syncJobs.delete(job.id);
-            });
-            continue;
-          }
-
-          // Exponential backoff
-          if (job.lastAttempt != null) {
-            final backoffMs = min(pow(2, job.retryCount) * 1000, 60000).toInt();
-            final elapsed =
-                DateTime.now().difference(job.lastAttempt!).inMilliseconds;
-            if (elapsed < backoffMs) continue;
-          }
-
-          attemptedJob = true;
-          try {
-            await _processJob(job);
-            await _db.isar.writeTxn(() async {
-              await _db.isar.syncJobs.delete(job.id);
-            });
-          } catch (e) {
-            if (_isPermissionDeniedError(e)) {
-              debugPrint(
-                '[SyncService] Permission denied for job ${job.id}; '
-                'pausing sync retries for 2 minutes.',
-              );
-              await _db.isar.writeTxn(() async {
-                job.lastAttempt = DateTime.now();
-                await _db.isar.syncJobs.put(job);
-              });
-              _permissionBlockedUntil =
-                  DateTime.now().add(const Duration(minutes: 2));
-              break;
-            }
-
-            debugPrint('[SyncService] Job ${job.id} failed: $e');
-            await _db.isar.writeTxn(() async {
-              job.retryCount++;
-              job.lastAttempt = DateTime.now();
-              if (job.retryCount >= 5) {
-                await _db.isar.syncJobs.delete(job.id);
-              } else {
-                await _db.isar.syncJobs.put(job);
-              }
-            });
-          }
-        }
-        if (droppedByRetryLimit > 0) {
-          debugPrint(
-            '[SyncService] Dropped $droppedByRetryLimit jobs after retry limit',
-          );
-        }
-
-        // Avoid busy-looping when all fetched jobs are still in backoff.
-        if (!attemptedJob) break;
-        if (jobs.length < 50) break;
-      }
+      await _processPendingJobs(client);
+      _lastSyncAt = DateTime.now();
     } finally {
       _isSyncing = false;
+      _emitStatus();
     }
   }
 
-  Future<void> _processJob(SyncJob job) async {
-    if (_firestore == null) return;
+  Future<void> _processPendingJobs(SupabaseClient client) async {
+    final jobs = await (_db.select(_db.syncJobsTable)
+          ..orderBy([(t) => OrderingTerm.asc(t.createdAt)]))
+        .get();
 
-    final data = jsonDecode(job.payload) as Map<String, dynamic>;
-    final ref = _firestore.collection(job.collection).doc(job.docId);
+    // Coalesce: for each (table, recordId), keep only the latest job
+    // and delete superseded older jobs immediately
+    final supersededIds = <String>[];
+    final coalesced = <String, SyncJobsTableData>{};
+    for (final job in jobs) {
+      final key = '${job.tableName_}:${job.recordId}';
+      if (coalesced.containsKey(key)) {
+        supersededIds.add(coalesced[key]!.id);
+      }
+      coalesced[key] = job;
+    }
 
-    switch (job.action) {
-      case 'create':
-      case 'update':
-        await ref.set(data, SetOptions(merge: true));
-        break;
-      case 'delete':
-        await ref.delete();
-        break;
+    if (supersededIds.isNotEmpty) {
+      await (_db.delete(_db.syncJobsTable)
+            ..where((t) => t.id.isIn(supersededIds)))
+          .go();
+      appLogger.d('Deleted ${supersededIds.length} superseded sync jobs');
+    }
+
+    for (final job in coalesced.values) {
+      if (job.retryCount >= 5) {
+        appLogger.w('Sync job ${job.id} exceeded max retries — skipping');
+        continue;
+      }
+
+      // Exponential backoff: 30s, 60s, 120s, 240s, 480s
+      if (job.retryCount > 0 && job.lastAttemptAt != null) {
+        final backoffSeconds =
+            min(30 * pow(2, job.retryCount - 1).toInt(), 1800);
+        final nextRetryAt =
+            job.lastAttemptAt!.add(Duration(seconds: backoffSeconds));
+        if (DateTime.now().isBefore(nextRetryAt)) continue;
+      }
+
+      try {
+        if (job.action == 'upsert') {
+          final payload = jsonDecode(job.payload) as Map<String, dynamic>;
+          await client.from(job.tableName_).upsert(payload);
+          // Notify trainer after training session syncs
+          if (job.tableName_ == 'training_sessions' &&
+              payload['is_completed'] == true) {
+            final traineeId = payload['user_id'] as String?;
+            final dayNumber = payload['day_number'] as int?;
+            if (traineeId != null && dayNumber != null) {
+              unawaited(
+                TrainerNotificationService.instance.checkAndNotifyTrainer(
+                  traineeId,
+                  dayNumber,
+                ),
+              );
+            }
+          }
+        } else if (job.action == 'delete') {
+          await client.from(job.tableName_).delete().eq('id', job.recordId);
+        }
+
+        await (_db.delete(_db.syncJobsTable)
+              ..where((t) => t.id.equals(job.id)))
+            .go();
+
+        appLogger.d('Synced ${job.tableName_}:${job.recordId}');
+      } on AuthException {
+        appLogger.w('Auth error during sync — pausing');
+        _isSyncing = false;
+        return;
+      } catch (e, st) {
+        appLogger.e('Sync error for job ${job.id}', error: e, stackTrace: st);
+        await (_db.update(_db.syncJobsTable)
+              ..where((t) => t.id.equals(job.id)))
+            .write(SyncJobsTableCompanion(
+          retryCount: Value(job.retryCount + 1),
+          lastAttemptAt: Value(DateTime.now()),
+        ));
+      }
     }
   }
 
-  Future<void> addJob({
-    required String collection,
-    required String docId,
-    required String action,
+  Future<void> enqueueUpsert({
+    required String tableName,
+    required String recordId,
     required Map<String, dynamic> payload,
   }) async {
-    await _db.isar.writeTxn(() async {
-      final existingForDoc = await _db.isar.syncJobs
-          .filter()
-          .collectionEqualTo(collection)
-          .docIdEqualTo(docId)
-          .findAll();
-      final hasPendingDelete = _hasPendingDelete(existingForDoc);
-
-      if (action == 'delete') {
-        if (existingForDoc.isNotEmpty) {
-          await _db.isar.syncJobs
-              .deleteAll(existingForDoc.map((j) => j.id).toList());
-        }
-
-        final deleteJob = SyncJob()
-          ..collection = collection
-          ..docId = docId
-          ..action = 'delete'
-          ..payload = jsonEncode(payload)
-          ..createdAt = DateTime.now()
-          ..retryCount = 0;
-        await _db.isar.syncJobs.put(deleteJob);
-        return;
-      }
-
-      if (hasPendingDelete) {
-        debugPrint(
-          '[SyncService] Ignoring $action for $collection/$docId '
-          'because a delete job is pending',
+    await _db.into(_db.syncJobsTable).insertOnConflictUpdate(
+          SyncJobsTableCompanion.insert(
+            id: _uuid.v4(),
+            action: 'upsert',
+            tableName_: tableName,
+            recordId: recordId,
+            payload: jsonEncode(payload),
+          ),
         );
-        return;
-      }
-
-      final nonDeleteJobs =
-          existingForDoc.where((j) => j.action != 'delete').toList();
-      final hasPendingCreate = _hasPendingCreate(nonDeleteJobs);
-
-      if (nonDeleteJobs.isEmpty) {
-        if (existingForDoc.isNotEmpty) {
-          await _db.isar.syncJobs
-              .deleteAll(existingForDoc.map((j) => j.id).toList());
-        }
-
-        final newJob = SyncJob()
-          ..collection = collection
-          ..docId = docId
-          ..action = action
-          ..payload = jsonEncode(payload)
-          ..createdAt = DateTime.now()
-          ..retryCount = 0;
-        await _db.isar.syncJobs.put(newJob);
-        return;
-      }
-
-      nonDeleteJobs.sort((a, b) => a.createdAt.compareTo(b.createdAt));
-      final primary = nonDeleteJobs.first;
-      final mergedPayload = _mergePayloads(
-        nonDeleteJobs.map((job) => job.payload),
-        payload,
-      );
-
-      primary
-        ..action = _resolveCoalescedAction(
-          hasPendingCreate: hasPendingCreate,
-          incomingAction: action,
-        )
-        ..payload = jsonEncode(mergedPayload)
-        ..lastAttempt = null
-        ..retryCount = 0;
-      await _db.isar.syncJobs.put(primary);
-
-      final redundantIds =
-          nonDeleteJobs.skip(1).map((job) => job.id).toList(growable: false);
-      if (redundantIds.isNotEmpty) {
-        await _db.isar.syncJobs.deleteAll(redundantIds);
-      }
-    });
-
-    syncPendingJobs();
+    _emitStatus();
   }
 
-  @visibleForTesting
-  bool hasPendingDeleteForTesting(Iterable<SyncJob> jobs) {
-    return _hasPendingDelete(jobs);
+  Future<void> enqueueDelete({
+    required String tableName,
+    required String recordId,
+  }) async {
+    await _db.into(_db.syncJobsTable).insertOnConflictUpdate(
+          SyncJobsTableCompanion.insert(
+            id: _uuid.v4(),
+            action: 'delete',
+            tableName_: tableName,
+            recordId: recordId,
+            payload: '{}',
+          ),
+        );
+    _emitStatus();
   }
 
-  @visibleForTesting
-  String resolveCoalescedActionForTesting({
-    required bool hasPendingCreate,
-    required String incomingAction,
-  }) {
-    return _resolveCoalescedAction(
-      hasPendingCreate: hasPendingCreate,
-      incomingAction: incomingAction,
-    );
-  }
-
-  @visibleForTesting
-  Map<String, dynamic> mergePayloadsForTesting(
-    Iterable<String> existingPayloadsJson,
-    Map<String, dynamic> incomingPayload,
-  ) {
-    return _mergePayloads(existingPayloadsJson, incomingPayload);
-  }
-
-  bool _hasPendingDelete(Iterable<SyncJob> jobs) {
-    return jobs.any((job) => job.action == 'delete');
-  }
-
-  bool _hasPendingCreate(Iterable<SyncJob> jobs) {
-    return jobs.any((job) => job.action == 'create');
-  }
-
-  String _resolveCoalescedAction({
-    required bool hasPendingCreate,
-    required String incomingAction,
-  }) {
-    return (hasPendingCreate || incomingAction == 'create')
-        ? 'create'
-        : 'update';
-  }
-
-  Map<String, dynamic> _mergePayloads(
-    Iterable<String> existingPayloadsJson,
-    Map<String, dynamic> incomingPayload,
-  ) {
-    final mergedPayload = <String, dynamic>{};
-    for (final payloadJson in existingPayloadsJson) {
-      final decoded = jsonDecode(payloadJson) as Map<String, dynamic>;
-      mergedPayload.addAll(decoded);
+  Future<void> _emitStatus() async {
+    if (_statusController.isClosed) return;
+    try {
+      final all = await (_db.select(_db.syncJobsTable)).get();
+      final failed = all.where((j) => j.retryCount >= 5).length;
+      final pending = all.length - failed;
+      _statusController.add(SyncStatus(
+        isSyncing: _isSyncing,
+        pendingCount: pending,
+        failedCount: failed,
+        lastSyncAt: _lastSyncAt,
+      ));
+    } catch (_) {
+      // DB may not be ready yet on startup
     }
-    mergedPayload.addAll(incomingPayload);
-    return mergedPayload;
-  }
-
-  bool _isPermissionDeniedError(Object error) {
-    return error is FirebaseException && error.code == 'permission-denied';
-  }
-
-  Future<SyncQueueStats> getQueueStats() async {
-    final jobs = await _db.isar.syncJobs.where().sortByCreatedAt().findAll();
-    final createJobs = jobs.where((job) => job.action == 'create').length;
-    final updateJobs = jobs.where((job) => job.action == 'update').length;
-    final deleteJobs = jobs.where((job) => job.action == 'delete').length;
-
-    return SyncQueueStats(
-      pendingJobs: jobs.length,
-      createJobs: createJobs,
-      updateJobs: updateJobs,
-      deleteJobs: deleteJobs,
-      oldestJobAt: jobs.isEmpty ? null : jobs.first.createdAt,
-    );
-  }
-
-  Future<void> clearPendingJobs() async {
-    final jobs = await _db.isar.syncJobs.where().findAll();
-    final ids = jobs.map((job) => job.id).toList(growable: false);
-    await _db.isar.writeTxn(() async {
-      await _db.isar.syncJobs.deleteAll(ids);
-    });
   }
 }

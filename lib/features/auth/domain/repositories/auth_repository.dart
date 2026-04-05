@@ -1,11 +1,10 @@
-import '../models/user.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 abstract class AuthRepository {
-  Stream<User?> get authStateChanges;
+  Stream<AuthState> get authStateChanges;
   User? get currentUser;
-  
-  Future<User> signInWithEmail(String email, String password);
-  Future<User> signUpWithEmail(String email, String password);
-  Future<void> sendPasswordResetEmail(String email);
+  Future<void> signInWithEmail({required String email, required String password});
+  Future<void> signUpWithEmail({required String email, required String password});
+  Future<void> sendPasswordReset({required String email});
   Future<void> signOut();
 }

@@ -1,0 +1,106 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+
+import '../../../../core/navigation/app_router.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../../../l10n/app_localizations.dart';
+import '../../../progress/presentation/providers/progress_provider.dart';
+
+const _packages = [
+  ('moro', 'Moro Reflex'),
+  ('spinal_galant', 'Spinaler Galant + Amphibien'),
+  ('tlr', 'Tonischer Labirint Reflex (TLR)'),
+  ('babkin', 'Babkin + Plantar + Greifen'),
+  ('such_saug', 'Such-Saug Reflex'),
+  ('atnr', 'ATNR'),
+  ('stnr', 'STNR'),
+  ('babinski', 'Babinski Reflex'),
+  ('landau', 'Landau Reflex'),
+];
+
+// Indices of packages that are free/unlocked
+const _freePackageIndices = {0, 1, 2};
+
+class PackagesScreen extends ConsumerWidget {
+  const PackagesScreen({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final selectedPackageId = ref.watch(selectedPackageIdProvider);
+
+    return Scaffold(
+      appBar: AppBar(title: Text(l10n.packages)),
+      body: ListView.separated(
+        padding: const EdgeInsets.all(16),
+        itemCount: _packages.length,
+        separatorBuilder: (_, __) => const SizedBox(height: 8),
+        itemBuilder: (context, index) {
+          final (packageId, packageName) = _packages[index];
+          final isSelected = packageId == selectedPackageId;
+          final isLocked = !_freePackageIndices.contains(index);
+
+          return Card(
+            child: ListTile(
+              onTap: isLocked
+                  ? null
+                  : () {
+                      ref.read(selectedPackageIdProvider.notifier).select(packageId);
+                      context.pop();
+                    },
+              leading: Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: isSelected
+                      ? AppColors.primary
+                      : isLocked
+                          ? AppColors.divider
+                          : AppColors.success,
+                  shape: BoxShape.circle,
+                ),
+                child: Center(
+                  child: isLocked
+                      ? const Icon(Icons.lock, size: 16, color: Colors.grey)
+                      : Text(
+                          '${index + 1}',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 13,
+                          ),
+                        ),
+                ),
+              ),
+              title: Text(
+                packageName,
+                style: TextStyle(
+                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                  color: isLocked ? AppColors.textDisabled : null,
+                ),
+              ),
+              subtitle: isSelected
+                  ? Text(
+                      l10n.packageCurrent,
+                      style: TextStyle(color: AppColors.primary, fontSize: 12),
+                    )
+                  : isLocked
+                      ? Text(
+                          l10n.packageLocked,
+                          style: TextStyle(
+                              color: AppColors.textDisabled, fontSize: 12),
+                        )
+                      : Text(
+                          l10n.packageCompleted,
+                          style:
+                              TextStyle(color: AppColors.success, fontSize: 12),
+                        ),
+              trailing: isLocked ? null : const Icon(Icons.chevron_right),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}

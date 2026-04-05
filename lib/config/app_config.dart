@@ -1,79 +1,30 @@
-enum Environment {
-  development,
-  staging,
-  production;
-
-  bool get isDevelopment => this == Environment.development;
-  bool get isStaging => this == Environment.staging;
-  bool get isProduction => this == Environment.production;
-}
+enum AppEnvironment { development, production }
 
 class AppConfig {
-  final Environment environment;
-  final String appName;
-  final String bundleId;
-  final bool enableAnalytics;
-  final bool enableCrashReporting;
-  final bool showDebugBanner;
-  final bool enablePerformanceMonitoring;
-  final String logLevel;
+  final AppEnvironment environment;
+  final String supabaseUrl;
+  final String supabaseAnonKey;
+  final String revenueCatApiKey;
+
+  /// Email that may see dev tools in development builds.
+  /// Set via ADMIN_EMAIL in .env.dev. If empty, dev tools are hidden for all.
+  final String adminEmail;
+
+  /// Secret code that activates the trainer role.
+  /// Set via TRAINER_CODE in .env.dev / .env.prod.
+  final String trainerCode;
 
   const AppConfig({
     required this.environment,
-    required this.appName,
-    required this.bundleId,
-    required this.enableAnalytics,
-    required this.enableCrashReporting,
-    required this.showDebugBanner,
-    required this.enablePerformanceMonitoring,
-    required this.logLevel,
+    required this.supabaseUrl,
+    required this.supabaseAnonKey,
+    required this.revenueCatApiKey,
+    this.adminEmail = '',
+    this.trainerCode = '',
   });
 
-  // Development configuration
-  static const development = AppConfig(
-    environment: Environment.development,
-    appName: 'CoreJourney DEV',
-    bundleId: 'com.alexandermessinger.corejourney.dev',
-    enableAnalytics: false,
-    enableCrashReporting: false,
-    showDebugBanner: false,
-    enablePerformanceMonitoring: false,
-    logLevel: 'debug',
-  );
+  bool get isDevelopment => environment == AppEnvironment.development;
+  bool get isProduction => environment == AppEnvironment.production;
 
-  // Staging configuration
-  static const staging = AppConfig(
-    environment: Environment.staging,
-    appName: 'CoreJourney STAGING',
-    bundleId: 'com.alexandermessinger.corejourney.staging',
-    enableAnalytics: true,
-    enableCrashReporting: true,
-    showDebugBanner: false,
-    enablePerformanceMonitoring: true,
-    logLevel: 'info',
-  );
-
-  // Production configuration
-  static const production = AppConfig(
-    environment: Environment.production,
-    appName: 'CoreJourney',
-    bundleId: 'com.alexandermessinger.corejourney',
-    enableAnalytics: true,
-    enableCrashReporting: true,
-    showDebugBanner: false,
-    enablePerformanceMonitoring: true,
-    logLevel: 'error',
-  );
-
-  // Get current config
-  static AppConfig get current {
-    // Will be set by main_*.dart files
-    return _currentConfig ?? development;
-  }
-
-  static AppConfig? _currentConfig;
-
-  static void setConfig(AppConfig config) {
-    _currentConfig = config;
-  }
+  String get envLabel => isDevelopment ? 'DEV' : 'PROD';
 }

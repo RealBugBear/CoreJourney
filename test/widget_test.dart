@@ -1,9 +1,3 @@
-// Placeholder test file - replace with actual tests
-
-import 'package:flutter_test/flutter_test.dart';
-
-void main() {
-  test('placeholder test', () {
-    expect(1 + 1, 2);
-  });
-}
+// Widget tests will be added once the app is running on a simulator.
+// Placeholder to keep the test directory valid.
+void main() {}

@@ -1,13 +1,36 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
-import '../core/database/database_service.dart';
+import '../config/app_config.dart';
+import '../core/database/app_database.dart';
+import '../core/notifications/notification_service.dart';
+import '../core/settings/settings_provider.dart';
 import '../core/sync/sync_service.dart';
+import '../core/sync/sync_status.dart';
+import 'bootstrap.dart';
 
-// Providers that will be overridden in bootstrap
-final databaseProvider = Provider<DatabaseService>((ref) {
-  throw UnimplementedError('Must be overridden in bootstrap');
+// These are overridden in main with real values from Bootstrap
+final appConfigProvider = Provider<AppConfig>((ref) {
+  throw UnimplementedError('appConfigProvider must be overridden');
+});
+
+final databaseProvider = Provider<AppDatabase>((ref) {
+  throw UnimplementedError('databaseProvider must be overridden');
 });
 
 final syncServiceProvider = Provider<SyncService>((ref) {
-  throw UnimplementedError('Must be overridden in bootstrap');
+  throw UnimplementedError('syncServiceProvider must be overridden');
 });
+
+final syncStatusProvider = StreamProvider<SyncStatus>((ref) {
+  return ref.watch(syncServiceProvider).statusStream;
+});
+
+final notificationServiceProvider = Provider<NotificationService>((ref) {
+  return NotificationService.instance;
+});
+
+List<Override> bootstrapOverrides(Bootstrap bootstrap) => [
+      appConfigProvider.overrideWithValue(bootstrap.config),
+      databaseProvider.overrideWithValue(bootstrap.database),
+      syncServiceProvider.overrideWithValue(bootstrap.syncService),
+      sharedPreferencesProvider.overrideWithValue(bootstrap.prefs),
+    ];

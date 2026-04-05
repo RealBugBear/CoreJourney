@@ -1,24 +1,23 @@
-import 'package:isar/isar.dart';
+enum TrainingFeedbackMode { silent, haptic, voiceAndCues }
 
-part 'training_session.g.dart';
+enum TrainingSessionMode { tutorial, routine }
 
-@collection
-class TrainingSession {
-  Id id = Isar.autoIncrement;
-  
-  @Index()
-  late String userId;
-  
-  late DateTime date;
-  late int dayNumber; // 1-28 (4 weeks)
-  
-  late String exercisePackage; // e.g., "moro_reflex"
-  late List<String> completedExercises;
-  
-  late bool isCompleted;
-  DateTime? completedAt;
-  
-  // Sync metadata
-  late String firestoreId;
-  late bool needsSync;
+class TrainingSessionResult {
+  final String id;
+  final String enrollmentId;
+  final DateTime sessionDate;
+  final int dayNumber;
+  final List<String> completedExerciseIds;
+  final bool isCompleted;
+  final DateTime? completedAt;
+
+  const TrainingSessionResult({
+    required this.id,
+    required this.enrollmentId,
+    required this.sessionDate,
+    required this.dayNumber,
+    required this.completedExerciseIds,
+    this.isCompleted = false,
+    this.completedAt,
+  });
 }
