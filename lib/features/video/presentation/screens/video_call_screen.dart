@@ -51,6 +51,7 @@ class _VideoCallScreenState extends ConsumerState<VideoCallScreen> {
       appId: appId,
       channelProfile: ChannelProfileType.channelProfileCommunication,
     ));
+    if (mounted) setState(() => _engine = engine);
 
     engine.registerEventHandler(RtcEngineEventHandler(
       onJoinChannelSuccess: (connection, elapsed) {
@@ -76,8 +77,6 @@ class _VideoCallScreenState extends ConsumerState<VideoCallScreen> {
         clientRoleType: ClientRoleType.clientRoleBroadcaster,
       ),
     );
-
-    if (mounted) setState(() => _engine = engine);
   }
 
   @override
