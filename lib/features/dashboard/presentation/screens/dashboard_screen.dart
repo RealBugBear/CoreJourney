@@ -16,6 +16,7 @@ import '../../../mood/presentation/widgets/mood_checkin_sheet.dart';
 import '../../../consent/presentation/providers/consent_provider.dart';
 import '../../../progress/presentation/providers/progress_provider.dart';
 import '../../../trainer/presentation/providers/trainer_provider.dart';
+import '../../../chat/presentation/providers/chat_providers.dart';
 
 class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({super.key});
@@ -29,6 +30,13 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
   void _maybeRedirectOnboarding() {
     if (_onboardingCheckDone) return;
+
+    // Gate: do not decide while server data is being loaded into local DB.
+    // A returning user on a fresh device has an empty local DB until
+    // rehydrate() completes. Without this guard, they would incorrectly
+    // be sent to the intake assessment screen.
+    final isRehydrating = ref.read(rehydrationProvider).valueOrNull ?? false;
+    if (isRehydrating) return;
 
     // Step 1: consent must come first
     final consent = ref.read(hasConsentedProvider);
@@ -72,6 +80,18 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       if (!next.isLoading) _maybeRedirectOnboarding();
     });
 
+    // Case 3: rehydration completes → re-run check with fresh DB data.
+    // Resets _onboardingCheckDone so the check fires again after rehydrate()
+    // has filled the local DB with server enrollments.
+    ref.listen<AsyncValue<bool>>(rehydrationProvider, (prev, next) {
+      final wasRehydrating = prev?.valueOrNull ?? false;
+      final isNowDone = next.valueOrNull == false;
+      if (wasRehydrating && isNowDone) {
+        _onboardingCheckDone = false;
+        _maybeRedirectOnboarding();
+      }
+    });
+
     final progress = ref.watch(activeProgressProvider).valueOrNull;
     final enrollment = ref.watch(activeEnrollmentProvider).valueOrNull;
     final weekSessions = ref.watch(thisWeekSessionsProvider).valueOrNull ?? [];
@@ -100,6 +120,36 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 ),
               ),
             ),
+          Consumer(builder: (context, ref, _) {
+            final unread = ref.watch(totalUnreadCountProvider);
+            return Stack(
+              alignment: Alignment.center,
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.chat_bubble_outline),
+                  onPressed: () => context.push(Routes.chatInbox),
+                ),
+                if (unread > 0)
+                  Positioned(
+                    top: 8,
+                    right: 8,
+                    child: Container(
+                      padding: const EdgeInsets.all(2),
+                      decoration: const BoxDecoration(
+                        color: Colors.red,
+                        shape: BoxShape.circle,
+                      ),
+                      constraints: const BoxConstraints(minWidth: 14, minHeight: 14),
+                      child: Text(
+                        unread > 99 ? '99+' : '$unread',
+                        style: const TextStyle(color: Colors.white, fontSize: 9),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ),
+              ],
+            );
+          }),
           IconButton(
             icon: const Icon(Icons.person_outline),
             onPressed: () => context.push(Routes.profile),
@@ -621,7 +671,7 @@ class _JournalCard extends ConsumerWidget {
               if (latestEntry != null) ...[
                 const SizedBox(height: 4),
                 Text(
-                  latestEntry.note ?? '',
+                  latestEntry.content,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(

@@ -13,6 +13,7 @@ import '../../../../l10n/app_localizations.dart';
 import '../../domain/models/appointment.dart';
 import '../../domain/models/trainer_client.dart';
 import '../providers/trainer_provider.dart';
+import '../../../chat/presentation/providers/chat_providers.dart';
 
 class TrainerDashboardScreen extends ConsumerStatefulWidget {
   const TrainerDashboardScreen({super.key});
@@ -54,6 +55,36 @@ class _TrainerDashboardScreenState
           ],
         ),
         actions: [
+          Consumer(builder: (context, ref, _) {
+            final unread = ref.watch(totalUnreadCountProvider);
+            return Stack(
+              alignment: Alignment.center,
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.chat_bubble_outline),
+                  onPressed: () => context.push(Routes.chatInbox),
+                ),
+                if (unread > 0)
+                  Positioned(
+                    top: 8,
+                    right: 8,
+                    child: Container(
+                      padding: const EdgeInsets.all(2),
+                      decoration: const BoxDecoration(
+                        color: Colors.red,
+                        shape: BoxShape.circle,
+                      ),
+                      constraints: const BoxConstraints(minWidth: 14, minHeight: 14),
+                      child: Text(
+                        unread > 99 ? '99+' : '$unread',
+                        style: const TextStyle(color: Colors.white, fontSize: 9),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ),
+              ],
+            );
+          }),
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: () {

@@ -1,0 +1,103 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../data/repositories/supabase_chat_repository.dart';
+import '../../domain/models/chat_channel.dart';
+import '../../domain/models/chat_message.dart';
+import '../../domain/repositories/chat_repository.dart';
+
+// ── Repository ────────────────────────────────────────────────────────────────
+
+final chatRepositoryProvider = Provider<ChatRepository>((ref) {
+  return SupabaseChatRepository();
+});
+
+// ── Channels ──────────────────────────────────────────────────────────────────
+
+final chatChannelsProvider = FutureProvider.autoDispose<List<ChatChannel>>((ref) {
+  return ref.read(chatRepositoryProvider).getChannels();
+});
+
+// ── Unread badge count ────────────────────────────────────────────────────────
+
+final totalUnreadCountProvider = Provider.autoDispose<int>((ref) {
+  return ref.watch(chatChannelsProvider).maybeWhen(
+    data: (channels) => channels.fold(0, (sum, c) => sum + c.unreadCount),
+    orElse: () => 0,
+  );
+});
+
+// ── Messages stream ───────────────────────────────────────────────────────────
+
+final chatMessagesProvider = StreamProvider.autoDispose
+    .family<List<ChatMessage>, String>((ref, channelId) {
+  return ref.read(chatRepositoryProvider).watchMessages(channelId);
+});
+
+// ── Typing users stream ───────────────────────────────────────────────────────
+
+final typingUsersProvider = StreamProvider.autoDispose
+    .family<Set<String>, String>((ref, channelId) {
+  return ref.read(chatRepositoryProvider).watchTypingUsers(channelId);
+});
+
+// ── Send message notifier ─────────────────────────────────────────────────────
+
+class SendMessageNotifier extends AutoDisposeAsyncNotifier<void> {
+  @override
+  Future<void> build() async {}
+
+  Future<void> send(String channelId, String content) async {
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(
+      () => ref.read(chatRepositoryProvider).sendMessage(channelId, content),
+    );
+  }
+
+  Future<void> sendCallRequest(String channelId) async {
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(
+      () => ref.read(chatRepositoryProvider).sendCallRequest(channelId),
+    );
+  }
+}
+
+final sendMessageProvider =
+    AsyncNotifierProvider.autoDispose<SendMessageNotifier, void>(
+  SendMessageNotifier.new,
+);
+
+// ── Delete message notifier ───────────────────────────────────────────────────
+
+class DeleteMessageNotifier extends AutoDisposeAsyncNotifier<void> {
+  @override
+  Future<void> build() async {}
+
+  Future<void> delete(String messageId) async {
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(
+      () => ref.read(chatRepositoryProvider).deleteMessage(messageId),
+    );
+  }
+}
+
+final deleteMessageProvider =
+    AsyncNotifierProvider.autoDispose<DeleteMessageNotifier, void>(
+  DeleteMessageNotifier.new,
+);
+
+// ── Mark read notifier ────────────────────────────────────────────────────────
+
+class MarkReadNotifier extends AutoDisposeAsyncNotifier<void> {
+  @override
+  Future<void> build() async {}
+
+  Future<void> markRead(String channelId) async {
+    await ref.read(chatRepositoryProvider).markChannelRead(channelId);
+    ref.invalidate(chatChannelsProvider);
+  }
+}
+
+final markReadProvider =
+    AsyncNotifierProvider.autoDispose<MarkReadNotifier, void>(
+  MarkReadNotifier.new,
+);

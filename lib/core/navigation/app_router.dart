@@ -22,6 +22,9 @@ import '../../features/trainer/presentation/screens/appointment_proposal_screen.
 import '../../features/trainer/domain/models/trainer_client.dart';
 import '../../features/journal/presentation/screens/journal_screen.dart';
 import '../../features/dev_tools/presentation/screens/dev_tools_screen.dart';
+import '../../features/chat/domain/models/chat_channel.dart';
+import '../../features/chat/presentation/screens/chat_inbox_screen.dart';
+import '../../features/chat/presentation/screens/chat_channel_screen.dart';
 
 // Route name constants
 class Routes {
@@ -43,6 +46,8 @@ class Routes {
   static const trainerDashboard = '/trainer/dashboard';
   static const appointmentScheduler = '/trainer/appointment/:clientId';
   static const appointmentProposals = '/appointments/proposals';
+  static const chatInbox = '/chat';
+  static const chatChannel = '/chat/:channelId';
 }
 
 /// Bridges a Stream into a [Listenable] so GoRouter can react to auth changes.
@@ -184,6 +189,20 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: Routes.appointmentProposals,
         name: 'appointment-proposals',
         builder: (context, state) => const AppointmentProposalScreen(),
+      ),
+      GoRoute(
+        path: Routes.chatInbox,
+        name: 'chat-inbox',
+        builder: (context, state) => const ChatInboxScreen(),
+      ),
+      GoRoute(
+        path: Routes.chatChannel,
+        name: 'chat-channel',
+        builder: (context, state) {
+          final channelId = state.pathParameters['channelId']!;
+          final channel = state.extra as ChatChannel?;
+          return ChatChannelScreen(channelId: channelId, channel: channel);
+        },
       ),
       GoRoute(
         path: Routes.devTools,
