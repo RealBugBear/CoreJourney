@@ -10,6 +10,9 @@ import '../providers/chat_providers.dart';
 import '../widgets/message_bubble.dart';
 import '../widgets/message_input_bar.dart';
 import '../widgets/typing_indicator.dart';
+import '../../../video/domain/models/video_call.dart';
+import '../../../video/presentation/providers/video_providers.dart';
+import '../../../video/presentation/screens/video_call_screen.dart';
 
 class ChatChannelScreen extends ConsumerStatefulWidget {
   const ChatChannelScreen({
@@ -92,6 +95,57 @@ class _ChatChannelScreenState extends ConsumerState<ChatChannelScreen> {
     });
   }
 
+  Future<void> _startCall() async {
+    final call = await ref.read(startCallProvider.notifier).start(widget.channelId);
+    if (call == null) return;
+    final token = await ref
+        .read(videoRepositoryProvider)
+        .getAgoraToken(call.channelId, call.agoraChannelName);
+    if (!mounted) return;
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        fullscreenDialog: true,
+        builder: (_) => VideoCallScreen(call: call, token: token),
+      ),
+    );
+  }
+
+  void _showIncomingCall(VideoCall call) {
+    if (!mounted) return;
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Eingehender Video-Call'),
+        content: const Text(
+          'Dein Trainer möchte mit dir sprechen.\nMöchtest du beitreten?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Ignorieren'),
+          ),
+          FilledButton(
+            onPressed: () async {
+              Navigator.pop(ctx);
+              final token = await ref
+                  .read(videoRepositoryProvider)
+                  .getAgoraToken(call.channelId, call.agoraChannelName);
+              if (!mounted) return;
+              await Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  fullscreenDialog: true,
+                  builder: (_) => VideoCallScreen(call: call, token: token),
+                ),
+              );
+            },
+            child: const Text('Beitreten'),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _sendCallRequest() {
     showDialog<void>(
       context: context,
@@ -128,6 +182,19 @@ class _ChatChannelScreenState extends ConsumerState<ChatChannelScreen> {
 
     final messagesAsync = ref.watch(chatMessagesProvider(widget.channelId));
 
+    // Listen for active calls started by someone else (incoming call for practitioner).
+    ref.listen(activeCallProvider(widget.channelId), (prev, next) {
+      final call = next.valueOrNull;
+      if (call == null) return;
+      final currentUserId =
+          Supabase.instance.client.auth.currentUser?.id ?? '';
+      // Don't show incoming call dialog to the person who started it.
+      if (call.startedBy == currentUserId) return;
+      // Only show if this is a new call (prev had no active call for this id).
+      if (prev?.valueOrNull?.id == call.id) return;
+      _showIncomingCall(call);
+    });
+
     return Scaffold(
       appBar: AppBar(
         title: Text(channel?.channelDisplayName() ?? 'Chat'),
@@ -137,12 +204,7 @@ class _ChatChannelScreenState extends ConsumerState<ChatChannelScreen> {
             IconButton(
               icon: const Icon(Icons.videocam_outlined),
               tooltip: 'Call starten',
-              onPressed: () {
-                // Placeholder until Plan 2 (Video Chat) is implemented.
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Video-Chat kommt in Phase 2.')),
-                );
-              },
+              onPressed: _startCall,
             ),
         ],
       ),
