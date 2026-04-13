@@ -1,3 +1,5 @@
+// lib/config/app_config.dart
+
 enum AppEnvironment { development, production }
 
 class AppConfig {
@@ -5,14 +7,9 @@ class AppConfig {
   final String supabaseUrl;
   final String supabaseAnonKey;
   final String revenueCatApiKey;
-
-  /// Email that may see dev tools in development builds.
-  /// Set via ADMIN_EMAIL in .env.dev. If empty, dev tools are hidden for all.
   final String adminEmail;
-
-  /// Secret code that activates the trainer role.
-  /// Set via TRAINER_CODE in .env.dev / .env.prod.
   final String trainerCode;
+  final String agoraAppId;
 
   const AppConfig({
     required this.environment,
@@ -21,6 +18,7 @@ class AppConfig {
     required this.revenueCatApiKey,
     this.adminEmail = '',
     this.trainerCode = '',
+    this.agoraAppId = '',
   });
 
   bool get isDevelopment => environment == AppEnvironment.development;

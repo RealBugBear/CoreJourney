@@ -49,5 +49,9 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>CoreJourney benötigt Kamera-Zugriff für Video-Calls mit deinem Trainer.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>CoreJourney benötigt Mikrofon-Zugriff für Video-Calls mit deinem Trainer.</string>
 </dict>
 </plist>
