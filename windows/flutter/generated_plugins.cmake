@@ -3,8 +3,10 @@
 #
 
 list(APPEND FLUTTER_PLUGIN_LIST
+  agora_rtc_engine
   app_links
   connectivity_plus
+  iris_method_channel
   sqlite3_flutter_libs
   url_launcher_windows
 )
