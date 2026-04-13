@@ -1,5 +1,5 @@
 -- supabase/migrations/20260414_video_calls.sql
--- Run in DEV Supabase SQL editor. Idempotent: safe to re-run.
+-- Idempotent: safe to re-run.
 
 -- ── 1. video_calls ────────────────────────────────────────────
 
@@ -17,6 +17,13 @@ CREATE TABLE IF NOT EXISTS video_calls (
 CREATE INDEX IF NOT EXISTS idx_video_calls_channel
     ON video_calls(channel_id, started_at DESC);
 
+CREATE INDEX IF NOT EXISTS idx_video_calls_started_by
+    ON video_calls(started_by);
+
+CREATE INDEX IF NOT EXISTS idx_video_calls_active
+    ON video_calls(channel_id)
+    WHERE ended_at IS NULL;
+
 -- ── 3. RLS ───────────────────────────────────────────────────
 
 ALTER TABLE video_calls ENABLE ROW LEVEL SECURITY;
@@ -25,7 +32,7 @@ ALTER TABLE video_calls ENABLE ROW LEVEL SECURITY;
 DO $$ BEGIN
   IF NOT EXISTS (
     SELECT 1 FROM pg_policies
-    WHERE tablename = 'video_calls' AND policyname = 'video_calls_select_member'
+    WHERE schemaname = 'public' AND tablename = 'video_calls' AND policyname = 'video_calls_select_member'
   ) THEN
     CREATE POLICY video_calls_select_member ON video_calls
       FOR SELECT
@@ -43,7 +50,7 @@ END $$;
 DO $$ BEGIN
   IF NOT EXISTS (
     SELECT 1 FROM pg_policies
-    WHERE tablename = 'video_calls' AND policyname = 'video_calls_insert_moderator'
+    WHERE schemaname = 'public' AND tablename = 'video_calls' AND policyname = 'video_calls_insert_moderator'
   ) THEN
     CREATE POLICY video_calls_insert_moderator ON video_calls
       FOR INSERT
@@ -63,10 +70,23 @@ END $$;
 DO $$ BEGIN
   IF NOT EXISTS (
     SELECT 1 FROM pg_policies
-    WHERE tablename = 'video_calls' AND policyname = 'video_calls_update_started_by'
+    WHERE schemaname = 'public' AND tablename = 'video_calls' AND policyname = 'video_calls_update_started_by'
   ) THEN
     CREATE POLICY video_calls_update_started_by ON video_calls
       FOR UPDATE
-      USING (started_by = auth.uid());
+      USING (started_by = auth.uid())
+      WITH CHECK (started_by = auth.uid());
+  END IF;
+END $$;
+
+-- DELETE: intentionally blocked at client level; calls are soft-deleted via ended_at.
+DO $$ BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE schemaname = 'public' AND tablename = 'video_calls' AND policyname = 'video_calls_delete_deny'
+  ) THEN
+    CREATE POLICY video_calls_delete_deny ON video_calls
+      FOR DELETE
+      USING (false);
   END IF;
 END $$;
