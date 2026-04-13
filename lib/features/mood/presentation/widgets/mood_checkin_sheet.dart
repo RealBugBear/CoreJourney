@@ -115,7 +115,9 @@ class _MoodCheckinSheetState extends ConsumerState<MoodCheckinSheet> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
 
-    return Padding(
+    // SingleChildScrollView lets the user scroll to the save button when the
+    // keyboard is open and the sheet content no longer fits on screen.
+    return SingleChildScrollView(
       padding: EdgeInsets.only(
         left: 20,
         right: 20,

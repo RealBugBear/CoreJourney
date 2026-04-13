@@ -1,5 +1,4 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 
@@ -35,8 +34,10 @@ class NotificationService {
     if (_initialized) return;
 
     tz.initializeTimeZones();
-    final timeZoneName = await FlutterTimezone.getLocalTimezone();
-    tz.setLocalLocation(tz.getLocation(timeZoneName));
+    // Android build compatibility: avoid depending on flutter_timezone here.
+    // Daily reminders still work, but are scheduled relative to UTC until a
+    // newer timezone integration is added back.
+    tz.setLocalLocation(tz.UTC);
 
     const androidSettings =
         AndroidInitializationSettings('@mipmap/ic_launcher');

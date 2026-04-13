@@ -219,6 +219,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get packageCompleted => 'Completed';
 
   @override
+  String get packageAvailable => 'Available';
+
+  @override
   String get settings => 'Settings';
 
   @override

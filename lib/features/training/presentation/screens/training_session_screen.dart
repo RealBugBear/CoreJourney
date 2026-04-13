@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
 import '../../../../core/navigation/app_router.dart';
 
 import '../../../../bootstrap/providers.dart';
+import '../../../../core/database/app_database.dart';
 import '../../../../core/notifications/notification_service.dart';
+import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../../core/settings/settings_provider.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../l10n/app_localizations.dart';
@@ -47,11 +50,34 @@ class _TrainingSessionScreenState extends ConsumerState<TrainingSessionScreen> {
   }
 
   Future<void> _handleOutroContinue(TrainingFlowState state) async {
-    // Save session + update progress in background
+    // Save session + update progress in background.
+    //
+    // IMPORTANT: Do NOT use activeEnrollmentProvider here — it is keyed to
+    // selectedPackageIdProvider, which may differ from widget.packageId if the
+    // user has multiple packages. Query the DB directly for this package.
     final db = ref.read(databaseProvider);
     final syncService = ref.read(syncServiceProvider);
-    final enrollment = ref.read(activeEnrollmentProvider).valueOrNull;
-    final progress = ref.read(activeProgressProvider).valueOrNull;
+    final userId = ref.read(authStateProvider).valueOrNull?.session?.user.id
+        ?? Supabase.instance.client.auth.currentUser?.id;
+
+    EnrollmentsTableData? enrollment;
+    ProgressEntriesTableData? progress;
+
+    if (userId != null) {
+      final rows = await (db.select(db.enrollmentsTable)
+            ..where((t) => t.userId.equals(userId))
+            ..where((t) => t.packageId.equals(widget.packageId))
+            ..where((t) => t.status.equals('active'))
+            ..limit(1))
+          .get();
+      enrollment = rows.firstOrNull;
+      if (enrollment != null) {
+        progress = await (db.select(db.progressEntriesTable)
+              ..where((t) => t.enrollmentId.equals(enrollment!.id))
+              ..limit(1))
+            .getSingleOrNull();
+      }
+    }
 
     if (enrollment != null && progress != null) {
       await saveCompletedSession(

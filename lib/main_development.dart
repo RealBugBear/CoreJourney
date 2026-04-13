@@ -5,7 +5,6 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import 'app.dart';
 import 'bootstrap/bootstrap.dart';
@@ -32,13 +31,6 @@ void main() {
 
 Future<void> _main() async {
   _dbg('_main() started');
-  if (Platform.isIOS) {
-    // iOS 26 beta: install the in-memory SharedPreferences store before
-    // ensureInitialized() triggers Flutter's plugin registrant.
-    // ignore: invalid_use_of_visible_for_testing_member
-    SharedPreferences.setMockInitialValues({});
-    _dbg('_main() installed SharedPreferences iOS mock');
-  }
   WidgetsFlutterBinding.ensureInitialized();
 
   // Make widget-tree build errors visible (text) instead of blank white screen.

@@ -1,5 +1,7 @@
+import 'package:drift/drift.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../bootstrap/providers.dart';
 import '../../domain/models/exercise.dart';
 import '../../domain/models/training_session.dart';
 
@@ -135,22 +137,73 @@ class TrainingFlowNotifier extends StateNotifier<TrainingFlowState> {
   }
 }
 
-List<Exercise> _exercisesForPackage(String packageId) {
+// ── Exercise loading ──────────────────────────────────────────────────────────
+//
+// Exercises are loaded from the local Drift DB cache (populated from Supabase
+// by ExercisesSyncService on startup). If the DB cache is empty (first offline
+// launch before any sync), falls back to the hardcoded const lists so the app
+// remains fully functional without network.
+
+/// Loads exercises for [packageId] from the local Drift cache.
+/// Returns null if the cache is empty for that package.
+final _dbExercisesProvider = FutureProvider.autoDispose
+    .family<List<Exercise>?, String>((ref, packageId) async {
+  final db = ref.watch(databaseProvider);
+  final rows = await (db.select(db.exercisesTable)
+        ..where((t) => t.packageId.equals(packageId))
+        ..orderBy([(t) => OrderingTerm.asc(t.sequenceNumber)]))
+      .get();
+
+  if (rows.isEmpty) return null; // trigger hardcoded fallback
+
+  return rows.map((row) => Exercise.fromRow({
+    'id':                        row.id,
+    'package_id':                row.packageId,
+    'sequence_number':           row.sequenceNumber,
+    'title_de':                  row.titleDe,
+    'title_en':                  row.titleEn,
+    'position_instructions_de':  row.positionInstructionsDe,
+    'position_instructions_en':  row.positionInstructionsEn,
+    'movement_instructions_de':  row.movementInstructionsDe,
+    'movement_instructions_en':  row.movementInstructionsEn,
+    'hints_de':                  row.hintsDe,
+    'hints_en':                  row.hintsEn,
+    'execution_guide_de':        row.executionGuideDe,
+    'execution_guide_en':        row.executionGuideEn,
+    'duration_seconds':          row.durationSeconds,
+    'repetitions':               row.repetitions,
+    'image_path':                row.imagePath,
+    'video_path':                row.videoPath,
+    'audio_cue_path':            row.audioCuePath,
+    'rhythm_type':               row.rhythmType,
+    'phases_json':               row.phasesJson,
+    'has_rep_switch':            row.hasRepSwitch,
+    'hold_cue_de':               row.holdCueDe,
+    'hold_cue_en':               row.holdCueEn,
+    'hold_seconds':              row.holdSeconds,
+    'rest_seconds':              row.restSeconds,
+    'halfway_switch':            row.halfwaySwitch,
+  })).toList();
+});
+
+/// Hardcoded fallback — used only when the Drift cache is empty (offline first launch).
+List<Exercise> _hardcodedFallback(String packageId) {
   switch (packageId) {
-    case 'spinal_galant':
-      return spinalGalantExercises;
-    case 'tlr':
-      return tlrExercises;
+    case 'spinal_galant': return spinalGalantExercises;
+    case 'tlr':           return tlrExercises;
     case 'moro':
-    default:
-      return moroExercises;
+    default:              return moroExercises;
   }
 }
 
 final trainingFlowProvider = StateNotifierProvider.autoDispose
     .family<TrainingFlowNotifier, TrainingFlowState, String>((ref, packageId) {
+  // Try DB cache first; use hardcoded fallback if not ready or empty.
+  final dbAsync = ref.watch(_dbExercisesProvider(packageId));
+  final exercises = dbAsync.valueOrNull ?? _hardcodedFallback(packageId);
+
   return TrainingFlowNotifier(
-    exercises: _exercisesForPackage(packageId),
+    exercises: exercises,
     mode: TrainingSessionMode.tutorial,
     requiresDisclaimer: false, // TODO: check progress entry
   );

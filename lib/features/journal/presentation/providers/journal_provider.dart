@@ -1,13 +1,26 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../bootstrap/providers.dart';
 import '../../../../core/database/app_database.dart';
 import '../../../../core/time/app_clock_provider.dart';
 import '../../../mood/domain/models/mood_daily_aggregate.dart';
 import '../../../mood/presentation/providers/mood_provider.dart';
 import '../../../progress/presentation/providers/progress_provider.dart';
+import '../../data/repositories/journal_repository.dart';
+
+// ── Repository provider ───────────────────────────────────────────────────────
+
+final journalRepositoryProvider = Provider<JournalRepository>((ref) {
+  return JournalRepository(
+    ref.read(databaseProvider),
+    ref.read(syncServiceProvider),
+  );
+});
+
+// ── State ─────────────────────────────────────────────────────────────────────
 
 class JournalState {
-  final List<MoodCheckinsTableData> entries;
+  final List<JournalEntriesTableData> entries;
   final List<MoodDailyAggregate> aggregates;
   final bool isLoading;
   final String? error;
@@ -26,7 +39,7 @@ class JournalState {
       );
 
   JournalState copyWith({
-    List<MoodCheckinsTableData>? entries,
+    List<JournalEntriesTableData>? entries,
     List<MoodDailyAggregate>? aggregates,
     bool? isLoading,
     String? error,
@@ -40,6 +53,8 @@ class JournalState {
     );
   }
 }
+
+// ── Notifier ──────────────────────────────────────────────────────────────────
 
 class JournalNotifier extends StateNotifier<JournalState> {
   final Ref _ref;
@@ -76,16 +91,17 @@ class JournalNotifier extends StateNotifier<JournalState> {
 
     _setStateIfMounted(state.copyWith(isLoading: true, clearError: true));
     try {
-      final repo = _ref.read(moodRepositoryProvider);
+      final journalRepo = _ref.read(journalRepositoryProvider);
+      final moodRepo = _ref.read(moodRepositoryProvider);
       final effectiveFrom = from ?? _defaultFrom();
       final effectiveTo = to ?? _ref.read(appClockProvider).now();
 
-      final entries = await repo.getNotesInRange(
+      final entries = await journalRepo.getEntriesInRange(
         enrollmentId: enrollmentId,
         from: effectiveFrom,
         to: effectiveTo,
       );
-      final aggregates = await repo.getDailyAggregatesInRange(
+      final aggregates = await moodRepo.getDailyAggregatesInRange(
         enrollmentId: enrollmentId,
         from: effectiveFrom,
         to: effectiveTo,
@@ -104,44 +120,8 @@ class JournalNotifier extends StateNotifier<JournalState> {
     }
   }
 
-  Future<void> addEntry({
-    required int mood,
-    required int energy,
-    required int stress,
-    String? note,
-  }) async {
-    final enrollmentId = _enrollmentId;
-    if (enrollmentId == null) return;
-    await _ref.read(moodRepositoryProvider).createCheckin(
-          enrollmentId: enrollmentId,
-          mood: mood,
-          energy: energy,
-          stress: stress,
-          note: note,
-          source: 'manual',
-        );
-    await load();
-  }
-
-  Future<void> updateEntry({
-    required String id,
-    required int mood,
-    required int energy,
-    required int stress,
-    String? note,
-  }) async {
-    await _ref.read(moodRepositoryProvider).updateCheckin(
-          id: id,
-          mood: mood,
-          energy: energy,
-          stress: stress,
-          note: note,
-        );
-    await load();
-  }
-
-  Future<void> deleteEntry(String id) async {
-    await _ref.read(moodRepositoryProvider).deleteCheckin(id: id);
+  Future<void> deleteEntry(String journalEntryId) async {
+    await _ref.read(journalRepositoryProvider).deleteEntry(journalEntryId);
     await load();
   }
 }

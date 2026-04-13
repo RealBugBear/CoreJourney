@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../../../../bootstrap/providers.dart';
 import '../providers/consent_provider.dart';
 import '../../../../core/settings/settings_provider.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -19,14 +18,21 @@ class ConsentScreen extends ConsumerStatefulWidget {
   ConsumerState<ConsentScreen> createState() => _ConsentScreenState();
 }
 
-class _ConsentScreenState extends ConsumerState<ConsentScreen> {
-  final _scrollController = ScrollController();
+class _ConsentScreenState extends ConsumerState<ConsentScreen>
+    with SingleTickerProviderStateMixin {
+  late final TabController _tabController;
   bool _agreed = false;
   bool _saving = false;
 
   @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 3, vsync: this);
+  }
+
+  @override
   void dispose() {
-    _scrollController.dispose();
+    _tabController.dispose();
     super.dispose();
   }
 
@@ -39,17 +45,14 @@ class _ConsentScreenState extends ConsumerState<ConsentScreen> {
       if (userId == null) return;
 
       // Write to Supabase for permanent audit trail.
-      // Best-effort — if table is missing we still proceed with local cache.
+      // Best-effort — if Supabase is unavailable, local cache is used.
       try {
         await Supabase.instance.client.from('user_consents').upsert({
           'user_id': userId,
           'consent_version': kConsentVersion,
           'consented_at': DateTime.now().toUtc().toIso8601String(),
         });
-      } catch (_) {
-        // Supabase unavailable or table not yet created — consent is still
-        // stored locally below and will sync once the table exists.
-      }
+      } catch (_) {}
 
       // Cache locally — this is the source of truth for day-to-day checks.
       final prefs = ref.read(sharedPreferencesProvider);
@@ -71,32 +74,40 @@ class _ConsentScreenState extends ConsumerState<ConsentScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
     final isDE = ref.watch(settingsProvider).languageCode == 'de';
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(isDE ? 'Wichtige Hinweise' : 'Important Information'),
-        automaticallyImplyLeading: false, // no back button — must agree to proceed
+        title: Text(isDE ? 'Zustimmung erforderlich' : 'Consent Required'),
+        automaticallyImplyLeading: false, // must agree to proceed
+        bottom: TabBar(
+          controller: _tabController,
+          tabs: [
+            Tab(text: isDE ? 'Hinweise' : 'Safety'),
+            Tab(text: isDE ? 'Nutzungsbedingungen' : 'Terms'),
+            Tab(text: isDE ? 'Datenschutz' : 'Privacy'),
+          ],
+        ),
       ),
       body: SafeArea(
         child: Column(
           children: [
             Expanded(
-              child: SingleChildScrollView(
-                controller: _scrollController,
-                padding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
-                child: _ConsentBody(isDE: isDE),
+              child: TabBarView(
+                controller: _tabController,
+                children: [
+                  _SafetyTab(isDE: isDE),
+                  _TermsTab(isDE: isDE),
+                  _PrivacyTab(isDE: isDE),
+                ],
               ),
             ),
 
-            // ── Agreement checkbox + button ─────────────────────────────────
+            // ── Agreement checkbox + confirm button ────────────────────────
             Container(
               decoration: BoxDecoration(
                 color: Theme.of(context).colorScheme.surface,
-                border: Border(
-                  top: BorderSide(color: AppColors.divider),
-                ),
+                border: const Border(top: BorderSide(color: AppColors.divider)),
               ),
               padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
               child: Column(
@@ -110,8 +121,8 @@ class _ConsentScreenState extends ConsumerState<ConsentScreen> {
                     controlAffinity: ListTileControlAffinity.leading,
                     title: Text(
                       isDE
-                          ? 'Ich habe diese Hinweise gelesen und verstanden.'
-                          : 'I have read and understood the above information.',
+                          ? 'Ich habe alle drei Abschnitte gelesen und stimme den Nutzungsbedingungen sowie der Datenschutzerklärung zu.'
+                          : 'I have read all three sections and agree to the Terms of Use and Privacy Policy.',
                       style: Theme.of(context).textTheme.bodyMedium,
                     ),
                   ),
@@ -144,148 +155,469 @@ class _ConsentScreenState extends ConsumerState<ConsentScreen> {
   }
 }
 
-// ── Consent body text ─────────────────────────────────────────────────────────
+// ── Tab 1: Safety & Medical Disclaimer ────────────────────────────────────────
 
-class _ConsentBody extends StatelessWidget {
+class _SafetyTab extends StatelessWidget {
   final bool isDE;
-  const _ConsentBody({required this.isDE});
+  const _SafetyTab({required this.isDE});
 
   @override
   Widget build(BuildContext context) {
-    return isDE ? _buildDE(context) : _buildEN(context);
+    return SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
+      child: isDE ? _buildDE(context) : _buildEN(context),
+    );
   }
 
   Widget _buildDE(BuildContext context) {
-    return _ConsentContent(
-      title: 'Bitte lies diese Hinweise sorgfältig durch',
+    return const _ConsentContent(
+      title: 'Medizinische und psychologische Hinweise',
       intro:
           'Das Reflexintegrations-Programm ist eine intensive körperliche und psychische Arbeit. '
           'Es kann tiefgreifende Veränderungsprozesse in Gang setzen. '
-          'Damit du gut informiert starten kannst, möchten wir dich auf Folgendes hinweisen:',
-      points: const [
+          'Bitte lies die folgenden Hinweise sorgfältig durch.',
+      points: [
         _ConsentPoint(
           icon: Icons.science_outlined,
           title: 'MVP-Prototyp — Testphase',
           body:
-              'Diese App befindet sich in einer frühen Testphase. Du nimmst als freiwilliger Testnutzer teil. '
-              'Es bestehen keine Garantien auf Datenschutz, Datensicherheit oder dauerhaften Betrieb. '
-              'Alle erhobenen Daten können zur Produktverbesserung verwendet werden. '
-              'Kein Anspruch auf Verfügbarkeit oder Fehlerfreiheit. Du kannst die Nutzung jederzeit einstellen.',
+              'Diese App befindet sich in einer frühen Testphase. Du nimmst als freiwilliger '
+              'Testnutzer teil. Es bestehen keine Garantien auf Datensicherheit oder dauerhaften Betrieb. '
+              'Daten können zur Produktverbesserung verwendet werden. Du kannst die Nutzung jederzeit einstellen.',
         ),
         _ConsentPoint(
           icon: Icons.favorite_border,
-          title: 'Kein Ersatz für Arzt, Therapeut oder Psychologe',
+          title: 'Kein Ersatz für medizinische Behandlung',
           body:
               'Dieses Programm ersetzt keine medizinische, therapeutische oder psychologische Behandlung. '
-              'Wenn du unter ernsthaften psychischen Beschwerden leidest, Trauma-Symptome auftreten '
-              'oder du dir unsicher bist, wende dich bitte an einen Arzt, Therapeuten, '
-              'Psychologen oder eine Krisenhotline.',
+              'Bei ernsthaften Beschwerden, Trauma-Symptomen oder Unsicherheit wende dich an einen '
+              'Arzt, Therapeuten oder eine Krisenhotline.',
         ),
         _ConsentPoint(
           icon: Icons.psychology_outlined,
           title: 'Emotionale und mentale Belastung',
           body:
-              'Das Training kann emotionale Reaktionen wie erhöhte Reizbarkeit, '
-              'Stimmungsschwankungen oder vorübergehend verstärkten Stress auslösen. '
+              'Das Training kann Reizbarkeit, Stimmungsschwankungen oder vorübergehenden Stress auslösen. '
               'Das ist ein normaler Teil des Integrationsprozesses.',
         ),
         _ConsentPoint(
           icon: Icons.layers_outlined,
           title: 'Verdrängte Erlebnisse können auftauchen',
           body:
-              'In manchen Fällen können durch das Training tief liegende, '
-              'verdrängte Erlebnisse oder Traumata an die Oberfläche kommen. '
-              'Das kann belastend sein. Wir empfehlen, während des Programms '
-              'Zugang zu psychologischer Unterstützung zu haben.',
+              'In manchen Fällen können tief liegende Erlebnisse oder Traumata an die Oberfläche kommen. '
+              'Wir empfehlen psychologische Unterstützung während des Programms.',
         ),
         _ConsentPoint(
           icon: Icons.bedtime_outlined,
           title: 'Schlafveränderungen möglich',
           body:
-              'Vorübergehende Schlafstörungen oder Veränderungen im Schlafrhythmus '
-              'können auftreten, insbesondere in intensiveren Phasen des Programms.',
+              'Vorübergehende Schlafstörungen oder veränderte Schlafmuster können auftreten, '
+              'besonders in intensiveren Programmphasen.',
         ),
         _ConsentPoint(
           icon: Icons.self_improvement_outlined,
           title: 'Deine Verantwortung',
           body:
-              'Du allein kennst deinen Körper und deine Grenzen. '
-              'Höre auf dich selbst, mache Pausen wenn nötig, und suche '
-              'professionelle Hilfe, wenn du dich überfordert fühlst. '
-              'Du bestimmst das Tempo.',
+              'Nur du kennst deinen Körper und deine Grenzen. '
+              'Mache Pausen wenn nötig und suche professionelle Hilfe bei Überforderung.',
         ),
       ],
       closing:
           'Indem du fortfährst, bestätigst du, dass du diese Hinweise gelesen und '
-          'verstanden hast, und dass du freiwillig und informiert an diesem Programm teilnimmst.',
+          'verstanden hast und freiwillig an diesem Programm teilnimmst.',
     );
   }
 
   Widget _buildEN(BuildContext context) {
-    return _ConsentContent(
-      title: 'Please read this information carefully',
+    return const _ConsentContent(
+      title: 'Medical and Psychological Disclaimer',
       intro:
           'The Reflex Integration Program involves intensive physical and psychological work. '
-          'It can initiate profound processes of change in your body and mind. '
-          'To help you start well-informed, please read the following:',
-      points: const [
+          'It can initiate profound processes of change. '
+          'Please read the following information carefully.',
+      points: [
         _ConsentPoint(
           icon: Icons.science_outlined,
           title: 'MVP Prototype — Test Phase',
           body:
-              'This app is in an early test phase. You are participating as a voluntary test user. '
-              'There are no guarantees regarding data privacy, data security, or continued availability. '
-              'Data collected may be used for product improvement. No warranty for uptime or correctness. '
-              'You may stop using the app at any time.',
+              'This app is in an early test phase. You participate as a voluntary test user. '
+              'There are no guarantees regarding data security or continued availability. '
+              'Data may be used for product improvement. You may stop at any time.',
         ),
         _ConsentPoint(
           icon: Icons.favorite_border,
-          title: 'Not a replacement for doctors, therapists, or psychologists',
+          title: 'Not a replacement for medical treatment',
           body:
               'This program does not replace medical, therapeutic, or psychological treatment. '
-              'If you are experiencing serious psychological distress, trauma symptoms arise, '
-              'or you are unsure about your wellbeing, please consult a doctor, therapist, '
-              'psychologist, or a crisis helpline.',
+              'For serious distress or trauma symptoms, consult a doctor, therapist, or crisis helpline.',
         ),
         _ConsentPoint(
           icon: Icons.psychology_outlined,
           title: 'Emotional and mental stress',
           body:
-              'The training may trigger emotional reactions such as increased irritability, '
-              'mood changes, or temporarily heightened stress. '
+              'The training may trigger irritability, mood changes, or heightened stress. '
               'This is a normal part of the integration process.',
         ),
         _ConsentPoint(
           icon: Icons.layers_outlined,
           title: 'Buried experiences may surface',
           body:
-              'In some cases, deep-seated or suppressed experiences and trauma '
-              'may come to the surface during the program. This can be challenging. '
+              'Deep-seated or suppressed experiences may come to the surface. '
               'We recommend having access to psychological support during the program.',
         ),
         _ConsentPoint(
           icon: Icons.bedtime_outlined,
           title: 'Sleep changes are possible',
           body:
-              'Temporary sleep disturbances or changes in sleep patterns may occur, '
-              'especially during more intensive phases of the program.',
+              'Temporary sleep disturbances may occur, '
+              'especially during more intensive phases.',
         ),
         _ConsentPoint(
           icon: Icons.self_improvement_outlined,
           title: 'Your responsibility',
           body:
-              'Only you know your body and your limits. '
-              'Listen to yourself, take breaks when needed, and seek '
-              'professional help if you feel overwhelmed. '
-              'You set the pace.',
+              'Only you know your limits. Take breaks when needed and seek '
+              'professional help if overwhelmed.',
         ),
       ],
       closing:
-          'By continuing, you confirm that you have read and understood this information, '
-          'and that you are voluntarily and informedly participating in this program.',
+          'By continuing, you confirm that you have read and understood this information '
+          'and are voluntarily participating in this program.',
     );
   }
 }
+
+// ── Tab 2: Nutzungsbedingungen / Terms of Use ─────────────────────────────────
+
+class _TermsTab extends StatelessWidget {
+  final bool isDE;
+  const _TermsTab({required this.isDE});
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
+      child: isDE ? _buildDE(context) : _buildEN(context),
+    );
+  }
+
+  Widget _buildDE(BuildContext context) {
+    return const _ConsentContent(
+      title: 'Nutzungsbedingungen (vorläufig)',
+      intro:
+          'Diese vorläufigen Nutzungsbedingungen gelten für die Nutzung der CoreJourney-App '
+          'in der aktuellen Testphase. Sie werden vor einem öffentlichen Launch durch rechtsverbindliche '
+          'Bedingungen ersetzt.',
+      points: [
+        _ConsentPoint(
+          icon: Icons.gavel_outlined,
+          title: '§ 1 Geltungsbereich',
+          body:
+              'Diese Bedingungen gelten zwischen dem Nutzer und dem Anbieter Alexander Messinger '
+              '(nachfolgend „Anbieter") für die Nutzung der mobilen Anwendung CoreJourney in der '
+              'aktuellen Testphase. Mit der Registrierung akzeptierst du diese Bedingungen.',
+        ),
+        _ConsentPoint(
+          icon: Icons.person_outlined,
+          title: '§ 2 Nutzerberechtigung',
+          body:
+              'Die App richtet sich an Erwachsene ab 18 Jahren. '
+              'Du bestätigst, dass du das 18. Lebensjahr vollendet hast. '
+              'Die Nutzung durch Minderjährige ist nur mit ausdrücklicher Einwilligung '
+              'eines Erziehungsberechtigten gestattet.',
+        ),
+        _ConsentPoint(
+          icon: Icons.build_outlined,
+          title: '§ 3 Leistungsumfang & Verfügbarkeit',
+          body:
+              'Der Anbieter stellt die App im Rahmen einer Testphase kostenlos zur Verfügung. '
+              'Es besteht kein Anspruch auf dauerhaften Betrieb, bestimmte Funktionen oder '
+              'Fehlerfreiheit. Der Anbieter kann den Dienst jederzeit einstellen oder ändern.',
+        ),
+        _ConsentPoint(
+          icon: Icons.copyright_outlined,
+          title: '§ 4 Geistiges Eigentum',
+          body:
+              'Alle Inhalte der App (Texte, Grafiken, Übungen, Code) sind Eigentum des Anbieters '
+              'und urheberrechtlich geschützt. Eine Vervielfältigung oder Weitergabe ohne '
+              'ausdrückliche Genehmigung ist untersagt.',
+        ),
+        _ConsentPoint(
+          icon: Icons.block_outlined,
+          title: '§ 5 Verbotene Nutzung',
+          body:
+              'Du verpflichtest dich, die App nicht für rechtswidrige Zwecke zu nutzen, '
+              'keine schädlichen Inhalte einzustellen und die technische Infrastruktur nicht '
+              'zu beeinträchtigen.',
+        ),
+        _ConsentPoint(
+          icon: Icons.balance_outlined,
+          title: '§ 6 Haftungsausschluss',
+          body:
+              'Der Anbieter haftet nicht für Schäden, die durch die Nutzung der App entstehen, '
+              'soweit diese nicht auf grober Fahrlässigkeit oder Vorsatz beruhen. '
+              'Dies gilt insbesondere für gesundheitliche Folgen der Trainingsausführung.',
+        ),
+        _ConsentPoint(
+          icon: Icons.flag_outlined,
+          title: '§ 7 Anwendbares Recht',
+          body:
+              'Es gilt das Recht der Bundesrepublik Deutschland. '
+              'Gerichtsstand ist, soweit gesetzlich zulässig, der Sitz des Anbieters.',
+        ),
+      ],
+      closing:
+          'Diese Nutzungsbedingungen sind vorläufig und werden vor einem öffentlichen Release '
+          'durch einen Rechtsanwalt geprüft und finalisiert.',
+    );
+  }
+
+  Widget _buildEN(BuildContext context) {
+    return const _ConsentContent(
+      title: 'Terms of Use (Provisional)',
+      intro:
+          'These provisional Terms of Use apply to the use of the CoreJourney app during '
+          'the current test phase. They will be replaced by legally binding terms before '
+          'a public launch.',
+      points: [
+        _ConsentPoint(
+          icon: Icons.gavel_outlined,
+          title: '§ 1 Scope',
+          body:
+              'These terms apply between the user and the provider Alexander Messinger '
+              '(hereinafter "Provider") for use of the CoreJourney mobile application during '
+              'the test phase. By registering, you accept these terms.',
+        ),
+        _ConsentPoint(
+          icon: Icons.person_outlined,
+          title: '§ 2 Eligibility',
+          body:
+              'The app is intended for adults aged 18 and over. '
+              'You confirm that you are at least 18 years old. '
+              'Use by minors is only permitted with the express consent of a parent or guardian.',
+        ),
+        _ConsentPoint(
+          icon: Icons.build_outlined,
+          title: '§ 3 Scope of Services & Availability',
+          body:
+              'The Provider makes the app available free of charge during the test phase. '
+              'There is no entitlement to continued operation, specific features, or freedom from errors. '
+              'The Provider may discontinue or modify the service at any time.',
+        ),
+        _ConsentPoint(
+          icon: Icons.copyright_outlined,
+          title: '§ 4 Intellectual Property',
+          body:
+              'All app content (texts, graphics, exercises, code) is the property of the Provider '
+              'and is protected by copyright. Reproduction or distribution without express '
+              'permission is prohibited.',
+        ),
+        _ConsentPoint(
+          icon: Icons.block_outlined,
+          title: '§ 5 Prohibited Use',
+          body:
+              'You agree not to use the app for unlawful purposes, not to post harmful content, '
+              'and not to interfere with the technical infrastructure.',
+        ),
+        _ConsentPoint(
+          icon: Icons.balance_outlined,
+          title: '§ 6 Limitation of Liability',
+          body:
+              'The Provider is not liable for damages arising from the use of the app unless '
+              'caused by gross negligence or intent. This applies in particular to health '
+              'consequences of performing the exercises.',
+        ),
+        _ConsentPoint(
+          icon: Icons.flag_outlined,
+          title: '§ 7 Governing Law',
+          body:
+              'The law of the Federal Republic of Germany applies. '
+              'The place of jurisdiction is, to the extent permitted by law, the Provider\'s place of business.',
+        ),
+      ],
+      closing:
+          'These Terms of Use are provisional and will be reviewed and finalised by a lawyer '
+          'before a public release.',
+    );
+  }
+}
+
+// ── Tab 3: Datenschutzerklärung / Privacy Policy ──────────────────────────────
+
+class _PrivacyTab extends StatelessWidget {
+  final bool isDE;
+  const _PrivacyTab({required this.isDE});
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
+      child: isDE ? _buildDE(context) : _buildEN(context),
+    );
+  }
+
+  Widget _buildDE(BuildContext context) {
+    return const _ConsentContent(
+      title: 'Datenschutzerklärung (vorläufig)',
+      intro:
+          'Diese vorläufige Datenschutzerklärung informiert dich über die Verarbeitung '
+          'personenbezogener Daten in der CoreJourney-Testphase gemäß DSGVO.',
+      points: [
+        _ConsentPoint(
+          icon: Icons.person_pin_outlined,
+          title: 'Verantwortlicher',
+          body:
+              'Verantwortlicher im Sinne der DSGVO: Alexander Messinger. '
+              'Kontakt für Datenschutzanfragen: über die in der App hinterlegten Kontaktdaten.',
+        ),
+        _ConsentPoint(
+          icon: Icons.storage_outlined,
+          title: 'Erhobene Daten',
+          body:
+              'Wir erheben folgende Daten: E-Mail-Adresse und Passwort (für die Registrierung), '
+              'Fortschrittsdaten (Trainingseinheiten, Intake-Assessment), '
+              'Stimmungsdaten (Mood-Checkins, Journal-Einträge) sowie '
+              'Geräteinformationen (Betriebssystem, App-Version).',
+        ),
+        _ConsentPoint(
+          icon: Icons.task_alt_outlined,
+          title: 'Zweck der Verarbeitung',
+          body:
+              'Die Daten werden verwendet für: Bereitstellung und Verbesserung der App-Funktionen, '
+              'Speicherung und Synchronisierung deines Trainingsfortschritts, '
+              'Analyse zur Produktverbesserung (anonymisiert, soweit möglich) sowie '
+              'Kommunikation im Rahmen der Testphase.',
+        ),
+        _ConsentPoint(
+          icon: Icons.cloud_outlined,
+          title: 'Datenverarbeitung & Speicherort',
+          body:
+              'Deine Daten werden verschlüsselt auf Servern von Supabase (EU-Region) gespeichert. '
+              'Supabase ist ein zertifizierter Cloud-Anbieter und verarbeitet Daten gemäß DSGVO. '
+              'Lokal auf deinem Gerät werden Daten in einer verschlüsselten SQLite-Datenbank '
+              'für die Offline-Funktionalität gehalten.',
+        ),
+        _ConsentPoint(
+          icon: Icons.share_outlined,
+          title: 'Weitergabe an Dritte',
+          body:
+              'Deine Daten werden nicht an Dritte zu kommerziellen Zwecken verkauft oder weitergegeben. '
+              'Eine Übermittlung erfolgt nur an technische Dienstleister (Supabase) im Rahmen '
+              'der Auftragsverarbeitung gemäß Art. 28 DSGVO.',
+        ),
+        _ConsentPoint(
+          icon: Icons.timer_outlined,
+          title: 'Speicherdauer',
+          body:
+              'Deine Daten werden für die Dauer der Testphase und bis zu 6 Monate danach gespeichert. '
+              'Auf Anfrage werden alle personenbezogenen Daten unverzüglich gelöscht.',
+        ),
+        _ConsentPoint(
+          icon: Icons.verified_user_outlined,
+          title: 'Deine Rechte (DSGVO)',
+          body:
+              'Du hast das Recht auf: Auskunft (Art. 15), Berichtigung (Art. 16), '
+              'Löschung (Art. 17), Einschränkung der Verarbeitung (Art. 18), '
+              'Datenübertragbarkeit (Art. 20) und Widerspruch (Art. 21). '
+              'Zur Geltendmachung deiner Rechte kontaktiere uns über die App.',
+        ),
+        _ConsentPoint(
+          icon: Icons.notifications_none_outlined,
+          title: 'Push-Benachrichtigungen',
+          body:
+              'Wenn du Erinnerungen aktivierst, werden lokale Push-Benachrichtigungen '
+              'auf deinem Gerät geplant. Diese Daten verlassen dein Gerät nicht.',
+        ),
+      ],
+      closing:
+          'Diese Datenschutzerklärung ist vorläufig und wird vor einem öffentlichen Release '
+          'durch einen Datenschutzbeauftragten geprüft und gemäß DSGVO finalisiert. '
+          'Durch die Nutzung stimmst du dieser vorläufigen Datenschutzerklärung zu.',
+    );
+  }
+
+  Widget _buildEN(BuildContext context) {
+    return const _ConsentContent(
+      title: 'Privacy Policy (Provisional)',
+      intro:
+          'This provisional Privacy Policy informs you about the processing of personal data '
+          'in the CoreJourney test phase in accordance with GDPR.',
+      points: [
+        _ConsentPoint(
+          icon: Icons.person_pin_outlined,
+          title: 'Data Controller',
+          body:
+              'The data controller within the meaning of the GDPR: Alexander Messinger. '
+              'For privacy inquiries, use the contact information provided in the app.',
+        ),
+        _ConsentPoint(
+          icon: Icons.storage_outlined,
+          title: 'Data Collected',
+          body:
+              'We collect: email address and password (for registration), '
+              'progress data (training sessions, intake assessment), '
+              'mood data (mood check-ins, journal entries), and '
+              'device information (OS, app version).',
+        ),
+        _ConsentPoint(
+          icon: Icons.task_alt_outlined,
+          title: 'Purpose of Processing',
+          body:
+              'Data is used for: providing and improving app features, '
+              'storing and syncing your training progress, '
+              'anonymised product analytics, and '
+              'communication during the test phase.',
+        ),
+        _ConsentPoint(
+          icon: Icons.cloud_outlined,
+          title: 'Data Processing & Storage',
+          body:
+              'Your data is stored encrypted on Supabase servers (EU region). '
+              'Supabase is a certified GDPR-compliant cloud provider. '
+              'Locally on your device, data is held in an encrypted SQLite database '
+              'for offline functionality.',
+        ),
+        _ConsentPoint(
+          icon: Icons.share_outlined,
+          title: 'Third-Party Sharing',
+          body:
+              'Your data is not sold or shared with third parties for commercial purposes. '
+              'Transmission occurs only to technical service providers (Supabase) '
+              'under a data processing agreement per Art. 28 GDPR.',
+        ),
+        _ConsentPoint(
+          icon: Icons.timer_outlined,
+          title: 'Retention Period',
+          body:
+              'Your data is stored for the duration of the test phase and up to 6 months thereafter. '
+              'On request, all personal data will be deleted without delay.',
+        ),
+        _ConsentPoint(
+          icon: Icons.verified_user_outlined,
+          title: 'Your Rights (GDPR)',
+          body:
+              'You have the right to: access (Art. 15), rectification (Art. 16), '
+              'erasure (Art. 17), restriction of processing (Art. 18), '
+              'data portability (Art. 20), and objection (Art. 21). '
+              'To exercise your rights, contact us via the app.',
+        ),
+        _ConsentPoint(
+          icon: Icons.notifications_none_outlined,
+          title: 'Push Notifications',
+          body:
+              'If you enable reminders, local push notifications are scheduled on your device. '
+              'This data does not leave your device.',
+        ),
+      ],
+      closing:
+          'This Privacy Policy is provisional and will be reviewed by a data protection officer '
+          'and finalised in accordance with GDPR before a public release. '
+          'By using the app, you agree to this provisional Privacy Policy.',
+    );
+  }
+}
+
+// ── Shared layout widgets ─────────────────────────────────────────────────────
 
 class _ConsentContent extends StatelessWidget {
   final String title;

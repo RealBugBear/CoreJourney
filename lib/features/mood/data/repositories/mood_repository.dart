@@ -97,13 +97,13 @@ class MoodRepository {
     if (userId == null) return;
 
     final now = _clock.now();
-    final id = _uuid.v4();
+    final checkinId = _uuid.v4();
     final dayKey = now.difference(DateTime(1970)).inDays;
     final normalizedNote = _normalizeNote(note);
 
     await _db.into(_db.moodCheckinsTable).insert(
           MoodCheckinsTableCompanion.insert(
-            id: id,
+            id: checkinId,
             userId: userId,
             enrollmentId: enrollmentId,
             recordedAt: now,
@@ -118,9 +118,9 @@ class MoodRepository {
 
     await _syncService.enqueueUpsert(
       tableName: 'mood_checkins',
-      recordId: id,
+      recordId: checkinId,
       payload: {
-        'id': id,
+        'id': checkinId,
         'user_id': userId,
         'enrollment_id': enrollmentId,
         'recorded_at': now.toIso8601String(),
@@ -132,6 +132,47 @@ class MoodRepository {
         'source': source,
       },
     );
+
+    // ── Dual-write: create a linked journal entry when note is present ────────
+    // journal_entries is the canonical store for user text; mood_checkins keeps
+    // the note for backward-compat but the journal feature reads journal_entries.
+    if (normalizedNote != null) {
+      final journalId = _uuid.v4();
+      await _db.into(_db.journalEntriesTable).insert(
+            JournalEntriesTableCompanion.insert(
+              id: journalId,
+              userId: userId,
+              enrollmentId: drift.Value(enrollmentId),
+              checkinId: drift.Value(checkinId),
+              content: normalizedNote,
+              mood: drift.Value(mood),
+              energy: drift.Value(energy),
+              stress: drift.Value(stress),
+              dayKey: dayKey,
+            ),
+          );
+
+      await _syncService.enqueueUpsert(
+        tableName: 'journal_entries',
+        recordId: journalId,
+        payload: {
+          'id': journalId,
+          'user_id': userId,
+          'enrollment_id': enrollmentId,
+          // checkin_id intentionally omitted from the Supabase payload:
+          // mood_checkins and journal_entries sync independently; sending
+          // a FK reference risks a violation if the checkin hasn't landed yet.
+          // The link is maintained locally in Drift for the edit flow.
+          'content': normalizedNote,
+          'mood': mood,
+          'energy': energy,
+          'stress': stress,
+          'day_key': dayKey,
+          'created_at': now.toIso8601String(),
+          'updated_at': now.toIso8601String(),
+        },
+      );
+    }
   }
 
   Future<void> updateCheckin({
@@ -180,9 +221,106 @@ class MoodRepository {
         'source': updated.source,
       },
     );
+
+    // ── Update or create the linked journal entry ─────────────────────────────
+    final existingJournal = await (_db.select(_db.journalEntriesTable)
+          ..where((t) => t.checkinId.equals(id))
+          ..limit(1))
+        .getSingleOrNull();
+
+    if (normalizedNote != null) {
+      final now = _clock.now();
+      if (existingJournal != null) {
+        // Update existing journal entry
+        await (_db.update(_db.journalEntriesTable)
+              ..where((t) => t.id.equals(existingJournal.id)))
+            .write(JournalEntriesTableCompanion(
+          content: drift.Value(normalizedNote),
+          mood: drift.Value(mood),
+          energy: drift.Value(energy),
+          stress: drift.Value(stress),
+          updatedAt: drift.Value(now),
+          needsSync: const drift.Value(true),
+        ));
+        await _syncService.enqueueUpsert(
+          tableName: 'journal_entries',
+          recordId: existingJournal.id,
+          payload: {
+            'id': existingJournal.id,
+            'user_id': userId,
+            'enrollment_id': updated.enrollmentId,
+            // checkin_id omitted — no FK on Supabase side; local Drift keeps it
+            'content': normalizedNote,
+            'mood': mood,
+            'energy': energy,
+            'stress': stress,
+            'day_key': updated.dayKey,
+            'updated_at': now.toIso8601String(),
+          },
+        );
+      } else {
+        // No linked journal entry yet — create one (e.g. note added on edit)
+        final journalId = _uuid.v4();
+        await _db.into(_db.journalEntriesTable).insert(
+              JournalEntriesTableCompanion.insert(
+                id: journalId,
+                userId: userId,
+                enrollmentId: drift.Value(updated.enrollmentId),
+                checkinId: drift.Value(id),
+                content: normalizedNote,
+                mood: drift.Value(mood),
+                energy: drift.Value(energy),
+                stress: drift.Value(stress),
+                dayKey: updated.dayKey,
+              ),
+            );
+        await _syncService.enqueueUpsert(
+          tableName: 'journal_entries',
+          recordId: journalId,
+          payload: {
+            'id': journalId,
+            'user_id': userId,
+            'enrollment_id': updated.enrollmentId,
+            // checkin_id omitted — no FK on Supabase side; local Drift keeps it
+            'content': normalizedNote,
+            'mood': mood,
+            'energy': energy,
+            'stress': stress,
+            'day_key': updated.dayKey,
+            'created_at': now.toIso8601String(),
+            'updated_at': now.toIso8601String(),
+          },
+        );
+      }
+    } else if (existingJournal != null) {
+      // Note was cleared — delete the journal entry
+      await (_db.delete(_db.journalEntriesTable)
+            ..where((t) => t.id.equals(existingJournal.id)))
+          .go();
+      await _syncService.enqueueDelete(
+        tableName: 'journal_entries',
+        recordId: existingJournal.id,
+      );
+    }
   }
 
   Future<void> deleteCheckin({required String id}) async {
+    // Find and delete linked journal entry first (FK ON DELETE SET NULL in
+    // Supabase, so we clean up locally and queue a delete for the journal entry)
+    final linkedJournal = await (_db.select(_db.journalEntriesTable)
+          ..where((t) => t.checkinId.equals(id))
+          ..limit(1))
+        .getSingleOrNull();
+    if (linkedJournal != null) {
+      await (_db.delete(_db.journalEntriesTable)
+            ..where((t) => t.id.equals(linkedJournal.id)))
+          .go();
+      await _syncService.enqueueDelete(
+        tableName: 'journal_entries',
+        recordId: linkedJournal.id,
+      );
+    }
+
     await (_db.delete(_db.moodCheckinsTable)..where((t) => t.id.equals(id)))
         .go();
     await _syncService.enqueueDelete(tableName: 'mood_checkins', recordId: id);

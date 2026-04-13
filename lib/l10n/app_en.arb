@@ -102,6 +102,7 @@
   "packageLocked": "Locked",
   "packageCurrent": "Current",
   "packageCompleted": "Completed",
+  "packageAvailable": "Available",
 
   "settings": "Settings",
   "settingsTraining": "Training",

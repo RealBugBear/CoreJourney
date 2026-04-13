@@ -3,6 +3,7 @@ import '../config/app_config.dart';
 import '../core/database/app_database.dart';
 import '../core/notifications/notification_service.dart';
 import '../core/settings/settings_provider.dart';
+import '../core/sync/exercises_sync_service.dart';
 import '../core/sync/sync_service.dart';
 import '../core/sync/sync_status.dart';
 import 'bootstrap.dart';
@@ -24,8 +25,23 @@ final syncStatusProvider = StreamProvider<SyncStatus>((ref) {
   return ref.watch(syncServiceProvider).statusStream;
 });
 
+/// Emits true while rehydrate() is running, false when it is done.
+/// DashboardScreen listens to this to gate the onboarding redirect:
+/// a returning user must not be sent to intake assessment before
+/// their Supabase data has loaded into the local DB.
+final rehydrationProvider = StreamProvider<bool>((ref) {
+  return ref.watch(syncServiceProvider).rehydrationStream;
+});
+
 final notificationServiceProvider = Provider<NotificationService>((ref) {
   return NotificationService.instance;
+});
+
+/// Lazily-constructed exercises sync service.
+/// Automatically syncs exercises from Supabase when first accessed.
+final exercisesSyncServiceProvider = Provider<ExercisesSyncService>((ref) {
+  final db = ref.watch(databaseProvider);
+  return ExercisesSyncService(db);
 });
 
 List<Override> bootstrapOverrides(Bootstrap bootstrap) => [

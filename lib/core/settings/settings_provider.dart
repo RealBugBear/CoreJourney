@@ -1,17 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
+import '../../features/auth/presentation/providers/auth_provider.dart';
 
 // ── Keys ─────────────────────────────────────────────────────────────────────
 
 const _kFeedbackMode = 'settings.feedbackMode';
 const _kWeeklyGoal = 'settings.weeklyGoal';
 const _kLanguage = 'settings.languageCode';
-const _kThemeMode = 'settings.themeMode';
+// Theme is user-scoped: 'settings.themeMode_<userId>' so each account
+// independently remembers its own theme preference.
+// Falls back to 'settings.themeMode' for unauthenticated state.
+const _kThemeModeGlobal = 'settings.themeMode';
 const _kRemindersEnabled = 'settings.remindersEnabled';
 const _kReminderStart = 'settings.reminderStartMinutes';
 const _kReminderEnd = 'settings.reminderEndMinutes';
 const _kChildAssist = 'settings.childAssistMode';
+
+String _themeModeKey(String? userId) =>
+    userId != null ? 'settings.themeMode_$userId' : _kThemeModeGlobal;
 
 // ── Model ─────────────────────────────────────────────────────────────────────
 
@@ -74,12 +83,18 @@ final sharedPreferencesProvider = Provider<SharedPreferences>((ref) {
 
 class SettingsNotifier extends StateNotifier<AppSettings> {
   final SharedPreferences _prefs;
+  final String? _userId;
 
-  SettingsNotifier(this._prefs) : super(_load(_prefs));
+  SettingsNotifier(this._prefs, this._userId)
+      : super(_load(_prefs, _userId));
 
-  static AppSettings _load(SharedPreferences prefs) {
+  static AppSettings _load(SharedPreferences prefs, String? userId) {
     final modeIndex = prefs.getInt(_kFeedbackMode) ?? 1;
-    final themeModeIndex = prefs.getInt(_kThemeMode) ?? 0;
+    // Read theme from user-scoped key; fall back to global key for migration
+    // (users who saved a theme before this change still get their preference).
+    final themeModeIndex = prefs.getInt(_themeModeKey(userId))
+        ?? prefs.getInt(_kThemeModeGlobal)
+        ?? 0;
 
     // If no language has been saved yet (first launch), detect from device locale.
     // We support 'de' and 'en'; everything else defaults to 'en'.
@@ -119,7 +134,8 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
 
   void setThemeMode(ThemeMode mode) {
     state = state.copyWith(themeMode: mode);
-    _prefs.setInt(_kThemeMode, mode.index);
+    // Persist under user-scoped key so sign-out/sign-in restores correctly.
+    _prefs.setInt(_themeModeKey(_userId), mode.index);
   }
 
   void setRemindersEnabled(bool enabled) {
@@ -148,7 +164,11 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
 final settingsProvider =
     StateNotifierProvider<SettingsNotifier, AppSettings>((ref) {
   final prefs = ref.watch(sharedPreferencesProvider);
-  return SettingsNotifier(prefs);
+  // Watch auth state so the notifier re-creates on sign-in/sign-out,
+  // loading the correct user-scoped theme key each time.
+  final userId = ref.watch(authStateProvider).valueOrNull?.session?.user.id
+      ?? Supabase.instance.client.auth.currentUser?.id;
+  return SettingsNotifier(prefs, userId);
 });
 
 // ── Derived providers consumed by app.dart ────────────────────────────────────

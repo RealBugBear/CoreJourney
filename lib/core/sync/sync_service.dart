@@ -23,6 +23,17 @@ class SyncService {
   final _statusController = StreamController<SyncStatus>.broadcast();
   Stream<SyncStatus> get statusStream => _statusController.stream;
 
+  // ── Rehydration state ─────────────────────────────────────────────────────
+  // Tracks whether a rehydrate() call is currently in-flight.
+  // Exposed as a broadcast stream so UI can gate decisions on completion.
+  // Initial value: false (not rehydrating). Emits true when rehydration starts,
+  // false when it ends (success, skip, or error).
+  bool _isRehydrating = false;
+  bool get isRehydrating => _isRehydrating;
+
+  final _rehydrationController = StreamController<bool>.broadcast();
+  Stream<bool> get rehydrationStream => _rehydrationController.stream;
+
   SyncService(this._db);
 
   void start() {
@@ -30,13 +41,35 @@ class SyncService {
       const Duration(minutes: 5),
       (_) => drain(),
     );
-    // Emit initial status on start
+    // Flush any jobs that were stuck in backoff from a previous session
+    // (e.g. Supabase table didn't exist yet, network was down, etc.).
+    // Resets retryCount so they're processed on the next drain() cycle.
+    unawaited(_resetStalledJobs());
     _emitStatus();
+  }
+
+  /// Resets retry count on jobs that have been failing but not yet exhausted
+  /// (retryCount 1–4). Called on app start so previously-stuck jobs get a
+  /// fresh attempt once the underlying issue is resolved (e.g. a missing
+  /// Supabase table that has now been created).
+  Future<void> _resetStalledJobs() async {
+    try {
+      await (_db.update(_db.syncJobsTable)
+            ..where((t) =>
+                t.retryCount.isBiggerThanValue(0) &
+                t.retryCount.isSmallerThanValue(5)))
+          .write(const SyncJobsTableCompanion(
+        retryCount: Value(0),
+        lastAttemptAt: Value(null),
+      ));
+      await drain();
+    } catch (_) {}
   }
 
   void stop() {
     _periodicTimer?.cancel();
     _statusController.close();
+    _rehydrationController.close();
   }
 
   Future<void> drain() async {
@@ -139,6 +172,259 @@ class SyncService {
     }
   }
 
+  // ── Server → Local rehydration ──────────────────────────────────────────────
+  //
+  // Pulls the authoritative server state for [userId] into the local Drift DB.
+  // Called once after every sign-in so that returning users on a fresh device
+  // (or after reinstall) see their real progress instead of being re-enrolled.
+  //
+  // Merge strategy: server wins, UNLESS the local record has needsSync=true
+  // (meaning there are local writes not yet uploaded). Local-pending records
+  // are skipped so we do not overwrite unsynced progress with stale server data.
+  Future<void> rehydrate(String userId) async {
+    if (!await ConnectivityService.isConnected()) {
+      // No network — emit completed immediately so UI doesn't wait forever
+      _setRehydrating(false);
+      return;
+    }
+
+    final client = Supabase.instance.client;
+    if (client.auth.currentUser?.id != userId) {
+      _setRehydrating(false);
+      return;
+    }
+
+    _setRehydrating(true);
+    appLogger.i('SyncService.rehydrate: pulling server data for user $userId');
+
+    try {
+      // 1. Pull enrollments
+      final enrollmentRows = await client
+          .from('enrollments')
+          .select()
+          .eq('user_id', userId) as List<dynamic>;
+
+      for (final raw in enrollmentRows) {
+        final row = raw as Map<String, dynamic>;
+        final id = row['id'] as String;
+
+        // Skip records with pending local changes — local wins until uploaded
+        final local = await (_db.select(_db.enrollmentsTable)
+              ..where((t) => t.id.equals(id)))
+            .getSingleOrNull();
+        if (local?.needsSync == true) continue;
+
+        await _db.into(_db.enrollmentsTable).insertOnConflictUpdate(
+              EnrollmentsTableCompanion.insert(
+                id: id,
+                userId: row['user_id'] as String,
+                packageId: row['package_id'] as String,
+                status: Value(row['status'] as String? ?? 'active'),
+                assignedDurationWeeks:
+                    row['assigned_duration_weeks'] as int? ?? 8,
+                startDate: _parseDate(row['start_date']),
+                targetCompletionDate:
+                    _parseDate(row['target_completion_date']),
+                completedAt: Value(
+                  row['completed_at'] != null
+                      ? DateTime.parse(row['completed_at'] as String)
+                      : null,
+                ),
+                needsSync: const Value(false),
+                updatedAt: Value(
+                  row['updated_at'] != null
+                      ? DateTime.parse(row['updated_at'] as String)
+                      : DateTime.now(),
+                ),
+              ),
+            );
+      }
+
+      // 2. Pull progress_entries for all user enrollments
+      final enrollmentIds = enrollmentRows
+          .map((r) => (r as Map<String, dynamic>)['id'] as String)
+          .toList();
+
+      if (enrollmentIds.isEmpty) {
+        appLogger.i('SyncService.rehydrate: no enrollments on server');
+        return;
+      }
+
+      final progressRows = await client
+          .from('progress_entries')
+          .select()
+          .inFilter('enrollment_id', enrollmentIds) as List<dynamic>;
+
+      for (final raw in progressRows) {
+        final row = raw as Map<String, dynamic>;
+        final id = row['id'] as String;
+
+        final local = await (_db.select(_db.progressEntriesTable)
+              ..where((t) => t.id.equals(id)))
+            .getSingleOrNull();
+        if (local?.needsSync == true) continue;
+
+        await _db.into(_db.progressEntriesTable).insertOnConflictUpdate(
+              ProgressEntriesTableCompanion.insert(
+                id: id,
+                userId: row['user_id'] as String,
+                enrollmentId: row['enrollment_id'] as String,
+                currentDay: Value(row['current_day'] as int? ?? 1),
+                lastActivityDate: Value(
+                  row['last_activity_date'] != null
+                      ? DateTime.parse(row['last_activity_date'] as String)
+                      : null,
+                ),
+                consecutiveInactiveDays: Value(
+                    row['consecutive_inactive_days'] as int? ?? 0),
+                dailyStreak:
+                    Value(row['daily_streak'] as int? ?? 0),
+                weeklyStreak:
+                    Value(row['weekly_streak'] as int? ?? 0),
+                trainingsThisWeek:
+                    Value(row['trainings_this_week'] as int? ?? 0),
+                lastTrainingWeekStart: Value(
+                  row['last_training_week_start'] != null
+                      ? DateTime.parse(
+                          row['last_training_week_start'] as String)
+                      : null,
+                ),
+                weeklyGoal:
+                    Value(row['weekly_goal'] as int? ?? 5),
+                totalSessionsSinceDisclaimer: Value(
+                    row['total_sessions_since_disclaimer'] as int? ?? 0),
+                needsSync: const Value(false),
+                updatedAt: Value(
+                  row['updated_at'] != null
+                      ? DateTime.parse(row['updated_at'] as String)
+                      : DateTime.now(),
+                ),
+              ),
+            );
+      }
+
+      // 3. Pull training_sessions for all user enrollments
+      final sessionRows = await client
+          .from('training_sessions')
+          .select()
+          .inFilter('enrollment_id', enrollmentIds) as List<dynamic>;
+
+      for (final raw in sessionRows) {
+        final row = raw as Map<String, dynamic>;
+        final id = row['id'] as String;
+
+        // Skip records with pending local changes
+        final local = await (_db.select(_db.trainingSessionsTable)
+              ..where((t) => t.id.equals(id)))
+            .getSingleOrNull();
+        if (local?.needsSync == true) continue;
+
+        // Supabase returns text[] as List<dynamic>; locally stored as
+        // jsonEncode(list) to match the format written by saveCompletedSession.
+        final exerciseIds = row['completed_exercise_ids'];
+        final exerciseIdsStr = exerciseIds is List
+            ? jsonEncode(exerciseIds)
+            : (exerciseIds as String? ?? '[]');
+
+        await _db.into(_db.trainingSessionsTable).insertOnConflictUpdate(
+              TrainingSessionsTableCompanion.insert(
+                id: id,
+                userId: row['user_id'] as String,
+                enrollmentId: row['enrollment_id'] as String,
+                sessionDate: _parseDate(row['session_date']),
+                dayNumber: row['day_number'] as int,
+                completedExerciseIds: exerciseIdsStr,
+                isCompleted:
+                    Value(row['is_completed'] as bool? ?? false),
+                completedAt: Value(
+                  row['completed_at'] != null
+                      ? DateTime.parse(row['completed_at'] as String)
+                      : null,
+                ),
+                needsSync: const Value(false),
+                createdAt: Value(
+                  row['created_at'] != null
+                      ? DateTime.parse(row['created_at'] as String)
+                      : DateTime.now(),
+                ),
+              ),
+            );
+      }
+
+      // 4. Pull journal_entries for all user enrollments
+      final journalRows = await client
+          .from('journal_entries')
+          .select()
+          .eq('user_id', userId) as List<dynamic>;
+
+      for (final raw in journalRows) {
+        final row = raw as Map<String, dynamic>;
+        final id = row['id'] as String;
+
+        final local = await (_db.select(_db.journalEntriesTable)
+              ..where((t) => t.id.equals(id)))
+            .getSingleOrNull();
+        if (local?.needsSync == true) continue;
+
+        // checkin_id is not stored on Supabase (no FK there); preserve whatever
+        // the local record has so the edit flow keeps working.
+        final existingCheckinId = local?.checkinId;
+
+        await _db.into(_db.journalEntriesTable).insertOnConflictUpdate(
+              JournalEntriesTableCompanion.insert(
+                id: id,
+                userId: row['user_id'] as String,
+                enrollmentId: Value(row['enrollment_id'] as String?),
+                checkinId: Value(existingCheckinId),
+                content: row['content'] as String,
+                mood: Value(row['mood'] as int?),
+                energy: Value(row['energy'] as int?),
+                stress: Value(row['stress'] as int?),
+                dayKey: row['day_key'] as int,
+                createdAt: Value(
+                  row['created_at'] != null
+                      ? DateTime.parse(row['created_at'] as String)
+                      : DateTime.now(),
+                ),
+                updatedAt: Value(
+                  row['updated_at'] != null
+                      ? DateTime.parse(row['updated_at'] as String)
+                      : DateTime.now(),
+                ),
+                needsSync: const Value(false),
+              ),
+            );
+      }
+
+      appLogger.i(
+        'SyncService.rehydrate: pulled ${enrollmentRows.length} enrollments, '
+        '${progressRows.length} progress entries, '
+        '${sessionRows.length} training sessions, '
+        '${journalRows.length} journal entries',
+      );
+    } on AuthException {
+      appLogger.w('SyncService.rehydrate: auth error — skipping');
+    } catch (e, st) {
+      appLogger.e('SyncService.rehydrate failed', error: e, stackTrace: st);
+    } finally {
+      _setRehydrating(false);
+    }
+  }
+
+  void _setRehydrating(bool value) {
+    _isRehydrating = value;
+    if (!_rehydrationController.isClosed) {
+      _rehydrationController.add(value);
+    }
+  }
+
+  static DateTime _parseDate(dynamic value) {
+    if (value == null) return DateTime.now();
+    final s = value as String;
+    // Handles both 'YYYY-MM-DD' and full ISO-8601 timestamps
+    return DateTime.parse(s.length == 10 ? '${s}T00:00:00.000Z' : s);
+  }
+
   Future<void> enqueueUpsert({
     required String tableName,
     required String recordId,
@@ -154,6 +440,10 @@ class SyncService {
           ),
         );
     _emitStatus();
+    // Attempt immediate sync so data reaches Supabase without waiting for the
+    // 5-minute periodic timer. Fire-and-forget — if it fails the job stays
+    // in the queue and will be retried by the timer.
+    unawaited(drain());
   }
 
   Future<void> enqueueDelete({
@@ -170,6 +460,7 @@ class SyncService {
           ),
         );
     _emitStatus();
+    unawaited(drain());
   }
 
   Future<void> _emitStatus() async {

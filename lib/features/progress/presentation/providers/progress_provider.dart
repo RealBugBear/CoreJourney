@@ -19,25 +19,39 @@ DateTime _weekStart(DateTime date) {
   return DateTime(date.year, date.month, date.day - (date.weekday - 1));
 }
 
-// ── Selected package (persisted to SharedPreferences) ────────────────────────
+// ── Selected package (persisted to SharedPreferences, scoped per user) ───────
+//
+// Key format: 'selected_package_id_<userId>'
+// This prevents user A's package selection from leaking into user B's session
+// after a sign-out/sign-in within the same app lifetime or across reinstalls.
+// When authStateProvider changes (sign-out/sign-in), Riverpod re-creates the
+// notifier with the new userId, reading the correct user-scoped key.
 
 class _SelectedPackageNotifier extends StateNotifier<String> {
-  static const _key = 'selected_package_id';
-  final SharedPreferences _prefs;
+  static String _prefKey(String? userId) =>
+      userId != null ? 'selected_package_id_$userId' : 'selected_package_id';
 
-  _SelectedPackageNotifier(this._prefs)
-      : super(_prefs.getString(_key) ?? 'moro');
+  final SharedPreferences _prefs;
+  final String _storageKey;
+
+  _SelectedPackageNotifier(this._prefs, String? userId)
+      : _storageKey = _prefKey(userId),
+        super(_prefs.getString(_prefKey(userId)) ?? 'moro');
 
   void select(String packageId) {
     state = packageId;
-    _prefs.setString(_key, packageId);
+    _prefs.setString(_storageKey, packageId);
   }
 }
 
 final selectedPackageIdProvider =
     StateNotifierProvider<_SelectedPackageNotifier, String>((ref) {
   final prefs = ref.watch(sharedPreferencesProvider);
-  return _SelectedPackageNotifier(prefs);
+  // Watch auth state so the notifier is re-created on sign-out/sign-in,
+  // loading the correct user-scoped key from SharedPreferences.
+  final userId = ref.watch(authStateProvider).valueOrNull?.session?.user.id
+      ?? Supabase.instance.client.auth.currentUser?.id;
+  return _SelectedPackageNotifier(prefs, userId);
 });
 
 // ── Active enrollment (for the currently selected package) ────────────────────
@@ -94,6 +108,24 @@ final thisWeekSessionsProvider =
 
 // ── Create enrollment after intake assessment ─────────────────────────────────
 
+// ── Create enrollment — idempotent on both local DB and Supabase ──────────────
+//
+// Idempotenz-Strategie (zwei Ebenen):
+//   1. Lokale DB: prüfe vor dem Insert, ob bereits ein aktives Enrollment
+//      für (userId, packageId) existiert → return early.
+//   2. Supabase: SyncService nutzt UPSERT. Supabase hat zusätzlich einen
+//      UNIQUE-Partial-Index auf (user_id, package_id) WHERE status='active'
+//      (siehe supabase/idempotency_constraints.sql). Ein doppelter UPSERT
+//      mit identischer enrollmentId ist ein No-op; eine andere ID schlägt
+//      mit UniqueViolation fehl → verhindert Datenverlust.
+//
+// Sonderfall fresh device: Wenn die lokale DB leer ist (nach Reinstall),
+// schlägt der lokale Check fehl und ein neues Enrollment wird erstellt.
+// Der nachfolgende Supabase-UPSERT ÜBERSCHREIBT das existierende Enrollment
+// NICHT (dank UNIQUE Index). Stattdessen schlägt er mit einem Conflict-Fehler
+// fehl, der im SyncService als retry-fähiger Fehler behandelt wird.
+// rehydrate() wird bei sign-in aufgerufen und lädt das echte Enrollment vor
+// dem Intake-Assessment in die lokale DB, sodass der lokale Check greift.
 Future<void> createEnrollment({
   required AppDatabase db,
   required SyncService syncService,
@@ -101,6 +133,9 @@ Future<void> createEnrollment({
   required String packageId,
   required int durationWeeks,
 }) async {
+  // Lokaler Idempotenz-Check — verhindert Duplicate in der Drift-DB.
+  // Auf frischen Geräten ist die DB leer; rehydrate() lädt das Server-Enrollment
+  // vor Ausführung dieser Funktion, sodass dieser Check auch dann greift.
   final existing = await (db.select(db.enrollmentsTable)
         ..where((t) =>
             t.userId.equals(userId) &
@@ -159,6 +194,20 @@ Future<void> createEnrollment({
     },
   );
 }
+
+// ── All enrollments for the current user (all packages) ──────────────────────
+
+final allUserEnrollmentsProvider =
+    StreamProvider<List<EnrollmentsTableData>>((ref) {
+  final db = ref.watch(databaseProvider);
+  final userId = ref.watch(authStateProvider).valueOrNull?.session?.user.id
+      ?? Supabase.instance.client.auth.currentUser?.id;
+  if (userId == null) return Stream.value([]);
+
+  return (db.select(db.enrollmentsTable)
+        ..where((t) => t.userId.equals(userId)))
+      .watch();
+});
 
 // ── Completion questionnaire ready? ──────────────────────────────────────────
 

@@ -30,6 +30,14 @@ class PackagesScreen extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final selectedPackageId = ref.watch(selectedPackageIdProvider);
 
+    // Read all user enrollments to derive real per-package status.
+    // Do NOT use static frontend logic to determine completion.
+    final allEnrollments = ref.watch(allUserEnrollmentsProvider).valueOrNull ?? [];
+    final completedPackageIds = {
+      for (final e in allEnrollments)
+        if (e.status == 'completed') e.packageId,
+    };
+
     return Scaffold(
       appBar: AppBar(title: Text(l10n.packages)),
       body: ListView.separated(
@@ -40,6 +48,18 @@ class PackagesScreen extends ConsumerWidget {
           final (packageId, packageName) = _packages[index];
           final isSelected = packageId == selectedPackageId;
           final isLocked = !_freePackageIndices.contains(index);
+          final isCompleted = completedPackageIds.contains(packageId);
+
+          final Color avatarColor;
+          if (isSelected) {
+            avatarColor = AppColors.primary;
+          } else if (isLocked) {
+            avatarColor = AppColors.divider;
+          } else if (isCompleted) {
+            avatarColor = AppColors.success;
+          } else {
+            avatarColor = AppColors.success.withValues(alpha: 0.4);
+          }
 
           return Card(
             child: ListTile(
@@ -53,11 +73,7 @@ class PackagesScreen extends ConsumerWidget {
                 width: 36,
                 height: 36,
                 decoration: BoxDecoration(
-                  color: isSelected
-                      ? AppColors.primary
-                      : isLocked
-                          ? AppColors.divider
-                          : AppColors.success,
+                  color: avatarColor,
                   shape: BoxShape.circle,
                 ),
                 child: Center(
@@ -91,11 +107,17 @@ class PackagesScreen extends ConsumerWidget {
                           style: TextStyle(
                               color: AppColors.textDisabled, fontSize: 12),
                         )
-                      : Text(
-                          l10n.packageCompleted,
-                          style:
-                              TextStyle(color: AppColors.success, fontSize: 12),
-                        ),
+                      : isCompleted
+                          ? Text(
+                              l10n.packageCompleted,
+                              style: TextStyle(
+                                  color: AppColors.success, fontSize: 12),
+                            )
+                          : Text(
+                              l10n.packageAvailable,
+                              style: TextStyle(
+                                  color: AppColors.textSecondary, fontSize: 12),
+                            ),
               trailing: isLocked ? null : const Icon(Icons.chevron_right),
             ),
           );

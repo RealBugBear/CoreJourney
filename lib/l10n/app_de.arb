@@ -102,6 +102,7 @@
   "packageLocked": "Gesperrt",
   "packageCurrent": "Aktuell",
   "packageCompleted": "Abgeschlossen",
+  "packageAvailable": "Verfügbar",
 
   "settings": "Einstellungen",
   "settingsTraining": "Training",

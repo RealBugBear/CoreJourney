@@ -9,7 +9,14 @@ final connectivityProvider = StreamProvider<bool>((ref) {
 
 class ConnectivityService {
   static Future<bool> isConnected() async {
-    final results = await Connectivity().checkConnectivity();
-    return results.any((r) => r != ConnectivityResult.none);
+    try {
+      final results = await Connectivity().checkConnectivity();
+      return results.any((r) => r != ConnectivityResult.none);
+    } catch (_) {
+      // connectivity_plus channel unavailable (e.g. iOS 26 plugin issue).
+      // Assume connected so drain() attempts sync — Supabase calls will
+      // fail normally and retry if there's truly no network.
+      return true;
+    }
   }
 }

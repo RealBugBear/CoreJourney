@@ -5,9 +5,10 @@ import 'package:intl/intl.dart';
 import '../../../../core/database/app_database.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../mood/presentation/widgets/mood_checkin_sheet.dart';
+import '../providers/journal_provider.dart';
 
 class JournalEntryTile extends ConsumerStatefulWidget {
-  final MoodCheckinsTableData entry;
+  final JournalEntriesTableData entry;
   final VoidCallback onDeleted;
   final VoidCallback onChanged;
 
@@ -46,16 +47,35 @@ class _JournalEntryTileState extends ConsumerState<JournalEntryTile> {
     return result ?? false;
   }
 
+  /// Opens the mood checkin sheet for editing if a linked checkin exists,
+  /// otherwise shows a read-only view (no editable checkin to attach to).
+  Future<void> _openEdit() async {
+    final checkinId = widget.entry.checkinId;
+    if (checkinId == null) return; // standalone entry — no edit UI yet
+
+    final linkedCheckin = await ref
+        .read(journalRepositoryProvider)
+        .getLinkedCheckin(checkinId);
+
+    if (linkedCheckin == null || !mounted) return;
+
+    await showMoodCheckinSheet(
+      context,
+      initialEntry: linkedCheckin,
+      onSaved: widget.onChanged,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final entry = widget.entry;
-    final dayText = DateFormat('dd', 'de').format(entry.recordedAt);
-    final monthText = DateFormat('MMM', 'de').format(entry.recordedAt);
-    final timeText = DateFormat('HH:mm', 'de').format(entry.recordedAt);
-    final note = entry.note?.trim() ?? '';
-    final hasLongText = note.length > 180;
+    final dayText = DateFormat('dd', 'de').format(entry.createdAt);
+    final monthText = DateFormat('MMM', 'de').format(entry.createdAt);
+    final timeText = DateFormat('HH:mm', 'de').format(entry.createdAt);
+    final content = entry.content.trim();
+    final hasLongText = content.length > 180;
     final shownText =
-        hasLongText && !_expanded ? '${note.substring(0, 180)}…' : note;
+        hasLongText && !_expanded ? '${content.substring(0, 180)}…' : content;
 
     return Dismissible(
       key: ValueKey(entry.id),
@@ -75,11 +95,7 @@ class _JournalEntryTileState extends ConsumerState<JournalEntryTile> {
         color: Colors.transparent,
         child: InkWell(
           borderRadius: BorderRadius.circular(16),
-          onTap: () => showMoodCheckinSheet(
-            context,
-            initialEntry: entry,
-            onSaved: widget.onChanged,
-          ),
+          onTap: entry.checkinId != null ? _openEdit : null,
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 6),
             child: Row(
@@ -121,7 +137,7 @@ class _JournalEntryTileState extends ConsumerState<JournalEntryTile> {
                     ),
                     Container(
                       width: 2,
-                      height: note.isEmpty ? 82 : 108,
+                      height: content.isEmpty ? 82 : 108,
                       margin: const EdgeInsets.symmetric(vertical: 4),
                       color: AppColors.divider,
                     ),
@@ -152,21 +168,21 @@ class _JournalEntryTileState extends ConsumerState<JournalEntryTile> {
                                   ),
                             ),
                             const SizedBox(width: 8),
-                            const Icon(
-                              Icons.edit_outlined,
-                              size: 14,
-                              color: AppColors.primary,
-                            ),
-                            const Spacer(),
-                            if (note.isNotEmpty)
-                              const Text(
-                                'Notiz',
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w700,
-                                  color: AppColors.textSecondary,
-                                ),
+                            if (entry.checkinId != null)
+                              const Icon(
+                                Icons.edit_outlined,
+                                size: 14,
+                                color: AppColors.primary,
                               ),
+                            const Spacer(),
+                            const Text(
+                              'Notiz',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
                           ],
                         ),
                         const SizedBox(height: 8),
@@ -182,7 +198,7 @@ class _JournalEntryTileState extends ConsumerState<JournalEntryTile> {
                                 AppColors.moodGold),
                           ].whereType<Widget>().toList(),
                         ),
-                        if (note.isNotEmpty) ...[
+                        if (content.isNotEmpty) ...[
                           const SizedBox(height: 10),
                           Text(
                             shownText,

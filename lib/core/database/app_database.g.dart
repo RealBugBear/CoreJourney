@@ -667,6 +667,1238 @@ class EnrollmentsTableCompanion extends UpdateCompanion<EnrollmentsTableData> {
   }
 }
 
+class $ExercisesTableTable extends ExercisesTable
+    with TableInfo<$ExercisesTableTable, ExercisesTableData> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $ExercisesTableTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+      'id', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _packageIdMeta =
+      const VerificationMeta('packageId');
+  @override
+  late final GeneratedColumn<String> packageId = GeneratedColumn<String>(
+      'package_id', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _sequenceNumberMeta =
+      const VerificationMeta('sequenceNumber');
+  @override
+  late final GeneratedColumn<int> sequenceNumber = GeneratedColumn<int>(
+      'sequence_number', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
+  static const VerificationMeta _titleDeMeta =
+      const VerificationMeta('titleDe');
+  @override
+  late final GeneratedColumn<String> titleDe = GeneratedColumn<String>(
+      'title_de', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _titleEnMeta =
+      const VerificationMeta('titleEn');
+  @override
+  late final GeneratedColumn<String> titleEn = GeneratedColumn<String>(
+      'title_en', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _positionInstructionsDeMeta =
+      const VerificationMeta('positionInstructionsDe');
+  @override
+  late final GeneratedColumn<String> positionInstructionsDe =
+      GeneratedColumn<String>('position_instructions_de', aliasedName, false,
+          type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _positionInstructionsEnMeta =
+      const VerificationMeta('positionInstructionsEn');
+  @override
+  late final GeneratedColumn<String> positionInstructionsEn =
+      GeneratedColumn<String>('position_instructions_en', aliasedName, false,
+          type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _movementInstructionsDeMeta =
+      const VerificationMeta('movementInstructionsDe');
+  @override
+  late final GeneratedColumn<String> movementInstructionsDe =
+      GeneratedColumn<String>('movement_instructions_de', aliasedName, false,
+          type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _movementInstructionsEnMeta =
+      const VerificationMeta('movementInstructionsEn');
+  @override
+  late final GeneratedColumn<String> movementInstructionsEn =
+      GeneratedColumn<String>('movement_instructions_en', aliasedName, false,
+          type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _hintsDeMeta =
+      const VerificationMeta('hintsDe');
+  @override
+  late final GeneratedColumn<String> hintsDe = GeneratedColumn<String>(
+      'hints_de', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _hintsEnMeta =
+      const VerificationMeta('hintsEn');
+  @override
+  late final GeneratedColumn<String> hintsEn = GeneratedColumn<String>(
+      'hints_en', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _executionGuideDeMeta =
+      const VerificationMeta('executionGuideDe');
+  @override
+  late final GeneratedColumn<String> executionGuideDe = GeneratedColumn<String>(
+      'execution_guide_de', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _executionGuideEnMeta =
+      const VerificationMeta('executionGuideEn');
+  @override
+  late final GeneratedColumn<String> executionGuideEn = GeneratedColumn<String>(
+      'execution_guide_en', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _durationSecondsMeta =
+      const VerificationMeta('durationSeconds');
+  @override
+  late final GeneratedColumn<int> durationSeconds = GeneratedColumn<int>(
+      'duration_seconds', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
+  static const VerificationMeta _repetitionsMeta =
+      const VerificationMeta('repetitions');
+  @override
+  late final GeneratedColumn<int> repetitions = GeneratedColumn<int>(
+      'repetitions', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
+  static const VerificationMeta _imagePathMeta =
+      const VerificationMeta('imagePath');
+  @override
+  late final GeneratedColumn<String> imagePath = GeneratedColumn<String>(
+      'image_path', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _videoPathMeta =
+      const VerificationMeta('videoPath');
+  @override
+  late final GeneratedColumn<String> videoPath = GeneratedColumn<String>(
+      'video_path', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _audioCuePathMeta =
+      const VerificationMeta('audioCuePath');
+  @override
+  late final GeneratedColumn<String> audioCuePath = GeneratedColumn<String>(
+      'audio_cue_path', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _rhythmTypeMeta =
+      const VerificationMeta('rhythmType');
+  @override
+  late final GeneratedColumn<String> rhythmType = GeneratedColumn<String>(
+      'rhythm_type', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: false,
+      defaultValue: const Constant('holdRest'));
+  static const VerificationMeta _phasesJsonMeta =
+      const VerificationMeta('phasesJson');
+  @override
+  late final GeneratedColumn<String> phasesJson = GeneratedColumn<String>(
+      'phases_json', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: false,
+      defaultValue: const Constant('[]'));
+  static const VerificationMeta _hasRepSwitchMeta =
+      const VerificationMeta('hasRepSwitch');
+  @override
+  late final GeneratedColumn<bool> hasRepSwitch = GeneratedColumn<bool>(
+      'has_rep_switch', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'CHECK ("has_rep_switch" IN (0, 1))'),
+      defaultValue: const Constant(false));
+  static const VerificationMeta _holdCueDeMeta =
+      const VerificationMeta('holdCueDe');
+  @override
+  late final GeneratedColumn<String> holdCueDe = GeneratedColumn<String>(
+      'hold_cue_de', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: false,
+      defaultValue: const Constant('Halten'));
+  static const VerificationMeta _holdCueEnMeta =
+      const VerificationMeta('holdCueEn');
+  @override
+  late final GeneratedColumn<String> holdCueEn = GeneratedColumn<String>(
+      'hold_cue_en', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: false,
+      defaultValue: const Constant('Hold'));
+  static const VerificationMeta _holdSecondsMeta =
+      const VerificationMeta('holdSeconds');
+  @override
+  late final GeneratedColumn<int> holdSeconds = GeneratedColumn<int>(
+      'hold_seconds', aliasedName, false,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(7));
+  static const VerificationMeta _restSecondsMeta =
+      const VerificationMeta('restSeconds');
+  @override
+  late final GeneratedColumn<int> restSeconds = GeneratedColumn<int>(
+      'rest_seconds', aliasedName, false,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(3));
+  static const VerificationMeta _halfwaySwitchMeta =
+      const VerificationMeta('halfwaySwitch');
+  @override
+  late final GeneratedColumn<bool> halfwaySwitch = GeneratedColumn<bool>(
+      'halfway_switch', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'CHECK ("halfway_switch" IN (0, 1))'),
+      defaultValue: const Constant(false));
+  @override
+  List<GeneratedColumn> get $columns => [
+        id,
+        packageId,
+        sequenceNumber,
+        titleDe,
+        titleEn,
+        positionInstructionsDe,
+        positionInstructionsEn,
+        movementInstructionsDe,
+        movementInstructionsEn,
+        hintsDe,
+        hintsEn,
+        executionGuideDe,
+        executionGuideEn,
+        durationSeconds,
+        repetitions,
+        imagePath,
+        videoPath,
+        audioCuePath,
+        rhythmType,
+        phasesJson,
+        hasRepSwitch,
+        holdCueDe,
+        holdCueEn,
+        holdSeconds,
+        restSeconds,
+        halfwaySwitch
+      ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'exercises';
+  @override
+  VerificationContext validateIntegrity(Insertable<ExercisesTableData> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('package_id')) {
+      context.handle(_packageIdMeta,
+          packageId.isAcceptableOrUnknown(data['package_id']!, _packageIdMeta));
+    } else if (isInserting) {
+      context.missing(_packageIdMeta);
+    }
+    if (data.containsKey('sequence_number')) {
+      context.handle(
+          _sequenceNumberMeta,
+          sequenceNumber.isAcceptableOrUnknown(
+              data['sequence_number']!, _sequenceNumberMeta));
+    } else if (isInserting) {
+      context.missing(_sequenceNumberMeta);
+    }
+    if (data.containsKey('title_de')) {
+      context.handle(_titleDeMeta,
+          titleDe.isAcceptableOrUnknown(data['title_de']!, _titleDeMeta));
+    } else if (isInserting) {
+      context.missing(_titleDeMeta);
+    }
+    if (data.containsKey('title_en')) {
+      context.handle(_titleEnMeta,
+          titleEn.isAcceptableOrUnknown(data['title_en']!, _titleEnMeta));
+    } else if (isInserting) {
+      context.missing(_titleEnMeta);
+    }
+    if (data.containsKey('position_instructions_de')) {
+      context.handle(
+          _positionInstructionsDeMeta,
+          positionInstructionsDe.isAcceptableOrUnknown(
+              data['position_instructions_de']!, _positionInstructionsDeMeta));
+    } else if (isInserting) {
+      context.missing(_positionInstructionsDeMeta);
+    }
+    if (data.containsKey('position_instructions_en')) {
+      context.handle(
+          _positionInstructionsEnMeta,
+          positionInstructionsEn.isAcceptableOrUnknown(
+              data['position_instructions_en']!, _positionInstructionsEnMeta));
+    } else if (isInserting) {
+      context.missing(_positionInstructionsEnMeta);
+    }
+    if (data.containsKey('movement_instructions_de')) {
+      context.handle(
+          _movementInstructionsDeMeta,
+          movementInstructionsDe.isAcceptableOrUnknown(
+              data['movement_instructions_de']!, _movementInstructionsDeMeta));
+    } else if (isInserting) {
+      context.missing(_movementInstructionsDeMeta);
+    }
+    if (data.containsKey('movement_instructions_en')) {
+      context.handle(
+          _movementInstructionsEnMeta,
+          movementInstructionsEn.isAcceptableOrUnknown(
+              data['movement_instructions_en']!, _movementInstructionsEnMeta));
+    } else if (isInserting) {
+      context.missing(_movementInstructionsEnMeta);
+    }
+    if (data.containsKey('hints_de')) {
+      context.handle(_hintsDeMeta,
+          hintsDe.isAcceptableOrUnknown(data['hints_de']!, _hintsDeMeta));
+    }
+    if (data.containsKey('hints_en')) {
+      context.handle(_hintsEnMeta,
+          hintsEn.isAcceptableOrUnknown(data['hints_en']!, _hintsEnMeta));
+    }
+    if (data.containsKey('execution_guide_de')) {
+      context.handle(
+          _executionGuideDeMeta,
+          executionGuideDe.isAcceptableOrUnknown(
+              data['execution_guide_de']!, _executionGuideDeMeta));
+    } else if (isInserting) {
+      context.missing(_executionGuideDeMeta);
+    }
+    if (data.containsKey('execution_guide_en')) {
+      context.handle(
+          _executionGuideEnMeta,
+          executionGuideEn.isAcceptableOrUnknown(
+              data['execution_guide_en']!, _executionGuideEnMeta));
+    } else if (isInserting) {
+      context.missing(_executionGuideEnMeta);
+    }
+    if (data.containsKey('duration_seconds')) {
+      context.handle(
+          _durationSecondsMeta,
+          durationSeconds.isAcceptableOrUnknown(
+              data['duration_seconds']!, _durationSecondsMeta));
+    } else if (isInserting) {
+      context.missing(_durationSecondsMeta);
+    }
+    if (data.containsKey('repetitions')) {
+      context.handle(
+          _repetitionsMeta,
+          repetitions.isAcceptableOrUnknown(
+              data['repetitions']!, _repetitionsMeta));
+    } else if (isInserting) {
+      context.missing(_repetitionsMeta);
+    }
+    if (data.containsKey('image_path')) {
+      context.handle(_imagePathMeta,
+          imagePath.isAcceptableOrUnknown(data['image_path']!, _imagePathMeta));
+    } else if (isInserting) {
+      context.missing(_imagePathMeta);
+    }
+    if (data.containsKey('video_path')) {
+      context.handle(_videoPathMeta,
+          videoPath.isAcceptableOrUnknown(data['video_path']!, _videoPathMeta));
+    }
+    if (data.containsKey('audio_cue_path')) {
+      context.handle(
+          _audioCuePathMeta,
+          audioCuePath.isAcceptableOrUnknown(
+              data['audio_cue_path']!, _audioCuePathMeta));
+    }
+    if (data.containsKey('rhythm_type')) {
+      context.handle(
+          _rhythmTypeMeta,
+          rhythmType.isAcceptableOrUnknown(
+              data['rhythm_type']!, _rhythmTypeMeta));
+    }
+    if (data.containsKey('phases_json')) {
+      context.handle(
+          _phasesJsonMeta,
+          phasesJson.isAcceptableOrUnknown(
+              data['phases_json']!, _phasesJsonMeta));
+    }
+    if (data.containsKey('has_rep_switch')) {
+      context.handle(
+          _hasRepSwitchMeta,
+          hasRepSwitch.isAcceptableOrUnknown(
+              data['has_rep_switch']!, _hasRepSwitchMeta));
+    }
+    if (data.containsKey('hold_cue_de')) {
+      context.handle(
+          _holdCueDeMeta,
+          holdCueDe.isAcceptableOrUnknown(
+              data['hold_cue_de']!, _holdCueDeMeta));
+    }
+    if (data.containsKey('hold_cue_en')) {
+      context.handle(
+          _holdCueEnMeta,
+          holdCueEn.isAcceptableOrUnknown(
+              data['hold_cue_en']!, _holdCueEnMeta));
+    }
+    if (data.containsKey('hold_seconds')) {
+      context.handle(
+          _holdSecondsMeta,
+          holdSeconds.isAcceptableOrUnknown(
+              data['hold_seconds']!, _holdSecondsMeta));
+    }
+    if (data.containsKey('rest_seconds')) {
+      context.handle(
+          _restSecondsMeta,
+          restSeconds.isAcceptableOrUnknown(
+              data['rest_seconds']!, _restSecondsMeta));
+    }
+    if (data.containsKey('halfway_switch')) {
+      context.handle(
+          _halfwaySwitchMeta,
+          halfwaySwitch.isAcceptableOrUnknown(
+              data['halfway_switch']!, _halfwaySwitchMeta));
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  ExercisesTableData map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return ExercisesTableData(
+      id: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}id'])!,
+      packageId: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}package_id'])!,
+      sequenceNumber: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}sequence_number'])!,
+      titleDe: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}title_de'])!,
+      titleEn: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}title_en'])!,
+      positionInstructionsDe: attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}position_instructions_de'])!,
+      positionInstructionsEn: attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}position_instructions_en'])!,
+      movementInstructionsDe: attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}movement_instructions_de'])!,
+      movementInstructionsEn: attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}movement_instructions_en'])!,
+      hintsDe: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}hints_de']),
+      hintsEn: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}hints_en']),
+      executionGuideDe: attachedDatabase.typeMapping.read(
+          DriftSqlType.string, data['${effectivePrefix}execution_guide_de'])!,
+      executionGuideEn: attachedDatabase.typeMapping.read(
+          DriftSqlType.string, data['${effectivePrefix}execution_guide_en'])!,
+      durationSeconds: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}duration_seconds'])!,
+      repetitions: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}repetitions'])!,
+      imagePath: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}image_path'])!,
+      videoPath: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}video_path']),
+      audioCuePath: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}audio_cue_path']),
+      rhythmType: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}rhythm_type'])!,
+      phasesJson: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}phases_json'])!,
+      hasRepSwitch: attachedDatabase.typeMapping
+          .read(DriftSqlType.bool, data['${effectivePrefix}has_rep_switch'])!,
+      holdCueDe: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}hold_cue_de'])!,
+      holdCueEn: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}hold_cue_en'])!,
+      holdSeconds: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}hold_seconds'])!,
+      restSeconds: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}rest_seconds'])!,
+      halfwaySwitch: attachedDatabase.typeMapping
+          .read(DriftSqlType.bool, data['${effectivePrefix}halfway_switch'])!,
+    );
+  }
+
+  @override
+  $ExercisesTableTable createAlias(String alias) {
+    return $ExercisesTableTable(attachedDatabase, alias);
+  }
+}
+
+class ExercisesTableData extends DataClass
+    implements Insertable<ExercisesTableData> {
+  final String id;
+  final String packageId;
+  final int sequenceNumber;
+  final String titleDe;
+  final String titleEn;
+  final String positionInstructionsDe;
+  final String positionInstructionsEn;
+  final String movementInstructionsDe;
+  final String movementInstructionsEn;
+  final String? hintsDe;
+  final String? hintsEn;
+  final String executionGuideDe;
+  final String executionGuideEn;
+  final int durationSeconds;
+  final int repetitions;
+  final String imagePath;
+  final String? videoPath;
+  final String? audioCuePath;
+  final String rhythmType;
+  final String phasesJson;
+  final bool hasRepSwitch;
+  final String holdCueDe;
+  final String holdCueEn;
+  final int holdSeconds;
+  final int restSeconds;
+  final bool halfwaySwitch;
+  const ExercisesTableData(
+      {required this.id,
+      required this.packageId,
+      required this.sequenceNumber,
+      required this.titleDe,
+      required this.titleEn,
+      required this.positionInstructionsDe,
+      required this.positionInstructionsEn,
+      required this.movementInstructionsDe,
+      required this.movementInstructionsEn,
+      this.hintsDe,
+      this.hintsEn,
+      required this.executionGuideDe,
+      required this.executionGuideEn,
+      required this.durationSeconds,
+      required this.repetitions,
+      required this.imagePath,
+      this.videoPath,
+      this.audioCuePath,
+      required this.rhythmType,
+      required this.phasesJson,
+      required this.hasRepSwitch,
+      required this.holdCueDe,
+      required this.holdCueEn,
+      required this.holdSeconds,
+      required this.restSeconds,
+      required this.halfwaySwitch});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['package_id'] = Variable<String>(packageId);
+    map['sequence_number'] = Variable<int>(sequenceNumber);
+    map['title_de'] = Variable<String>(titleDe);
+    map['title_en'] = Variable<String>(titleEn);
+    map['position_instructions_de'] = Variable<String>(positionInstructionsDe);
+    map['position_instructions_en'] = Variable<String>(positionInstructionsEn);
+    map['movement_instructions_de'] = Variable<String>(movementInstructionsDe);
+    map['movement_instructions_en'] = Variable<String>(movementInstructionsEn);
+    if (!nullToAbsent || hintsDe != null) {
+      map['hints_de'] = Variable<String>(hintsDe);
+    }
+    if (!nullToAbsent || hintsEn != null) {
+      map['hints_en'] = Variable<String>(hintsEn);
+    }
+    map['execution_guide_de'] = Variable<String>(executionGuideDe);
+    map['execution_guide_en'] = Variable<String>(executionGuideEn);
+    map['duration_seconds'] = Variable<int>(durationSeconds);
+    map['repetitions'] = Variable<int>(repetitions);
+    map['image_path'] = Variable<String>(imagePath);
+    if (!nullToAbsent || videoPath != null) {
+      map['video_path'] = Variable<String>(videoPath);
+    }
+    if (!nullToAbsent || audioCuePath != null) {
+      map['audio_cue_path'] = Variable<String>(audioCuePath);
+    }
+    map['rhythm_type'] = Variable<String>(rhythmType);
+    map['phases_json'] = Variable<String>(phasesJson);
+    map['has_rep_switch'] = Variable<bool>(hasRepSwitch);
+    map['hold_cue_de'] = Variable<String>(holdCueDe);
+    map['hold_cue_en'] = Variable<String>(holdCueEn);
+    map['hold_seconds'] = Variable<int>(holdSeconds);
+    map['rest_seconds'] = Variable<int>(restSeconds);
+    map['halfway_switch'] = Variable<bool>(halfwaySwitch);
+    return map;
+  }
+
+  ExercisesTableCompanion toCompanion(bool nullToAbsent) {
+    return ExercisesTableCompanion(
+      id: Value(id),
+      packageId: Value(packageId),
+      sequenceNumber: Value(sequenceNumber),
+      titleDe: Value(titleDe),
+      titleEn: Value(titleEn),
+      positionInstructionsDe: Value(positionInstructionsDe),
+      positionInstructionsEn: Value(positionInstructionsEn),
+      movementInstructionsDe: Value(movementInstructionsDe),
+      movementInstructionsEn: Value(movementInstructionsEn),
+      hintsDe: hintsDe == null && nullToAbsent
+          ? const Value.absent()
+          : Value(hintsDe),
+      hintsEn: hintsEn == null && nullToAbsent
+          ? const Value.absent()
+          : Value(hintsEn),
+      executionGuideDe: Value(executionGuideDe),
+      executionGuideEn: Value(executionGuideEn),
+      durationSeconds: Value(durationSeconds),
+      repetitions: Value(repetitions),
+      imagePath: Value(imagePath),
+      videoPath: videoPath == null && nullToAbsent
+          ? const Value.absent()
+          : Value(videoPath),
+      audioCuePath: audioCuePath == null && nullToAbsent
+          ? const Value.absent()
+          : Value(audioCuePath),
+      rhythmType: Value(rhythmType),
+      phasesJson: Value(phasesJson),
+      hasRepSwitch: Value(hasRepSwitch),
+      holdCueDe: Value(holdCueDe),
+      holdCueEn: Value(holdCueEn),
+      holdSeconds: Value(holdSeconds),
+      restSeconds: Value(restSeconds),
+      halfwaySwitch: Value(halfwaySwitch),
+    );
+  }
+
+  factory ExercisesTableData.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return ExercisesTableData(
+      id: serializer.fromJson<String>(json['id']),
+      packageId: serializer.fromJson<String>(json['packageId']),
+      sequenceNumber: serializer.fromJson<int>(json['sequenceNumber']),
+      titleDe: serializer.fromJson<String>(json['titleDe']),
+      titleEn: serializer.fromJson<String>(json['titleEn']),
+      positionInstructionsDe:
+          serializer.fromJson<String>(json['positionInstructionsDe']),
+      positionInstructionsEn:
+          serializer.fromJson<String>(json['positionInstructionsEn']),
+      movementInstructionsDe:
+          serializer.fromJson<String>(json['movementInstructionsDe']),
+      movementInstructionsEn:
+          serializer.fromJson<String>(json['movementInstructionsEn']),
+      hintsDe: serializer.fromJson<String?>(json['hintsDe']),
+      hintsEn: serializer.fromJson<String?>(json['hintsEn']),
+      executionGuideDe: serializer.fromJson<String>(json['executionGuideDe']),
+      executionGuideEn: serializer.fromJson<String>(json['executionGuideEn']),
+      durationSeconds: serializer.fromJson<int>(json['durationSeconds']),
+      repetitions: serializer.fromJson<int>(json['repetitions']),
+      imagePath: serializer.fromJson<String>(json['imagePath']),
+      videoPath: serializer.fromJson<String?>(json['videoPath']),
+      audioCuePath: serializer.fromJson<String?>(json['audioCuePath']),
+      rhythmType: serializer.fromJson<String>(json['rhythmType']),
+      phasesJson: serializer.fromJson<String>(json['phasesJson']),
+      hasRepSwitch: serializer.fromJson<bool>(json['hasRepSwitch']),
+      holdCueDe: serializer.fromJson<String>(json['holdCueDe']),
+      holdCueEn: serializer.fromJson<String>(json['holdCueEn']),
+      holdSeconds: serializer.fromJson<int>(json['holdSeconds']),
+      restSeconds: serializer.fromJson<int>(json['restSeconds']),
+      halfwaySwitch: serializer.fromJson<bool>(json['halfwaySwitch']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'packageId': serializer.toJson<String>(packageId),
+      'sequenceNumber': serializer.toJson<int>(sequenceNumber),
+      'titleDe': serializer.toJson<String>(titleDe),
+      'titleEn': serializer.toJson<String>(titleEn),
+      'positionInstructionsDe':
+          serializer.toJson<String>(positionInstructionsDe),
+      'positionInstructionsEn':
+          serializer.toJson<String>(positionInstructionsEn),
+      'movementInstructionsDe':
+          serializer.toJson<String>(movementInstructionsDe),
+      'movementInstructionsEn':
+          serializer.toJson<String>(movementInstructionsEn),
+      'hintsDe': serializer.toJson<String?>(hintsDe),
+      'hintsEn': serializer.toJson<String?>(hintsEn),
+      'executionGuideDe': serializer.toJson<String>(executionGuideDe),
+      'executionGuideEn': serializer.toJson<String>(executionGuideEn),
+      'durationSeconds': serializer.toJson<int>(durationSeconds),
+      'repetitions': serializer.toJson<int>(repetitions),
+      'imagePath': serializer.toJson<String>(imagePath),
+      'videoPath': serializer.toJson<String?>(videoPath),
+      'audioCuePath': serializer.toJson<String?>(audioCuePath),
+      'rhythmType': serializer.toJson<String>(rhythmType),
+      'phasesJson': serializer.toJson<String>(phasesJson),
+      'hasRepSwitch': serializer.toJson<bool>(hasRepSwitch),
+      'holdCueDe': serializer.toJson<String>(holdCueDe),
+      'holdCueEn': serializer.toJson<String>(holdCueEn),
+      'holdSeconds': serializer.toJson<int>(holdSeconds),
+      'restSeconds': serializer.toJson<int>(restSeconds),
+      'halfwaySwitch': serializer.toJson<bool>(halfwaySwitch),
+    };
+  }
+
+  ExercisesTableData copyWith(
+          {String? id,
+          String? packageId,
+          int? sequenceNumber,
+          String? titleDe,
+          String? titleEn,
+          String? positionInstructionsDe,
+          String? positionInstructionsEn,
+          String? movementInstructionsDe,
+          String? movementInstructionsEn,
+          Value<String?> hintsDe = const Value.absent(),
+          Value<String?> hintsEn = const Value.absent(),
+          String? executionGuideDe,
+          String? executionGuideEn,
+          int? durationSeconds,
+          int? repetitions,
+          String? imagePath,
+          Value<String?> videoPath = const Value.absent(),
+          Value<String?> audioCuePath = const Value.absent(),
+          String? rhythmType,
+          String? phasesJson,
+          bool? hasRepSwitch,
+          String? holdCueDe,
+          String? holdCueEn,
+          int? holdSeconds,
+          int? restSeconds,
+          bool? halfwaySwitch}) =>
+      ExercisesTableData(
+        id: id ?? this.id,
+        packageId: packageId ?? this.packageId,
+        sequenceNumber: sequenceNumber ?? this.sequenceNumber,
+        titleDe: titleDe ?? this.titleDe,
+        titleEn: titleEn ?? this.titleEn,
+        positionInstructionsDe:
+            positionInstructionsDe ?? this.positionInstructionsDe,
+        positionInstructionsEn:
+            positionInstructionsEn ?? this.positionInstructionsEn,
+        movementInstructionsDe:
+            movementInstructionsDe ?? this.movementInstructionsDe,
+        movementInstructionsEn:
+            movementInstructionsEn ?? this.movementInstructionsEn,
+        hintsDe: hintsDe.present ? hintsDe.value : this.hintsDe,
+        hintsEn: hintsEn.present ? hintsEn.value : this.hintsEn,
+        executionGuideDe: executionGuideDe ?? this.executionGuideDe,
+        executionGuideEn: executionGuideEn ?? this.executionGuideEn,
+        durationSeconds: durationSeconds ?? this.durationSeconds,
+        repetitions: repetitions ?? this.repetitions,
+        imagePath: imagePath ?? this.imagePath,
+        videoPath: videoPath.present ? videoPath.value : this.videoPath,
+        audioCuePath:
+            audioCuePath.present ? audioCuePath.value : this.audioCuePath,
+        rhythmType: rhythmType ?? this.rhythmType,
+        phasesJson: phasesJson ?? this.phasesJson,
+        hasRepSwitch: hasRepSwitch ?? this.hasRepSwitch,
+        holdCueDe: holdCueDe ?? this.holdCueDe,
+        holdCueEn: holdCueEn ?? this.holdCueEn,
+        holdSeconds: holdSeconds ?? this.holdSeconds,
+        restSeconds: restSeconds ?? this.restSeconds,
+        halfwaySwitch: halfwaySwitch ?? this.halfwaySwitch,
+      );
+  ExercisesTableData copyWithCompanion(ExercisesTableCompanion data) {
+    return ExercisesTableData(
+      id: data.id.present ? data.id.value : this.id,
+      packageId: data.packageId.present ? data.packageId.value : this.packageId,
+      sequenceNumber: data.sequenceNumber.present
+          ? data.sequenceNumber.value
+          : this.sequenceNumber,
+      titleDe: data.titleDe.present ? data.titleDe.value : this.titleDe,
+      titleEn: data.titleEn.present ? data.titleEn.value : this.titleEn,
+      positionInstructionsDe: data.positionInstructionsDe.present
+          ? data.positionInstructionsDe.value
+          : this.positionInstructionsDe,
+      positionInstructionsEn: data.positionInstructionsEn.present
+          ? data.positionInstructionsEn.value
+          : this.positionInstructionsEn,
+      movementInstructionsDe: data.movementInstructionsDe.present
+          ? data.movementInstructionsDe.value
+          : this.movementInstructionsDe,
+      movementInstructionsEn: data.movementInstructionsEn.present
+          ? data.movementInstructionsEn.value
+          : this.movementInstructionsEn,
+      hintsDe: data.hintsDe.present ? data.hintsDe.value : this.hintsDe,
+      hintsEn: data.hintsEn.present ? data.hintsEn.value : this.hintsEn,
+      executionGuideDe: data.executionGuideDe.present
+          ? data.executionGuideDe.value
+          : this.executionGuideDe,
+      executionGuideEn: data.executionGuideEn.present
+          ? data.executionGuideEn.value
+          : this.executionGuideEn,
+      durationSeconds: data.durationSeconds.present
+          ? data.durationSeconds.value
+          : this.durationSeconds,
+      repetitions:
+          data.repetitions.present ? data.repetitions.value : this.repetitions,
+      imagePath: data.imagePath.present ? data.imagePath.value : this.imagePath,
+      videoPath: data.videoPath.present ? data.videoPath.value : this.videoPath,
+      audioCuePath: data.audioCuePath.present
+          ? data.audioCuePath.value
+          : this.audioCuePath,
+      rhythmType:
+          data.rhythmType.present ? data.rhythmType.value : this.rhythmType,
+      phasesJson:
+          data.phasesJson.present ? data.phasesJson.value : this.phasesJson,
+      hasRepSwitch: data.hasRepSwitch.present
+          ? data.hasRepSwitch.value
+          : this.hasRepSwitch,
+      holdCueDe: data.holdCueDe.present ? data.holdCueDe.value : this.holdCueDe,
+      holdCueEn: data.holdCueEn.present ? data.holdCueEn.value : this.holdCueEn,
+      holdSeconds:
+          data.holdSeconds.present ? data.holdSeconds.value : this.holdSeconds,
+      restSeconds:
+          data.restSeconds.present ? data.restSeconds.value : this.restSeconds,
+      halfwaySwitch: data.halfwaySwitch.present
+          ? data.halfwaySwitch.value
+          : this.halfwaySwitch,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ExercisesTableData(')
+          ..write('id: $id, ')
+          ..write('packageId: $packageId, ')
+          ..write('sequenceNumber: $sequenceNumber, ')
+          ..write('titleDe: $titleDe, ')
+          ..write('titleEn: $titleEn, ')
+          ..write('positionInstructionsDe: $positionInstructionsDe, ')
+          ..write('positionInstructionsEn: $positionInstructionsEn, ')
+          ..write('movementInstructionsDe: $movementInstructionsDe, ')
+          ..write('movementInstructionsEn: $movementInstructionsEn, ')
+          ..write('hintsDe: $hintsDe, ')
+          ..write('hintsEn: $hintsEn, ')
+          ..write('executionGuideDe: $executionGuideDe, ')
+          ..write('executionGuideEn: $executionGuideEn, ')
+          ..write('durationSeconds: $durationSeconds, ')
+          ..write('repetitions: $repetitions, ')
+          ..write('imagePath: $imagePath, ')
+          ..write('videoPath: $videoPath, ')
+          ..write('audioCuePath: $audioCuePath, ')
+          ..write('rhythmType: $rhythmType, ')
+          ..write('phasesJson: $phasesJson, ')
+          ..write('hasRepSwitch: $hasRepSwitch, ')
+          ..write('holdCueDe: $holdCueDe, ')
+          ..write('holdCueEn: $holdCueEn, ')
+          ..write('holdSeconds: $holdSeconds, ')
+          ..write('restSeconds: $restSeconds, ')
+          ..write('halfwaySwitch: $halfwaySwitch')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hashAll([
+        id,
+        packageId,
+        sequenceNumber,
+        titleDe,
+        titleEn,
+        positionInstructionsDe,
+        positionInstructionsEn,
+        movementInstructionsDe,
+        movementInstructionsEn,
+        hintsDe,
+        hintsEn,
+        executionGuideDe,
+        executionGuideEn,
+        durationSeconds,
+        repetitions,
+        imagePath,
+        videoPath,
+        audioCuePath,
+        rhythmType,
+        phasesJson,
+        hasRepSwitch,
+        holdCueDe,
+        holdCueEn,
+        holdSeconds,
+        restSeconds,
+        halfwaySwitch
+      ]);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is ExercisesTableData &&
+          other.id == this.id &&
+          other.packageId == this.packageId &&
+          other.sequenceNumber == this.sequenceNumber &&
+          other.titleDe == this.titleDe &&
+          other.titleEn == this.titleEn &&
+          other.positionInstructionsDe == this.positionInstructionsDe &&
+          other.positionInstructionsEn == this.positionInstructionsEn &&
+          other.movementInstructionsDe == this.movementInstructionsDe &&
+          other.movementInstructionsEn == this.movementInstructionsEn &&
+          other.hintsDe == this.hintsDe &&
+          other.hintsEn == this.hintsEn &&
+          other.executionGuideDe == this.executionGuideDe &&
+          other.executionGuideEn == this.executionGuideEn &&
+          other.durationSeconds == this.durationSeconds &&
+          other.repetitions == this.repetitions &&
+          other.imagePath == this.imagePath &&
+          other.videoPath == this.videoPath &&
+          other.audioCuePath == this.audioCuePath &&
+          other.rhythmType == this.rhythmType &&
+          other.phasesJson == this.phasesJson &&
+          other.hasRepSwitch == this.hasRepSwitch &&
+          other.holdCueDe == this.holdCueDe &&
+          other.holdCueEn == this.holdCueEn &&
+          other.holdSeconds == this.holdSeconds &&
+          other.restSeconds == this.restSeconds &&
+          other.halfwaySwitch == this.halfwaySwitch);
+}
+
+class ExercisesTableCompanion extends UpdateCompanion<ExercisesTableData> {
+  final Value<String> id;
+  final Value<String> packageId;
+  final Value<int> sequenceNumber;
+  final Value<String> titleDe;
+  final Value<String> titleEn;
+  final Value<String> positionInstructionsDe;
+  final Value<String> positionInstructionsEn;
+  final Value<String> movementInstructionsDe;
+  final Value<String> movementInstructionsEn;
+  final Value<String?> hintsDe;
+  final Value<String?> hintsEn;
+  final Value<String> executionGuideDe;
+  final Value<String> executionGuideEn;
+  final Value<int> durationSeconds;
+  final Value<int> repetitions;
+  final Value<String> imagePath;
+  final Value<String?> videoPath;
+  final Value<String?> audioCuePath;
+  final Value<String> rhythmType;
+  final Value<String> phasesJson;
+  final Value<bool> hasRepSwitch;
+  final Value<String> holdCueDe;
+  final Value<String> holdCueEn;
+  final Value<int> holdSeconds;
+  final Value<int> restSeconds;
+  final Value<bool> halfwaySwitch;
+  final Value<int> rowid;
+  const ExercisesTableCompanion({
+    this.id = const Value.absent(),
+    this.packageId = const Value.absent(),
+    this.sequenceNumber = const Value.absent(),
+    this.titleDe = const Value.absent(),
+    this.titleEn = const Value.absent(),
+    this.positionInstructionsDe = const Value.absent(),
+    this.positionInstructionsEn = const Value.absent(),
+    this.movementInstructionsDe = const Value.absent(),
+    this.movementInstructionsEn = const Value.absent(),
+    this.hintsDe = const Value.absent(),
+    this.hintsEn = const Value.absent(),
+    this.executionGuideDe = const Value.absent(),
+    this.executionGuideEn = const Value.absent(),
+    this.durationSeconds = const Value.absent(),
+    this.repetitions = const Value.absent(),
+    this.imagePath = const Value.absent(),
+    this.videoPath = const Value.absent(),
+    this.audioCuePath = const Value.absent(),
+    this.rhythmType = const Value.absent(),
+    this.phasesJson = const Value.absent(),
+    this.hasRepSwitch = const Value.absent(),
+    this.holdCueDe = const Value.absent(),
+    this.holdCueEn = const Value.absent(),
+    this.holdSeconds = const Value.absent(),
+    this.restSeconds = const Value.absent(),
+    this.halfwaySwitch = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  ExercisesTableCompanion.insert({
+    required String id,
+    required String packageId,
+    required int sequenceNumber,
+    required String titleDe,
+    required String titleEn,
+    required String positionInstructionsDe,
+    required String positionInstructionsEn,
+    required String movementInstructionsDe,
+    required String movementInstructionsEn,
+    this.hintsDe = const Value.absent(),
+    this.hintsEn = const Value.absent(),
+    required String executionGuideDe,
+    required String executionGuideEn,
+    required int durationSeconds,
+    required int repetitions,
+    required String imagePath,
+    this.videoPath = const Value.absent(),
+    this.audioCuePath = const Value.absent(),
+    this.rhythmType = const Value.absent(),
+    this.phasesJson = const Value.absent(),
+    this.hasRepSwitch = const Value.absent(),
+    this.holdCueDe = const Value.absent(),
+    this.holdCueEn = const Value.absent(),
+    this.holdSeconds = const Value.absent(),
+    this.restSeconds = const Value.absent(),
+    this.halfwaySwitch = const Value.absent(),
+    this.rowid = const Value.absent(),
+  })  : id = Value(id),
+        packageId = Value(packageId),
+        sequenceNumber = Value(sequenceNumber),
+        titleDe = Value(titleDe),
+        titleEn = Value(titleEn),
+        positionInstructionsDe = Value(positionInstructionsDe),
+        positionInstructionsEn = Value(positionInstructionsEn),
+        movementInstructionsDe = Value(movementInstructionsDe),
+        movementInstructionsEn = Value(movementInstructionsEn),
+        executionGuideDe = Value(executionGuideDe),
+        executionGuideEn = Value(executionGuideEn),
+        durationSeconds = Value(durationSeconds),
+        repetitions = Value(repetitions),
+        imagePath = Value(imagePath);
+  static Insertable<ExercisesTableData> custom({
+    Expression<String>? id,
+    Expression<String>? packageId,
+    Expression<int>? sequenceNumber,
+    Expression<String>? titleDe,
+    Expression<String>? titleEn,
+    Expression<String>? positionInstructionsDe,
+    Expression<String>? positionInstructionsEn,
+    Expression<String>? movementInstructionsDe,
+    Expression<String>? movementInstructionsEn,
+    Expression<String>? hintsDe,
+    Expression<String>? hintsEn,
+    Expression<String>? executionGuideDe,
+    Expression<String>? executionGuideEn,
+    Expression<int>? durationSeconds,
+    Expression<int>? repetitions,
+    Expression<String>? imagePath,
+    Expression<String>? videoPath,
+    Expression<String>? audioCuePath,
+    Expression<String>? rhythmType,
+    Expression<String>? phasesJson,
+    Expression<bool>? hasRepSwitch,
+    Expression<String>? holdCueDe,
+    Expression<String>? holdCueEn,
+    Expression<int>? holdSeconds,
+    Expression<int>? restSeconds,
+    Expression<bool>? halfwaySwitch,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (packageId != null) 'package_id': packageId,
+      if (sequenceNumber != null) 'sequence_number': sequenceNumber,
+      if (titleDe != null) 'title_de': titleDe,
+      if (titleEn != null) 'title_en': titleEn,
+      if (positionInstructionsDe != null)
+        'position_instructions_de': positionInstructionsDe,
+      if (positionInstructionsEn != null)
+        'position_instructions_en': positionInstructionsEn,
+      if (movementInstructionsDe != null)
+        'movement_instructions_de': movementInstructionsDe,
+      if (movementInstructionsEn != null)
+        'movement_instructions_en': movementInstructionsEn,
+      if (hintsDe != null) 'hints_de': hintsDe,
+      if (hintsEn != null) 'hints_en': hintsEn,
+      if (executionGuideDe != null) 'execution_guide_de': executionGuideDe,
+      if (executionGuideEn != null) 'execution_guide_en': executionGuideEn,
+      if (durationSeconds != null) 'duration_seconds': durationSeconds,
+      if (repetitions != null) 'repetitions': repetitions,
+      if (imagePath != null) 'image_path': imagePath,
+      if (videoPath != null) 'video_path': videoPath,
+      if (audioCuePath != null) 'audio_cue_path': audioCuePath,
+      if (rhythmType != null) 'rhythm_type': rhythmType,
+      if (phasesJson != null) 'phases_json': phasesJson,
+      if (hasRepSwitch != null) 'has_rep_switch': hasRepSwitch,
+      if (holdCueDe != null) 'hold_cue_de': holdCueDe,
+      if (holdCueEn != null) 'hold_cue_en': holdCueEn,
+      if (holdSeconds != null) 'hold_seconds': holdSeconds,
+      if (restSeconds != null) 'rest_seconds': restSeconds,
+      if (halfwaySwitch != null) 'halfway_switch': halfwaySwitch,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  ExercisesTableCompanion copyWith(
+      {Value<String>? id,
+      Value<String>? packageId,
+      Value<int>? sequenceNumber,
+      Value<String>? titleDe,
+      Value<String>? titleEn,
+      Value<String>? positionInstructionsDe,
+      Value<String>? positionInstructionsEn,
+      Value<String>? movementInstructionsDe,
+      Value<String>? movementInstructionsEn,
+      Value<String?>? hintsDe,
+      Value<String?>? hintsEn,
+      Value<String>? executionGuideDe,
+      Value<String>? executionGuideEn,
+      Value<int>? durationSeconds,
+      Value<int>? repetitions,
+      Value<String>? imagePath,
+      Value<String?>? videoPath,
+      Value<String?>? audioCuePath,
+      Value<String>? rhythmType,
+      Value<String>? phasesJson,
+      Value<bool>? hasRepSwitch,
+      Value<String>? holdCueDe,
+      Value<String>? holdCueEn,
+      Value<int>? holdSeconds,
+      Value<int>? restSeconds,
+      Value<bool>? halfwaySwitch,
+      Value<int>? rowid}) {
+    return ExercisesTableCompanion(
+      id: id ?? this.id,
+      packageId: packageId ?? this.packageId,
+      sequenceNumber: sequenceNumber ?? this.sequenceNumber,
+      titleDe: titleDe ?? this.titleDe,
+      titleEn: titleEn ?? this.titleEn,
+      positionInstructionsDe:
+          positionInstructionsDe ?? this.positionInstructionsDe,
+      positionInstructionsEn:
+          positionInstructionsEn ?? this.positionInstructionsEn,
+      movementInstructionsDe:
+          movementInstructionsDe ?? this.movementInstructionsDe,
+      movementInstructionsEn:
+          movementInstructionsEn ?? this.movementInstructionsEn,
+      hintsDe: hintsDe ?? this.hintsDe,
+      hintsEn: hintsEn ?? this.hintsEn,
+      executionGuideDe: executionGuideDe ?? this.executionGuideDe,
+      executionGuideEn: executionGuideEn ?? this.executionGuideEn,
+      durationSeconds: durationSeconds ?? this.durationSeconds,
+      repetitions: repetitions ?? this.repetitions,
+      imagePath: imagePath ?? this.imagePath,
+      videoPath: videoPath ?? this.videoPath,
+      audioCuePath: audioCuePath ?? this.audioCuePath,
+      rhythmType: rhythmType ?? this.rhythmType,
+      phasesJson: phasesJson ?? this.phasesJson,
+      hasRepSwitch: hasRepSwitch ?? this.hasRepSwitch,
+      holdCueDe: holdCueDe ?? this.holdCueDe,
+      holdCueEn: holdCueEn ?? this.holdCueEn,
+      holdSeconds: holdSeconds ?? this.holdSeconds,
+      restSeconds: restSeconds ?? this.restSeconds,
+      halfwaySwitch: halfwaySwitch ?? this.halfwaySwitch,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (packageId.present) {
+      map['package_id'] = Variable<String>(packageId.value);
+    }
+    if (sequenceNumber.present) {
+      map['sequence_number'] = Variable<int>(sequenceNumber.value);
+    }
+    if (titleDe.present) {
+      map['title_de'] = Variable<String>(titleDe.value);
+    }
+    if (titleEn.present) {
+      map['title_en'] = Variable<String>(titleEn.value);
+    }
+    if (positionInstructionsDe.present) {
+      map['position_instructions_de'] =
+          Variable<String>(positionInstructionsDe.value);
+    }
+    if (positionInstructionsEn.present) {
+      map['position_instructions_en'] =
+          Variable<String>(positionInstructionsEn.value);
+    }
+    if (movementInstructionsDe.present) {
+      map['movement_instructions_de'] =
+          Variable<String>(movementInstructionsDe.value);
+    }
+    if (movementInstructionsEn.present) {
+      map['movement_instructions_en'] =
+          Variable<String>(movementInstructionsEn.value);
+    }
+    if (hintsDe.present) {
+      map['hints_de'] = Variable<String>(hintsDe.value);
+    }
+    if (hintsEn.present) {
+      map['hints_en'] = Variable<String>(hintsEn.value);
+    }
+    if (executionGuideDe.present) {
+      map['execution_guide_de'] = Variable<String>(executionGuideDe.value);
+    }
+    if (executionGuideEn.present) {
+      map['execution_guide_en'] = Variable<String>(executionGuideEn.value);
+    }
+    if (durationSeconds.present) {
+      map['duration_seconds'] = Variable<int>(durationSeconds.value);
+    }
+    if (repetitions.present) {
+      map['repetitions'] = Variable<int>(repetitions.value);
+    }
+    if (imagePath.present) {
+      map['image_path'] = Variable<String>(imagePath.value);
+    }
+    if (videoPath.present) {
+      map['video_path'] = Variable<String>(videoPath.value);
+    }
+    if (audioCuePath.present) {
+      map['audio_cue_path'] = Variable<String>(audioCuePath.value);
+    }
+    if (rhythmType.present) {
+      map['rhythm_type'] = Variable<String>(rhythmType.value);
+    }
+    if (phasesJson.present) {
+      map['phases_json'] = Variable<String>(phasesJson.value);
+    }
+    if (hasRepSwitch.present) {
+      map['has_rep_switch'] = Variable<bool>(hasRepSwitch.value);
+    }
+    if (holdCueDe.present) {
+      map['hold_cue_de'] = Variable<String>(holdCueDe.value);
+    }
+    if (holdCueEn.present) {
+      map['hold_cue_en'] = Variable<String>(holdCueEn.value);
+    }
+    if (holdSeconds.present) {
+      map['hold_seconds'] = Variable<int>(holdSeconds.value);
+    }
+    if (restSeconds.present) {
+      map['rest_seconds'] = Variable<int>(restSeconds.value);
+    }
+    if (halfwaySwitch.present) {
+      map['halfway_switch'] = Variable<bool>(halfwaySwitch.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ExercisesTableCompanion(')
+          ..write('id: $id, ')
+          ..write('packageId: $packageId, ')
+          ..write('sequenceNumber: $sequenceNumber, ')
+          ..write('titleDe: $titleDe, ')
+          ..write('titleEn: $titleEn, ')
+          ..write('positionInstructionsDe: $positionInstructionsDe, ')
+          ..write('positionInstructionsEn: $positionInstructionsEn, ')
+          ..write('movementInstructionsDe: $movementInstructionsDe, ')
+          ..write('movementInstructionsEn: $movementInstructionsEn, ')
+          ..write('hintsDe: $hintsDe, ')
+          ..write('hintsEn: $hintsEn, ')
+          ..write('executionGuideDe: $executionGuideDe, ')
+          ..write('executionGuideEn: $executionGuideEn, ')
+          ..write('durationSeconds: $durationSeconds, ')
+          ..write('repetitions: $repetitions, ')
+          ..write('imagePath: $imagePath, ')
+          ..write('videoPath: $videoPath, ')
+          ..write('audioCuePath: $audioCuePath, ')
+          ..write('rhythmType: $rhythmType, ')
+          ..write('phasesJson: $phasesJson, ')
+          ..write('hasRepSwitch: $hasRepSwitch, ')
+          ..write('holdCueDe: $holdCueDe, ')
+          ..write('holdCueEn: $holdCueEn, ')
+          ..write('holdSeconds: $holdSeconds, ')
+          ..write('restSeconds: $restSeconds, ')
+          ..write('halfwaySwitch: $halfwaySwitch, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class $TrainingSessionsTableTable extends TrainingSessionsTable
     with TableInfo<$TrainingSessionsTableTable, TrainingSessionsTableData> {
   @override
@@ -4100,12 +5332,33 @@ class $JournalEntriesTableTable extends JournalEntriesTable
   late final GeneratedColumn<String> enrollmentId = GeneratedColumn<String>(
       'enrollment_id', aliasedName, true,
       type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _checkinIdMeta =
+      const VerificationMeta('checkinId');
+  @override
+  late final GeneratedColumn<String> checkinId = GeneratedColumn<String>(
+      'checkin_id', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
   static const VerificationMeta _contentMeta =
       const VerificationMeta('content');
   @override
   late final GeneratedColumn<String> content = GeneratedColumn<String>(
       'content', aliasedName, false,
       type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _moodMeta = const VerificationMeta('mood');
+  @override
+  late final GeneratedColumn<int> mood = GeneratedColumn<int>(
+      'mood', aliasedName, true,
+      type: DriftSqlType.int, requiredDuringInsert: false);
+  static const VerificationMeta _energyMeta = const VerificationMeta('energy');
+  @override
+  late final GeneratedColumn<int> energy = GeneratedColumn<int>(
+      'energy', aliasedName, true,
+      type: DriftSqlType.int, requiredDuringInsert: false);
+  static const VerificationMeta _stressMeta = const VerificationMeta('stress');
+  @override
+  late final GeneratedColumn<int> stress = GeneratedColumn<int>(
+      'stress', aliasedName, true,
+      type: DriftSqlType.int, requiredDuringInsert: false);
   static const VerificationMeta _dayKeyMeta = const VerificationMeta('dayKey');
   @override
   late final GeneratedColumn<int> dayKey = GeneratedColumn<int>(
@@ -4116,6 +5369,14 @@ class $JournalEntriesTableTable extends JournalEntriesTable
   @override
   late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
       'created_at', aliasedName, false,
+      type: DriftSqlType.dateTime,
+      requiredDuringInsert: false,
+      defaultValue: currentDateAndTime);
+  static const VerificationMeta _updatedAtMeta =
+      const VerificationMeta('updatedAt');
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+      'updated_at', aliasedName, false,
       type: DriftSqlType.dateTime,
       requiredDuringInsert: false,
       defaultValue: currentDateAndTime);
@@ -4130,8 +5391,20 @@ class $JournalEntriesTableTable extends JournalEntriesTable
           GeneratedColumn.constraintIsAlways('CHECK ("needs_sync" IN (0, 1))'),
       defaultValue: const Constant(true));
   @override
-  List<GeneratedColumn> get $columns =>
-      [id, userId, enrollmentId, content, dayKey, createdAt, needsSync];
+  List<GeneratedColumn> get $columns => [
+        id,
+        userId,
+        enrollmentId,
+        checkinId,
+        content,
+        mood,
+        energy,
+        stress,
+        dayKey,
+        createdAt,
+        updatedAt,
+        needsSync
+      ];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -4160,11 +5433,27 @@ class $JournalEntriesTableTable extends JournalEntriesTable
           enrollmentId.isAcceptableOrUnknown(
               data['enrollment_id']!, _enrollmentIdMeta));
     }
+    if (data.containsKey('checkin_id')) {
+      context.handle(_checkinIdMeta,
+          checkinId.isAcceptableOrUnknown(data['checkin_id']!, _checkinIdMeta));
+    }
     if (data.containsKey('content')) {
       context.handle(_contentMeta,
           content.isAcceptableOrUnknown(data['content']!, _contentMeta));
     } else if (isInserting) {
       context.missing(_contentMeta);
+    }
+    if (data.containsKey('mood')) {
+      context.handle(
+          _moodMeta, mood.isAcceptableOrUnknown(data['mood']!, _moodMeta));
+    }
+    if (data.containsKey('energy')) {
+      context.handle(_energyMeta,
+          energy.isAcceptableOrUnknown(data['energy']!, _energyMeta));
+    }
+    if (data.containsKey('stress')) {
+      context.handle(_stressMeta,
+          stress.isAcceptableOrUnknown(data['stress']!, _stressMeta));
     }
     if (data.containsKey('day_key')) {
       context.handle(_dayKeyMeta,
@@ -4175,6 +5464,10 @@ class $JournalEntriesTableTable extends JournalEntriesTable
     if (data.containsKey('created_at')) {
       context.handle(_createdAtMeta,
           createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta));
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(_updatedAtMeta,
+          updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta));
     }
     if (data.containsKey('needs_sync')) {
       context.handle(_needsSyncMeta,
@@ -4196,12 +5489,22 @@ class $JournalEntriesTableTable extends JournalEntriesTable
           .read(DriftSqlType.string, data['${effectivePrefix}user_id'])!,
       enrollmentId: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}enrollment_id']),
+      checkinId: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}checkin_id']),
       content: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}content'])!,
+      mood: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}mood']),
+      energy: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}energy']),
+      stress: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}stress']),
       dayKey: attachedDatabase.typeMapping
           .read(DriftSqlType.int, data['${effectivePrefix}day_key'])!,
       createdAt: attachedDatabase.typeMapping
           .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
+      updatedAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}updated_at'])!,
       needsSync: attachedDatabase.typeMapping
           .read(DriftSqlType.bool, data['${effectivePrefix}needs_sync'])!,
     );
@@ -4218,17 +5521,34 @@ class JournalEntriesTableData extends DataClass
   final String id;
   final String userId;
   final String? enrollmentId;
+
+  /// FK to the mood_checkin that was submitted alongside this note, or null for
+  /// standalone entries.
+  final String? checkinId;
   final String content;
+
+  /// Snapshot of mood at the time of writing (1–5, nullable).
+  final int? mood;
+  final int? energy;
+  final int? stress;
+
+  /// Epoch-day key (days since 1970-01-01) — matches mood_checkins.day_key.
   final int dayKey;
   final DateTime createdAt;
+  final DateTime updatedAt;
   final bool needsSync;
   const JournalEntriesTableData(
       {required this.id,
       required this.userId,
       this.enrollmentId,
+      this.checkinId,
       required this.content,
+      this.mood,
+      this.energy,
+      this.stress,
       required this.dayKey,
       required this.createdAt,
+      required this.updatedAt,
       required this.needsSync});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -4238,9 +5558,22 @@ class JournalEntriesTableData extends DataClass
     if (!nullToAbsent || enrollmentId != null) {
       map['enrollment_id'] = Variable<String>(enrollmentId);
     }
+    if (!nullToAbsent || checkinId != null) {
+      map['checkin_id'] = Variable<String>(checkinId);
+    }
     map['content'] = Variable<String>(content);
+    if (!nullToAbsent || mood != null) {
+      map['mood'] = Variable<int>(mood);
+    }
+    if (!nullToAbsent || energy != null) {
+      map['energy'] = Variable<int>(energy);
+    }
+    if (!nullToAbsent || stress != null) {
+      map['stress'] = Variable<int>(stress);
+    }
     map['day_key'] = Variable<int>(dayKey);
     map['created_at'] = Variable<DateTime>(createdAt);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
     map['needs_sync'] = Variable<bool>(needsSync);
     return map;
   }
@@ -4252,9 +5585,18 @@ class JournalEntriesTableData extends DataClass
       enrollmentId: enrollmentId == null && nullToAbsent
           ? const Value.absent()
           : Value(enrollmentId),
+      checkinId: checkinId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(checkinId),
       content: Value(content),
+      mood: mood == null && nullToAbsent ? const Value.absent() : Value(mood),
+      energy:
+          energy == null && nullToAbsent ? const Value.absent() : Value(energy),
+      stress:
+          stress == null && nullToAbsent ? const Value.absent() : Value(stress),
       dayKey: Value(dayKey),
       createdAt: Value(createdAt),
+      updatedAt: Value(updatedAt),
       needsSync: Value(needsSync),
     );
   }
@@ -4266,9 +5608,14 @@ class JournalEntriesTableData extends DataClass
       id: serializer.fromJson<String>(json['id']),
       userId: serializer.fromJson<String>(json['userId']),
       enrollmentId: serializer.fromJson<String?>(json['enrollmentId']),
+      checkinId: serializer.fromJson<String?>(json['checkinId']),
       content: serializer.fromJson<String>(json['content']),
+      mood: serializer.fromJson<int?>(json['mood']),
+      energy: serializer.fromJson<int?>(json['energy']),
+      stress: serializer.fromJson<int?>(json['stress']),
       dayKey: serializer.fromJson<int>(json['dayKey']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
       needsSync: serializer.fromJson<bool>(json['needsSync']),
     );
   }
@@ -4279,9 +5626,14 @@ class JournalEntriesTableData extends DataClass
       'id': serializer.toJson<String>(id),
       'userId': serializer.toJson<String>(userId),
       'enrollmentId': serializer.toJson<String?>(enrollmentId),
+      'checkinId': serializer.toJson<String?>(checkinId),
       'content': serializer.toJson<String>(content),
+      'mood': serializer.toJson<int?>(mood),
+      'energy': serializer.toJson<int?>(energy),
+      'stress': serializer.toJson<int?>(stress),
       'dayKey': serializer.toJson<int>(dayKey),
       'createdAt': serializer.toJson<DateTime>(createdAt),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
       'needsSync': serializer.toJson<bool>(needsSync),
     };
   }
@@ -4290,18 +5642,28 @@ class JournalEntriesTableData extends DataClass
           {String? id,
           String? userId,
           Value<String?> enrollmentId = const Value.absent(),
+          Value<String?> checkinId = const Value.absent(),
           String? content,
+          Value<int?> mood = const Value.absent(),
+          Value<int?> energy = const Value.absent(),
+          Value<int?> stress = const Value.absent(),
           int? dayKey,
           DateTime? createdAt,
+          DateTime? updatedAt,
           bool? needsSync}) =>
       JournalEntriesTableData(
         id: id ?? this.id,
         userId: userId ?? this.userId,
         enrollmentId:
             enrollmentId.present ? enrollmentId.value : this.enrollmentId,
+        checkinId: checkinId.present ? checkinId.value : this.checkinId,
         content: content ?? this.content,
+        mood: mood.present ? mood.value : this.mood,
+        energy: energy.present ? energy.value : this.energy,
+        stress: stress.present ? stress.value : this.stress,
         dayKey: dayKey ?? this.dayKey,
         createdAt: createdAt ?? this.createdAt,
+        updatedAt: updatedAt ?? this.updatedAt,
         needsSync: needsSync ?? this.needsSync,
       );
   JournalEntriesTableData copyWithCompanion(JournalEntriesTableCompanion data) {
@@ -4311,9 +5673,14 @@ class JournalEntriesTableData extends DataClass
       enrollmentId: data.enrollmentId.present
           ? data.enrollmentId.value
           : this.enrollmentId,
+      checkinId: data.checkinId.present ? data.checkinId.value : this.checkinId,
       content: data.content.present ? data.content.value : this.content,
+      mood: data.mood.present ? data.mood.value : this.mood,
+      energy: data.energy.present ? data.energy.value : this.energy,
+      stress: data.stress.present ? data.stress.value : this.stress,
       dayKey: data.dayKey.present ? data.dayKey.value : this.dayKey,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
       needsSync: data.needsSync.present ? data.needsSync.value : this.needsSync,
     );
   }
@@ -4324,17 +5691,22 @@ class JournalEntriesTableData extends DataClass
           ..write('id: $id, ')
           ..write('userId: $userId, ')
           ..write('enrollmentId: $enrollmentId, ')
+          ..write('checkinId: $checkinId, ')
           ..write('content: $content, ')
+          ..write('mood: $mood, ')
+          ..write('energy: $energy, ')
+          ..write('stress: $stress, ')
           ..write('dayKey: $dayKey, ')
           ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
           ..write('needsSync: $needsSync')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(
-      id, userId, enrollmentId, content, dayKey, createdAt, needsSync);
+  int get hashCode => Object.hash(id, userId, enrollmentId, checkinId, content,
+      mood, energy, stress, dayKey, createdAt, updatedAt, needsSync);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -4342,9 +5714,14 @@ class JournalEntriesTableData extends DataClass
           other.id == this.id &&
           other.userId == this.userId &&
           other.enrollmentId == this.enrollmentId &&
+          other.checkinId == this.checkinId &&
           other.content == this.content &&
+          other.mood == this.mood &&
+          other.energy == this.energy &&
+          other.stress == this.stress &&
           other.dayKey == this.dayKey &&
           other.createdAt == this.createdAt &&
+          other.updatedAt == this.updatedAt &&
           other.needsSync == this.needsSync);
 }
 
@@ -4353,18 +5730,28 @@ class JournalEntriesTableCompanion
   final Value<String> id;
   final Value<String> userId;
   final Value<String?> enrollmentId;
+  final Value<String?> checkinId;
   final Value<String> content;
+  final Value<int?> mood;
+  final Value<int?> energy;
+  final Value<int?> stress;
   final Value<int> dayKey;
   final Value<DateTime> createdAt;
+  final Value<DateTime> updatedAt;
   final Value<bool> needsSync;
   final Value<int> rowid;
   const JournalEntriesTableCompanion({
     this.id = const Value.absent(),
     this.userId = const Value.absent(),
     this.enrollmentId = const Value.absent(),
+    this.checkinId = const Value.absent(),
     this.content = const Value.absent(),
+    this.mood = const Value.absent(),
+    this.energy = const Value.absent(),
+    this.stress = const Value.absent(),
     this.dayKey = const Value.absent(),
     this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
     this.needsSync = const Value.absent(),
     this.rowid = const Value.absent(),
   });
@@ -4372,9 +5759,14 @@ class JournalEntriesTableCompanion
     required String id,
     required String userId,
     this.enrollmentId = const Value.absent(),
+    this.checkinId = const Value.absent(),
     required String content,
+    this.mood = const Value.absent(),
+    this.energy = const Value.absent(),
+    this.stress = const Value.absent(),
     required int dayKey,
     this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
     this.needsSync = const Value.absent(),
     this.rowid = const Value.absent(),
   })  : id = Value(id),
@@ -4385,9 +5777,14 @@ class JournalEntriesTableCompanion
     Expression<String>? id,
     Expression<String>? userId,
     Expression<String>? enrollmentId,
+    Expression<String>? checkinId,
     Expression<String>? content,
+    Expression<int>? mood,
+    Expression<int>? energy,
+    Expression<int>? stress,
     Expression<int>? dayKey,
     Expression<DateTime>? createdAt,
+    Expression<DateTime>? updatedAt,
     Expression<bool>? needsSync,
     Expression<int>? rowid,
   }) {
@@ -4395,9 +5792,14 @@ class JournalEntriesTableCompanion
       if (id != null) 'id': id,
       if (userId != null) 'user_id': userId,
       if (enrollmentId != null) 'enrollment_id': enrollmentId,
+      if (checkinId != null) 'checkin_id': checkinId,
       if (content != null) 'content': content,
+      if (mood != null) 'mood': mood,
+      if (energy != null) 'energy': energy,
+      if (stress != null) 'stress': stress,
       if (dayKey != null) 'day_key': dayKey,
       if (createdAt != null) 'created_at': createdAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
       if (needsSync != null) 'needs_sync': needsSync,
       if (rowid != null) 'rowid': rowid,
     });
@@ -4407,18 +5809,28 @@ class JournalEntriesTableCompanion
       {Value<String>? id,
       Value<String>? userId,
       Value<String?>? enrollmentId,
+      Value<String?>? checkinId,
       Value<String>? content,
+      Value<int?>? mood,
+      Value<int?>? energy,
+      Value<int?>? stress,
       Value<int>? dayKey,
       Value<DateTime>? createdAt,
+      Value<DateTime>? updatedAt,
       Value<bool>? needsSync,
       Value<int>? rowid}) {
     return JournalEntriesTableCompanion(
       id: id ?? this.id,
       userId: userId ?? this.userId,
       enrollmentId: enrollmentId ?? this.enrollmentId,
+      checkinId: checkinId ?? this.checkinId,
       content: content ?? this.content,
+      mood: mood ?? this.mood,
+      energy: energy ?? this.energy,
+      stress: stress ?? this.stress,
       dayKey: dayKey ?? this.dayKey,
       createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
       needsSync: needsSync ?? this.needsSync,
       rowid: rowid ?? this.rowid,
     );
@@ -4436,14 +5848,29 @@ class JournalEntriesTableCompanion
     if (enrollmentId.present) {
       map['enrollment_id'] = Variable<String>(enrollmentId.value);
     }
+    if (checkinId.present) {
+      map['checkin_id'] = Variable<String>(checkinId.value);
+    }
     if (content.present) {
       map['content'] = Variable<String>(content.value);
+    }
+    if (mood.present) {
+      map['mood'] = Variable<int>(mood.value);
+    }
+    if (energy.present) {
+      map['energy'] = Variable<int>(energy.value);
+    }
+    if (stress.present) {
+      map['stress'] = Variable<int>(stress.value);
     }
     if (dayKey.present) {
       map['day_key'] = Variable<int>(dayKey.value);
     }
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
     }
     if (needsSync.present) {
       map['needs_sync'] = Variable<bool>(needsSync.value);
@@ -4460,9 +5887,14 @@ class JournalEntriesTableCompanion
           ..write('id: $id, ')
           ..write('userId: $userId, ')
           ..write('enrollmentId: $enrollmentId, ')
+          ..write('checkinId: $checkinId, ')
           ..write('content: $content, ')
+          ..write('mood: $mood, ')
+          ..write('energy: $energy, ')
+          ..write('stress: $stress, ')
           ..write('dayKey: $dayKey, ')
           ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
           ..write('needsSync: $needsSync, ')
           ..write('rowid: $rowid')
           ..write(')'))
@@ -4475,6 +5907,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
   late final $EnrollmentsTableTable enrollmentsTable =
       $EnrollmentsTableTable(this);
+  late final $ExercisesTableTable exercisesTable = $ExercisesTableTable(this);
   late final $TrainingSessionsTableTable trainingSessionsTable =
       $TrainingSessionsTableTable(this);
   late final $ProgressEntriesTableTable progressEntriesTable =
@@ -4494,6 +5927,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   @override
   List<DatabaseSchemaEntity> get allSchemaEntities => [
         enrollmentsTable,
+        exercisesTable,
         trainingSessionsTable,
         progressEntriesTable,
         moodCheckinsTable,
@@ -4805,6 +6239,514 @@ typedef $$EnrollmentsTableTableProcessedTableManager = ProcessedTableManager<
           EnrollmentsTableData>
     ),
     EnrollmentsTableData,
+    PrefetchHooks Function()>;
+typedef $$ExercisesTableTableCreateCompanionBuilder = ExercisesTableCompanion
+    Function({
+  required String id,
+  required String packageId,
+  required int sequenceNumber,
+  required String titleDe,
+  required String titleEn,
+  required String positionInstructionsDe,
+  required String positionInstructionsEn,
+  required String movementInstructionsDe,
+  required String movementInstructionsEn,
+  Value<String?> hintsDe,
+  Value<String?> hintsEn,
+  required String executionGuideDe,
+  required String executionGuideEn,
+  required int durationSeconds,
+  required int repetitions,
+  required String imagePath,
+  Value<String?> videoPath,
+  Value<String?> audioCuePath,
+  Value<String> rhythmType,
+  Value<String> phasesJson,
+  Value<bool> hasRepSwitch,
+  Value<String> holdCueDe,
+  Value<String> holdCueEn,
+  Value<int> holdSeconds,
+  Value<int> restSeconds,
+  Value<bool> halfwaySwitch,
+  Value<int> rowid,
+});
+typedef $$ExercisesTableTableUpdateCompanionBuilder = ExercisesTableCompanion
+    Function({
+  Value<String> id,
+  Value<String> packageId,
+  Value<int> sequenceNumber,
+  Value<String> titleDe,
+  Value<String> titleEn,
+  Value<String> positionInstructionsDe,
+  Value<String> positionInstructionsEn,
+  Value<String> movementInstructionsDe,
+  Value<String> movementInstructionsEn,
+  Value<String?> hintsDe,
+  Value<String?> hintsEn,
+  Value<String> executionGuideDe,
+  Value<String> executionGuideEn,
+  Value<int> durationSeconds,
+  Value<int> repetitions,
+  Value<String> imagePath,
+  Value<String?> videoPath,
+  Value<String?> audioCuePath,
+  Value<String> rhythmType,
+  Value<String> phasesJson,
+  Value<bool> hasRepSwitch,
+  Value<String> holdCueDe,
+  Value<String> holdCueEn,
+  Value<int> holdSeconds,
+  Value<int> restSeconds,
+  Value<bool> halfwaySwitch,
+  Value<int> rowid,
+});
+
+class $$ExercisesTableTableFilterComposer
+    extends Composer<_$AppDatabase, $ExercisesTableTable> {
+  $$ExercisesTableTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get packageId => $composableBuilder(
+      column: $table.packageId, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get sequenceNumber => $composableBuilder(
+      column: $table.sequenceNumber,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get titleDe => $composableBuilder(
+      column: $table.titleDe, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get titleEn => $composableBuilder(
+      column: $table.titleEn, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get positionInstructionsDe => $composableBuilder(
+      column: $table.positionInstructionsDe,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get positionInstructionsEn => $composableBuilder(
+      column: $table.positionInstructionsEn,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get movementInstructionsDe => $composableBuilder(
+      column: $table.movementInstructionsDe,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get movementInstructionsEn => $composableBuilder(
+      column: $table.movementInstructionsEn,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get hintsDe => $composableBuilder(
+      column: $table.hintsDe, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get hintsEn => $composableBuilder(
+      column: $table.hintsEn, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get executionGuideDe => $composableBuilder(
+      column: $table.executionGuideDe,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get executionGuideEn => $composableBuilder(
+      column: $table.executionGuideEn,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get durationSeconds => $composableBuilder(
+      column: $table.durationSeconds,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get repetitions => $composableBuilder(
+      column: $table.repetitions, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get imagePath => $composableBuilder(
+      column: $table.imagePath, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get videoPath => $composableBuilder(
+      column: $table.videoPath, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get audioCuePath => $composableBuilder(
+      column: $table.audioCuePath, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get rhythmType => $composableBuilder(
+      column: $table.rhythmType, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get phasesJson => $composableBuilder(
+      column: $table.phasesJson, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get hasRepSwitch => $composableBuilder(
+      column: $table.hasRepSwitch, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get holdCueDe => $composableBuilder(
+      column: $table.holdCueDe, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get holdCueEn => $composableBuilder(
+      column: $table.holdCueEn, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get holdSeconds => $composableBuilder(
+      column: $table.holdSeconds, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get restSeconds => $composableBuilder(
+      column: $table.restSeconds, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get halfwaySwitch => $composableBuilder(
+      column: $table.halfwaySwitch, builder: (column) => ColumnFilters(column));
+}
+
+class $$ExercisesTableTableOrderingComposer
+    extends Composer<_$AppDatabase, $ExercisesTableTable> {
+  $$ExercisesTableTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get packageId => $composableBuilder(
+      column: $table.packageId, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get sequenceNumber => $composableBuilder(
+      column: $table.sequenceNumber,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get titleDe => $composableBuilder(
+      column: $table.titleDe, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get titleEn => $composableBuilder(
+      column: $table.titleEn, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get positionInstructionsDe => $composableBuilder(
+      column: $table.positionInstructionsDe,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get positionInstructionsEn => $composableBuilder(
+      column: $table.positionInstructionsEn,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get movementInstructionsDe => $composableBuilder(
+      column: $table.movementInstructionsDe,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get movementInstructionsEn => $composableBuilder(
+      column: $table.movementInstructionsEn,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get hintsDe => $composableBuilder(
+      column: $table.hintsDe, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get hintsEn => $composableBuilder(
+      column: $table.hintsEn, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get executionGuideDe => $composableBuilder(
+      column: $table.executionGuideDe,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get executionGuideEn => $composableBuilder(
+      column: $table.executionGuideEn,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get durationSeconds => $composableBuilder(
+      column: $table.durationSeconds,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get repetitions => $composableBuilder(
+      column: $table.repetitions, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get imagePath => $composableBuilder(
+      column: $table.imagePath, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get videoPath => $composableBuilder(
+      column: $table.videoPath, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get audioCuePath => $composableBuilder(
+      column: $table.audioCuePath,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get rhythmType => $composableBuilder(
+      column: $table.rhythmType, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get phasesJson => $composableBuilder(
+      column: $table.phasesJson, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<bool> get hasRepSwitch => $composableBuilder(
+      column: $table.hasRepSwitch,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get holdCueDe => $composableBuilder(
+      column: $table.holdCueDe, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get holdCueEn => $composableBuilder(
+      column: $table.holdCueEn, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get holdSeconds => $composableBuilder(
+      column: $table.holdSeconds, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get restSeconds => $composableBuilder(
+      column: $table.restSeconds, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<bool> get halfwaySwitch => $composableBuilder(
+      column: $table.halfwaySwitch,
+      builder: (column) => ColumnOrderings(column));
+}
+
+class $$ExercisesTableTableAnnotationComposer
+    extends Composer<_$AppDatabase, $ExercisesTableTable> {
+  $$ExercisesTableTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get packageId =>
+      $composableBuilder(column: $table.packageId, builder: (column) => column);
+
+  GeneratedColumn<int> get sequenceNumber => $composableBuilder(
+      column: $table.sequenceNumber, builder: (column) => column);
+
+  GeneratedColumn<String> get titleDe =>
+      $composableBuilder(column: $table.titleDe, builder: (column) => column);
+
+  GeneratedColumn<String> get titleEn =>
+      $composableBuilder(column: $table.titleEn, builder: (column) => column);
+
+  GeneratedColumn<String> get positionInstructionsDe => $composableBuilder(
+      column: $table.positionInstructionsDe, builder: (column) => column);
+
+  GeneratedColumn<String> get positionInstructionsEn => $composableBuilder(
+      column: $table.positionInstructionsEn, builder: (column) => column);
+
+  GeneratedColumn<String> get movementInstructionsDe => $composableBuilder(
+      column: $table.movementInstructionsDe, builder: (column) => column);
+
+  GeneratedColumn<String> get movementInstructionsEn => $composableBuilder(
+      column: $table.movementInstructionsEn, builder: (column) => column);
+
+  GeneratedColumn<String> get hintsDe =>
+      $composableBuilder(column: $table.hintsDe, builder: (column) => column);
+
+  GeneratedColumn<String> get hintsEn =>
+      $composableBuilder(column: $table.hintsEn, builder: (column) => column);
+
+  GeneratedColumn<String> get executionGuideDe => $composableBuilder(
+      column: $table.executionGuideDe, builder: (column) => column);
+
+  GeneratedColumn<String> get executionGuideEn => $composableBuilder(
+      column: $table.executionGuideEn, builder: (column) => column);
+
+  GeneratedColumn<int> get durationSeconds => $composableBuilder(
+      column: $table.durationSeconds, builder: (column) => column);
+
+  GeneratedColumn<int> get repetitions => $composableBuilder(
+      column: $table.repetitions, builder: (column) => column);
+
+  GeneratedColumn<String> get imagePath =>
+      $composableBuilder(column: $table.imagePath, builder: (column) => column);
+
+  GeneratedColumn<String> get videoPath =>
+      $composableBuilder(column: $table.videoPath, builder: (column) => column);
+
+  GeneratedColumn<String> get audioCuePath => $composableBuilder(
+      column: $table.audioCuePath, builder: (column) => column);
+
+  GeneratedColumn<String> get rhythmType => $composableBuilder(
+      column: $table.rhythmType, builder: (column) => column);
+
+  GeneratedColumn<String> get phasesJson => $composableBuilder(
+      column: $table.phasesJson, builder: (column) => column);
+
+  GeneratedColumn<bool> get hasRepSwitch => $composableBuilder(
+      column: $table.hasRepSwitch, builder: (column) => column);
+
+  GeneratedColumn<String> get holdCueDe =>
+      $composableBuilder(column: $table.holdCueDe, builder: (column) => column);
+
+  GeneratedColumn<String> get holdCueEn =>
+      $composableBuilder(column: $table.holdCueEn, builder: (column) => column);
+
+  GeneratedColumn<int> get holdSeconds => $composableBuilder(
+      column: $table.holdSeconds, builder: (column) => column);
+
+  GeneratedColumn<int> get restSeconds => $composableBuilder(
+      column: $table.restSeconds, builder: (column) => column);
+
+  GeneratedColumn<bool> get halfwaySwitch => $composableBuilder(
+      column: $table.halfwaySwitch, builder: (column) => column);
+}
+
+class $$ExercisesTableTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $ExercisesTableTable,
+    ExercisesTableData,
+    $$ExercisesTableTableFilterComposer,
+    $$ExercisesTableTableOrderingComposer,
+    $$ExercisesTableTableAnnotationComposer,
+    $$ExercisesTableTableCreateCompanionBuilder,
+    $$ExercisesTableTableUpdateCompanionBuilder,
+    (
+      ExercisesTableData,
+      BaseReferences<_$AppDatabase, $ExercisesTableTable, ExercisesTableData>
+    ),
+    ExercisesTableData,
+    PrefetchHooks Function()> {
+  $$ExercisesTableTableTableManager(
+      _$AppDatabase db, $ExercisesTableTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$ExercisesTableTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$ExercisesTableTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$ExercisesTableTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<String> id = const Value.absent(),
+            Value<String> packageId = const Value.absent(),
+            Value<int> sequenceNumber = const Value.absent(),
+            Value<String> titleDe = const Value.absent(),
+            Value<String> titleEn = const Value.absent(),
+            Value<String> positionInstructionsDe = const Value.absent(),
+            Value<String> positionInstructionsEn = const Value.absent(),
+            Value<String> movementInstructionsDe = const Value.absent(),
+            Value<String> movementInstructionsEn = const Value.absent(),
+            Value<String?> hintsDe = const Value.absent(),
+            Value<String?> hintsEn = const Value.absent(),
+            Value<String> executionGuideDe = const Value.absent(),
+            Value<String> executionGuideEn = const Value.absent(),
+            Value<int> durationSeconds = const Value.absent(),
+            Value<int> repetitions = const Value.absent(),
+            Value<String> imagePath = const Value.absent(),
+            Value<String?> videoPath = const Value.absent(),
+            Value<String?> audioCuePath = const Value.absent(),
+            Value<String> rhythmType = const Value.absent(),
+            Value<String> phasesJson = const Value.absent(),
+            Value<bool> hasRepSwitch = const Value.absent(),
+            Value<String> holdCueDe = const Value.absent(),
+            Value<String> holdCueEn = const Value.absent(),
+            Value<int> holdSeconds = const Value.absent(),
+            Value<int> restSeconds = const Value.absent(),
+            Value<bool> halfwaySwitch = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              ExercisesTableCompanion(
+            id: id,
+            packageId: packageId,
+            sequenceNumber: sequenceNumber,
+            titleDe: titleDe,
+            titleEn: titleEn,
+            positionInstructionsDe: positionInstructionsDe,
+            positionInstructionsEn: positionInstructionsEn,
+            movementInstructionsDe: movementInstructionsDe,
+            movementInstructionsEn: movementInstructionsEn,
+            hintsDe: hintsDe,
+            hintsEn: hintsEn,
+            executionGuideDe: executionGuideDe,
+            executionGuideEn: executionGuideEn,
+            durationSeconds: durationSeconds,
+            repetitions: repetitions,
+            imagePath: imagePath,
+            videoPath: videoPath,
+            audioCuePath: audioCuePath,
+            rhythmType: rhythmType,
+            phasesJson: phasesJson,
+            hasRepSwitch: hasRepSwitch,
+            holdCueDe: holdCueDe,
+            holdCueEn: holdCueEn,
+            holdSeconds: holdSeconds,
+            restSeconds: restSeconds,
+            halfwaySwitch: halfwaySwitch,
+            rowid: rowid,
+          ),
+          createCompanionCallback: ({
+            required String id,
+            required String packageId,
+            required int sequenceNumber,
+            required String titleDe,
+            required String titleEn,
+            required String positionInstructionsDe,
+            required String positionInstructionsEn,
+            required String movementInstructionsDe,
+            required String movementInstructionsEn,
+            Value<String?> hintsDe = const Value.absent(),
+            Value<String?> hintsEn = const Value.absent(),
+            required String executionGuideDe,
+            required String executionGuideEn,
+            required int durationSeconds,
+            required int repetitions,
+            required String imagePath,
+            Value<String?> videoPath = const Value.absent(),
+            Value<String?> audioCuePath = const Value.absent(),
+            Value<String> rhythmType = const Value.absent(),
+            Value<String> phasesJson = const Value.absent(),
+            Value<bool> hasRepSwitch = const Value.absent(),
+            Value<String> holdCueDe = const Value.absent(),
+            Value<String> holdCueEn = const Value.absent(),
+            Value<int> holdSeconds = const Value.absent(),
+            Value<int> restSeconds = const Value.absent(),
+            Value<bool> halfwaySwitch = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              ExercisesTableCompanion.insert(
+            id: id,
+            packageId: packageId,
+            sequenceNumber: sequenceNumber,
+            titleDe: titleDe,
+            titleEn: titleEn,
+            positionInstructionsDe: positionInstructionsDe,
+            positionInstructionsEn: positionInstructionsEn,
+            movementInstructionsDe: movementInstructionsDe,
+            movementInstructionsEn: movementInstructionsEn,
+            hintsDe: hintsDe,
+            hintsEn: hintsEn,
+            executionGuideDe: executionGuideDe,
+            executionGuideEn: executionGuideEn,
+            durationSeconds: durationSeconds,
+            repetitions: repetitions,
+            imagePath: imagePath,
+            videoPath: videoPath,
+            audioCuePath: audioCuePath,
+            rhythmType: rhythmType,
+            phasesJson: phasesJson,
+            hasRepSwitch: hasRepSwitch,
+            holdCueDe: holdCueDe,
+            holdCueEn: holdCueEn,
+            holdSeconds: holdSeconds,
+            restSeconds: restSeconds,
+            halfwaySwitch: halfwaySwitch,
+            rowid: rowid,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ));
+}
+
+typedef $$ExercisesTableTableProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    $ExercisesTableTable,
+    ExercisesTableData,
+    $$ExercisesTableTableFilterComposer,
+    $$ExercisesTableTableOrderingComposer,
+    $$ExercisesTableTableAnnotationComposer,
+    $$ExercisesTableTableCreateCompanionBuilder,
+    $$ExercisesTableTableUpdateCompanionBuilder,
+    (
+      ExercisesTableData,
+      BaseReferences<_$AppDatabase, $ExercisesTableTable, ExercisesTableData>
+    ),
+    ExercisesTableData,
     PrefetchHooks Function()>;
 typedef $$TrainingSessionsTableTableCreateCompanionBuilder
     = TrainingSessionsTableCompanion Function({
@@ -6409,9 +8351,14 @@ typedef $$JournalEntriesTableTableCreateCompanionBuilder
   required String id,
   required String userId,
   Value<String?> enrollmentId,
+  Value<String?> checkinId,
   required String content,
+  Value<int?> mood,
+  Value<int?> energy,
+  Value<int?> stress,
   required int dayKey,
   Value<DateTime> createdAt,
+  Value<DateTime> updatedAt,
   Value<bool> needsSync,
   Value<int> rowid,
 });
@@ -6420,9 +8367,14 @@ typedef $$JournalEntriesTableTableUpdateCompanionBuilder
   Value<String> id,
   Value<String> userId,
   Value<String?> enrollmentId,
+  Value<String?> checkinId,
   Value<String> content,
+  Value<int?> mood,
+  Value<int?> energy,
+  Value<int?> stress,
   Value<int> dayKey,
   Value<DateTime> createdAt,
+  Value<DateTime> updatedAt,
   Value<bool> needsSync,
   Value<int> rowid,
 });
@@ -6445,14 +8397,29 @@ class $$JournalEntriesTableTableFilterComposer
   ColumnFilters<String> get enrollmentId => $composableBuilder(
       column: $table.enrollmentId, builder: (column) => ColumnFilters(column));
 
+  ColumnFilters<String> get checkinId => $composableBuilder(
+      column: $table.checkinId, builder: (column) => ColumnFilters(column));
+
   ColumnFilters<String> get content => $composableBuilder(
       column: $table.content, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get mood => $composableBuilder(
+      column: $table.mood, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get energy => $composableBuilder(
+      column: $table.energy, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get stress => $composableBuilder(
+      column: $table.stress, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<int> get dayKey => $composableBuilder(
       column: $table.dayKey, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<DateTime> get createdAt => $composableBuilder(
       column: $table.createdAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+      column: $table.updatedAt, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<bool> get needsSync => $composableBuilder(
       column: $table.needsSync, builder: (column) => ColumnFilters(column));
@@ -6477,14 +8444,29 @@ class $$JournalEntriesTableTableOrderingComposer
       column: $table.enrollmentId,
       builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<String> get checkinId => $composableBuilder(
+      column: $table.checkinId, builder: (column) => ColumnOrderings(column));
+
   ColumnOrderings<String> get content => $composableBuilder(
       column: $table.content, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get mood => $composableBuilder(
+      column: $table.mood, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get energy => $composableBuilder(
+      column: $table.energy, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get stress => $composableBuilder(
+      column: $table.stress, builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<int> get dayKey => $composableBuilder(
       column: $table.dayKey, builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<DateTime> get createdAt => $composableBuilder(
       column: $table.createdAt, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+      column: $table.updatedAt, builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<bool> get needsSync => $composableBuilder(
       column: $table.needsSync, builder: (column) => ColumnOrderings(column));
@@ -6508,14 +8490,29 @@ class $$JournalEntriesTableTableAnnotationComposer
   GeneratedColumn<String> get enrollmentId => $composableBuilder(
       column: $table.enrollmentId, builder: (column) => column);
 
+  GeneratedColumn<String> get checkinId =>
+      $composableBuilder(column: $table.checkinId, builder: (column) => column);
+
   GeneratedColumn<String> get content =>
       $composableBuilder(column: $table.content, builder: (column) => column);
+
+  GeneratedColumn<int> get mood =>
+      $composableBuilder(column: $table.mood, builder: (column) => column);
+
+  GeneratedColumn<int> get energy =>
+      $composableBuilder(column: $table.energy, builder: (column) => column);
+
+  GeneratedColumn<int> get stress =>
+      $composableBuilder(column: $table.stress, builder: (column) => column);
 
   GeneratedColumn<int> get dayKey =>
       $composableBuilder(column: $table.dayKey, builder: (column) => column);
 
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
 
   GeneratedColumn<bool> get needsSync =>
       $composableBuilder(column: $table.needsSync, builder: (column) => column);
@@ -6554,9 +8551,14 @@ class $$JournalEntriesTableTableTableManager extends RootTableManager<
             Value<String> id = const Value.absent(),
             Value<String> userId = const Value.absent(),
             Value<String?> enrollmentId = const Value.absent(),
+            Value<String?> checkinId = const Value.absent(),
             Value<String> content = const Value.absent(),
+            Value<int?> mood = const Value.absent(),
+            Value<int?> energy = const Value.absent(),
+            Value<int?> stress = const Value.absent(),
             Value<int> dayKey = const Value.absent(),
             Value<DateTime> createdAt = const Value.absent(),
+            Value<DateTime> updatedAt = const Value.absent(),
             Value<bool> needsSync = const Value.absent(),
             Value<int> rowid = const Value.absent(),
           }) =>
@@ -6564,9 +8566,14 @@ class $$JournalEntriesTableTableTableManager extends RootTableManager<
             id: id,
             userId: userId,
             enrollmentId: enrollmentId,
+            checkinId: checkinId,
             content: content,
+            mood: mood,
+            energy: energy,
+            stress: stress,
             dayKey: dayKey,
             createdAt: createdAt,
+            updatedAt: updatedAt,
             needsSync: needsSync,
             rowid: rowid,
           ),
@@ -6574,9 +8581,14 @@ class $$JournalEntriesTableTableTableManager extends RootTableManager<
             required String id,
             required String userId,
             Value<String?> enrollmentId = const Value.absent(),
+            Value<String?> checkinId = const Value.absent(),
             required String content,
+            Value<int?> mood = const Value.absent(),
+            Value<int?> energy = const Value.absent(),
+            Value<int?> stress = const Value.absent(),
             required int dayKey,
             Value<DateTime> createdAt = const Value.absent(),
+            Value<DateTime> updatedAt = const Value.absent(),
             Value<bool> needsSync = const Value.absent(),
             Value<int> rowid = const Value.absent(),
           }) =>
@@ -6584,9 +8596,14 @@ class $$JournalEntriesTableTableTableManager extends RootTableManager<
             id: id,
             userId: userId,
             enrollmentId: enrollmentId,
+            checkinId: checkinId,
             content: content,
+            mood: mood,
+            energy: energy,
+            stress: stress,
             dayKey: dayKey,
             createdAt: createdAt,
+            updatedAt: updatedAt,
             needsSync: needsSync,
             rowid: rowid,
           ),
@@ -6619,6 +8636,8 @@ class $AppDatabaseManager {
   $AppDatabaseManager(this._db);
   $$EnrollmentsTableTableTableManager get enrollmentsTable =>
       $$EnrollmentsTableTableTableManager(_db, _db.enrollmentsTable);
+  $$ExercisesTableTableTableManager get exercisesTable =>
+      $$ExercisesTableTableTableManager(_db, _db.exercisesTable);
   $$TrainingSessionsTableTableTableManager get trainingSessionsTable =>
       $$TrainingSessionsTableTableTableManager(_db, _db.trainingSessionsTable);
   $$ProgressEntriesTableTableTableManager get progressEntriesTable =>

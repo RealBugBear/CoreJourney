@@ -19,12 +19,9 @@ class JournalScreen extends ConsumerWidget {
     final state = ref.watch(journalProvider);
     final enrollmentId = ref.watch(activeEnrollmentProvider).valueOrNull?.id;
     final now = ref.watch(appClockProvider).now();
+    final cutoff = now.subtract(const Duration(days: 7));
     final entriesThisWeek = state.entries
-        .where(
-          (entry) => entry.recordedAt.isAfter(
-            now.subtract(const Duration(days: 7)),
-          ),
-        )
+        .where((entry) => entry.createdAt.isAfter(cutoff))
         .length;
 
     return Scaffold(

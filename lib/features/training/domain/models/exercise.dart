@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 // ── Rhythm types ──────────────────────────────────────────────────────────────
 
 enum RhythmType {
@@ -100,6 +102,77 @@ class Exercise {
   List<String>? hints(String locale) => locale == 'de' ? hintsDe : hintsEn;
   String executionGuide(String locale) =>
       locale == 'de' ? executionGuideDe : executionGuideEn;
+
+  // ── Deserialisation from Supabase row ───────────────────────────────────────
+
+  static List<String> _decodeStringList(dynamic value) {
+    if (value == null) return [];
+    if (value is List) return value.cast<String>();
+    // Stored as JSON string in Drift
+    final decoded = jsonDecode(value as String);
+    return (decoded as List).cast<String>();
+  }
+
+  static List<String>? _decodeNullableStringList(dynamic value) {
+    if (value == null) return null;
+    if (value is List) {
+      final list = value.cast<String>();
+      return list.isEmpty ? null : list;
+    }
+    final decoded = jsonDecode(value as String);
+    final list = (decoded as List).cast<String>();
+    return list.isEmpty ? null : list;
+  }
+
+  static List<ExercisePhase> _decodePhases(dynamic value) {
+    if (value == null) return [];
+    final List<dynamic> raw = value is String ? jsonDecode(value) : value as List;
+    return raw.map((e) {
+      final m = e as Map<String, dynamic>;
+      return ExercisePhase(
+        labelDe: m['labelDe'] as String,
+        labelEn: m['labelEn'] as String,
+        durationSeconds: m['durationSeconds'] as int,
+      );
+    }).toList();
+  }
+
+  /// Create an [Exercise] from a Supabase REST response row or a Drift DB row.
+  /// Both sources are Map<String, dynamic>; Supabase returns Postgres arrays as
+  /// List<dynamic>, Drift stores them as JSON strings.
+  factory Exercise.fromRow(Map<String, dynamic> row) {
+    final rhythmStr = row['rhythm_type'] as String? ?? 'holdRest';
+    final rhythm = rhythmStr == 'phased' ? RhythmType.phased : RhythmType.holdRest;
+
+    return Exercise(
+      id:                      row['id'] as String,
+      packageId:               row['package_id'] as String,
+      sequenceNumber:          row['sequence_number'] as int,
+      titleDe:                 row['title_de'] as String,
+      titleEn:                 row['title_en'] as String,
+      positionInstructionsDe:  _decodeStringList(row['position_instructions_de']),
+      positionInstructionsEn:  _decodeStringList(row['position_instructions_en']),
+      movementInstructionsDe:  _decodeStringList(row['movement_instructions_de']),
+      movementInstructionsEn:  _decodeStringList(row['movement_instructions_en']),
+      hintsDe:                 _decodeNullableStringList(row['hints_de']),
+      hintsEn:                 _decodeNullableStringList(row['hints_en']),
+      executionGuideDe:        row['execution_guide_de'] as String,
+      executionGuideEn:        row['execution_guide_en'] as String,
+      durationSeconds:         row['duration_seconds'] as int,
+      repetitions:             row['repetitions'] as int,
+      imagePath:               row['image_path'] as String,
+      videoPath:               row['video_path'] as String?,
+      audioCuePath:            row['audio_cue_path'] as String?,
+      rhythmType:              rhythm,
+      phases:                  _decodePhases(row['phases_json']),
+      hasRepSwitch:            row['has_rep_switch'] as bool? ?? false,
+      holdCueDe:               row['hold_cue_de'] as String? ?? 'Halten',
+      holdCueEn:               row['hold_cue_en'] as String? ?? 'Hold',
+      holdSeconds:             row['hold_seconds'] as int? ?? 7,
+      restSeconds:             row['rest_seconds'] as int? ?? 3,
+      halfwaySwitch:           row['halfway_switch'] as bool? ?? false,
+    );
+  }
 }
 
 // ── Shared phase sets ─────────────────────────────────────────────────────────

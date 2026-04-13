@@ -223,6 +223,9 @@ class AppLocalizationsDe extends AppLocalizations {
   String get packageCompleted => 'Abgeschlossen';
 
   @override
+  String get packageAvailable => 'Verfügbar';
+
+  @override
   String get settings => 'Einstellungen';
 
   @override

@@ -482,6 +482,12 @@ abstract class AppLocalizations {
   /// **'Abgeschlossen'**
   String get packageCompleted;
 
+  /// No description provided for @packageAvailable.
+  ///
+  /// In de, this message translates to:
+  /// **'Verfügbar'**
+  String get packageAvailable;
+
   /// No description provided for @settings.
   ///
   /// In de, this message translates to:

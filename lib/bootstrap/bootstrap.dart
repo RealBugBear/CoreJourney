@@ -12,6 +12,7 @@ import '../config/app_config.dart';
 import '../core/database/app_database.dart';
 import '../core/logging/app_logger.dart';
 import '../core/notifications/notification_service.dart';
+import '../core/storage/file_local_storage.dart';
 import '../core/sync/sync_service.dart';
 
 class Bootstrap {
@@ -68,35 +69,33 @@ class Bootstrap {
     );
     _dbg('AppConfig created, url=${config.supabaseUrl}');
 
-    // Initialize Supabase
+    // Initialize Supabase with file-based session storage.
+    //
+    // FileLocalStorage writes the auth token to a JSON file in
+    // getApplicationSupportDirectory() — fully persistent across launches on
+    // all platforms, with zero dependency on SharedPreferences or
+    // platform-specific UserDefaults channels.
     _dbg('Supabase.initialize start');
-    final disableDeeplinkSessionDetection = Platform.isIOS &&
-        environment == AppEnvironment.development;
+    final disableDeeplinkSessionDetection =
+        Platform.isIOS && environment == AppEnvironment.development;
     await Supabase.initialize(
       url: config.supabaseUrl,
       anonKey: config.supabaseAnonKey,
       authOptions: FlutterAuthClientOptions(
         detectSessionInUri: !disableDeeplinkSessionDetection,
+        localStorage: FileLocalStorage(),
       ),
     );
     _dbg('Supabase.initialize done');
 
-    // Initialize local database
-    _dbg('AppDatabase()');
-    final useInMemoryDatabase = Platform.isIOS &&
-        environment == AppEnvironment.development;
-    final database = useInMemoryDatabase
-        ? AppDatabase.inMemory()
-        : AppDatabase();
-    if (useInMemoryDatabase) {
-      _dbg('AppDatabase.inMemory() activated for iOS DEV');
-      appLogger.w(
-        'AppDatabase: using in-memory fallback on iOS DEV '
-        '(path_provider/drift workaround)',
-      );
-    } else {
-      _dbg('AppDatabase() done');
-    }
+    // Initialize local database.
+    //
+    // AppDatabase.open() uses getApplicationSupportDirectory() — the correct
+    // location for app data on all platforms. Falls back to in-memory only if
+    // the directory truly cannot be obtained (should never happen in production).
+    _dbg('AppDatabase.open() start');
+    final database = await AppDatabase.open();
+    _dbg('AppDatabase.open() done');
 
     // Initialize sync service
     _dbg('SyncService()');
@@ -104,23 +103,30 @@ class Bootstrap {
     _dbg('SyncService() done');
 
     // Initialize SharedPreferences.
-    // iOS 26 beta: the LegacyUserDefaultsApi Pigeon channel fails at runtime.
-    // Pre-emptively replace the platform store with an in-memory stub on iOS
-    // so getInstance() never hits the broken channel.
-    // Settings will not persist across launches on affected builds, which is
-    // acceptable for DEV. Remove this block once the channel issue is resolved.
+    //
+    // SharedPreferences is used only for lightweight settings (theme, language,
+    // reminder prefs, consent flags). Session persistence has been moved to
+    // FileLocalStorage above, so a SharedPreferences failure no longer causes
+    // sign-out on restart.
+    //
+    // On iOS, if the UserDefaults channel is still unavailable, fall back to an
+    // in-memory stub — settings will reset per launch but no data is lost and
+    // the user stays logged in.
     _dbg('SharedPreferences.getInstance');
-    if (Platform.isIOS) {
+    SharedPreferences prefs;
+    try {
+      prefs = await SharedPreferences.getInstance();
+      _dbg('SharedPreferences: real instance obtained');
+    } catch (e) {
+      _dbg('SharedPreferences: channel error ($e) — falling back to in-memory stub');
+      appLogger.w('SharedPreferences: using in-memory stub ($e)');
       // ignore: invalid_use_of_visible_for_testing_member
       SharedPreferences.setMockInitialValues({});
-      _dbg('SharedPreferences: iOS in-memory stub activated');
-      appLogger.w('SharedPreferences: using in-memory stub on iOS (channel workaround)');
+      prefs = await SharedPreferences.getInstance();
     }
-    final prefs = await SharedPreferences.getInstance();
     _dbg('SharedPreferences done');
 
-    // Initialize local notifications — wrapped so a native plugin crash on
-    // iOS 26 beta does not kill the entire bootstrap.
+    // Initialize local notifications
     _dbg('NotificationService.initialize start');
     final enableIosProfileNotifications =
         dotenv.env['ENABLE_IOS_PROFILE_NOTIFICATIONS'] == 'true';
