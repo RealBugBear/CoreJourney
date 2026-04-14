@@ -55,6 +55,22 @@ class AppDatabase extends _$AppDatabase {
   /// In-memory database for unit tests.
   AppDatabase.inMemory() : super(NativeDatabase.memory());
 
+  /// Deletes all user-specific rows from every table.
+  /// Called on sign-out to prevent data leaking to the next user session.
+  Future<void> clearUserData() async {
+    await transaction(() async {
+      await delete(enrollmentsTable).go();
+      await delete(trainingSessionsTable).go();
+      await delete(progressEntriesTable).go();
+      await delete(moodCheckinsTable).go();
+      await delete(syncJobsTable).go();
+      await delete(intakeAssessmentsTable).go();
+      await delete(completionQuestionnairesTable).go();
+      await delete(journalEntriesTable).go();
+      // exercisesTable is shared content (not user-specific) — keep it.
+    });
+  }
+
   @override
   int get schemaVersion => 4;
 

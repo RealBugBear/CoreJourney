@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../../bootstrap/providers.dart';
 import '../../data/repositories/supabase_auth_repository.dart';
 import '../../domain/repositories/auth_repository.dart';
 
@@ -18,8 +19,9 @@ final currentUserProvider = Provider<User?>((ref) {
 
 class AuthNotifier extends StateNotifier<AsyncValue<void>> {
   final AuthRepository _repo;
+  final Ref _ref;
 
-  AuthNotifier(this._repo) : super(const AsyncValue.data(null));
+  AuthNotifier(this._repo, this._ref) : super(const AsyncValue.data(null));
 
   Future<void> signIn({required String email, required String password}) async {
     state = const AsyncValue.loading();
@@ -44,6 +46,8 @@ class AuthNotifier extends StateNotifier<AsyncValue<void>> {
 
   Future<void> signOut() async {
     state = const AsyncValue.loading();
+    // Clear local DB before signing out to prevent data leaking to next session.
+    await _ref.read(databaseProvider).clearUserData();
     state = await AsyncValue.guard(() => _repo.signOut());
   }
 
@@ -54,5 +58,5 @@ class AuthNotifier extends StateNotifier<AsyncValue<void>> {
 
 final authNotifierProvider =
     StateNotifierProvider<AuthNotifier, AsyncValue<void>>((ref) {
-  return AuthNotifier(ref.watch(authRepositoryProvider));
+  return AuthNotifier(ref.watch(authRepositoryProvider), ref);
 });
