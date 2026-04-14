@@ -143,9 +143,11 @@ class Exercise {
   factory Exercise.fromRow(Map<String, dynamic> row) {
     final rhythmStr = row['rhythm_type'] as String? ?? 'holdRest';
     final rhythm = rhythmStr == 'phased' ? RhythmType.phased : RhythmType.holdRest;
+    final id = row['id'] as String;
+    final rawImagePath = row['image_path'] as String;
 
     return Exercise(
-      id:                      row['id'] as String,
+      id:                      id,
       packageId:               row['package_id'] as String,
       sequenceNumber:          row['sequence_number'] as int,
       titleDe:                 row['title_de'] as String,
@@ -160,7 +162,7 @@ class Exercise {
       executionGuideEn:        row['execution_guide_en'] as String,
       durationSeconds:         row['duration_seconds'] as int,
       repetitions:             row['repetitions'] as int,
-      imagePath:               row['image_path'] as String,
+      imagePath:               _preferredBundledImagePath(id, rawImagePath),
       videoPath:               row['video_path'] as String?,
       audioCuePath:            row['audio_cue_path'] as String?,
       rhythmType:              rhythm,
@@ -172,6 +174,19 @@ class Exercise {
       restSeconds:             row['rest_seconds'] as int? ?? 3,
       halfwaySwitch:           row['halfway_switch'] as bool? ?? false,
     );
+  }
+}
+
+String _preferredBundledImagePath(String exerciseId, String backendImagePath) {
+  switch (exerciseId) {
+    case 'moro_ex2':
+      return 'assets/images/trainings/moro/moro1.3.jpeg';
+    case 'moro_ex4':
+      return 'assets/images/trainings/moro/moro1.1.jpeg';
+    case 'moro_ex5':
+      return 'assets/images/trainings/moro/moro1.2.jpeg';
+    default:
+      return backendImagePath;
   }
 }
 
@@ -308,7 +323,7 @@ const List<Exercise> moroExercises = [
     executionGuideEn: 'Sole of foot slides up along the other leg.',
     durationSeconds: 40,
     repetitions: 3,
-    imagePath: 'assets/images/trainings/moro/moro3.png',
+    imagePath: 'assets/images/trainings/moro/moro1.3.jpeg',
     videoPath: 'assets/videos/moro/moro_3.mov',
     rhythmType: RhythmType.phased,
     phases: _phasesUpDown,
@@ -397,7 +412,7 @@ const List<Exercise> moroExercises = [
     executionGuideEn: 'Slowly lower knees to the side. Hips stay stable on the floor.',
     durationSeconds: 45,
     repetitions: 3,
-    imagePath: 'assets/images/trainings/moro/moro1.png',
+    imagePath: 'assets/images/trainings/moro/moro1.1.jpeg',
     videoPath: 'assets/videos/moro/moro_1.mov',
     rhythmType: RhythmType.phased,
     phases: _phasesKnees,
@@ -445,7 +460,7 @@ const List<Exercise> moroExercises = [
     executionGuideEn: 'Slowly raise head and upper body, forehead toward knees.',
     durationSeconds: 30,
     repetitions: 3,
-    imagePath: 'assets/images/trainings/moro/moro2.png',
+    imagePath: 'assets/images/trainings/moro/moro1.2.jpeg',
     videoPath: 'assets/videos/moro/moro_2.mov',
     rhythmType: RhythmType.phased,
     phases: _phasesRollUp,

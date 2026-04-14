@@ -67,6 +67,8 @@ class _StreamRefreshListenable extends ChangeNotifier {
   }
 }
 
+final _rootNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'root');
+
 final routerProvider = Provider<GoRouter>((ref) {
   final authRefresh = _StreamRefreshListenable(
     Supabase.instance.client.auth.onAuthStateChange,
@@ -74,6 +76,7 @@ final routerProvider = Provider<GoRouter>((ref) {
   ref.onDispose(authRefresh.dispose);
 
   return GoRouter(
+    navigatorKey: _rootNavigatorKey,
     initialLocation: Routes.login,
     refreshListenable: authRefresh,
     redirect: (context, state) {
@@ -179,15 +182,6 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const AppointmentProposalScreen(),
       ),
       GoRoute(
-        path: Routes.chatChannel,
-        name: 'chat-channel',
-        builder: (context, state) {
-          final channelId = state.pathParameters['channelId']!;
-          final channel = state.extra as ChatChannel?;
-          return ChatChannelScreen(channelId: channelId, channel: channel);
-        },
-      ),
-      GoRoute(
         path: Routes.devTools,
         name: 'dev-tools',
         builder: (context, state) => const DevToolsScreen(),
@@ -204,22 +198,47 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: Routes.dashboard,
             name: 'dashboard',
-            builder: (context, state) => const DashboardScreen(),
+            pageBuilder: (context, state) => NoTransitionPage(
+              key: state.pageKey,
+              child: const DashboardScreen(),
+            ),
           ),
           GoRoute(
             path: Routes.packages,
             name: 'packages',
-            builder: (context, state) => const PackagesScreen(),
+            pageBuilder: (context, state) => NoTransitionPage(
+              key: state.pageKey,
+              child: const PackagesScreen(),
+            ),
           ),
           GoRoute(
             path: Routes.chatInbox,
             name: 'chat-inbox',
-            builder: (context, state) => const ChatInboxScreen(),
+            pageBuilder: (context, state) => NoTransitionPage(
+              key: state.pageKey,
+              child: const ChatInboxScreen(),
+            ),
+            routes: [
+              GoRoute(
+                // Renders on root navigator → no shell nav bar
+                parentNavigatorKey: _rootNavigatorKey,
+                path: ':channelId',
+                name: 'chat-channel',
+                builder: (context, state) {
+                  final channelId = state.pathParameters['channelId']!;
+                  final channel = state.extra as ChatChannel?;
+                  return ChatChannelScreen(channelId: channelId, channel: channel);
+                },
+              ),
+            ],
           ),
           GoRoute(
             path: Routes.profile,
             name: 'profile',
-            builder: (context, state) => const ProfileScreen(),
+            pageBuilder: (context, state) => NoTransitionPage(
+              key: state.pageKey,
+              child: const ProfileScreen(),
+            ),
           ),
         ],
       ),
