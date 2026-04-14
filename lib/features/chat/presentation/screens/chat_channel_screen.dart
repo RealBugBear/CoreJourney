@@ -13,6 +13,9 @@ import '../widgets/typing_indicator.dart';
 import '../../../video/domain/models/video_call.dart';
 import '../../../video/presentation/providers/video_providers.dart';
 import '../../../video/presentation/screens/video_call_screen.dart';
+import '../../../trainer/presentation/providers/trainer_provider.dart';
+import '../../../../core/navigation/app_router.dart';
+import 'package:go_router/go_router.dart';
 
 class ChatChannelScreen extends ConsumerStatefulWidget {
   const ChatChannelScreen({
@@ -146,6 +149,54 @@ class _ChatChannelScreenState extends ConsumerState<ChatChannelScreen> {
     );
   }
 
+  Future<void> _proposeAppointment(BuildContext context, WidgetRef ref) async {
+    final partnerIdAsync = ref.read(chatPartnerIdProvider(widget.channelId));
+    final clientId = await partnerIdAsync.when(
+      data: (id) async => id,
+      loading: () async => null,
+      error: (_, __) async => null,
+    );
+    if (clientId == null || !mounted) return;
+    context.push(
+      Routes.appointmentScheduler.replaceFirst(':clientId', clientId),
+    );
+  }
+
+  void _showPremiumSheet(BuildContext context) {
+    showModalBottomSheet<void>(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.videocam_outlined, size: 48),
+            const SizedBox(height: 16),
+            Text(
+              'Video-Calls sind ein Premium-Feature',
+              style: Theme.of(context).textTheme.titleMedium,
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Mit einem Premium-Abo kannst du deinen Trainer direkt per Video-Call erreichen.',
+              style: Theme.of(context).textTheme.bodyMedium,
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24),
+            FilledButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Verstanden'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   void _sendCallRequest() {
     showDialog<void>(
       context: context,
@@ -199,13 +250,32 @@ class _ChatChannelScreenState extends ConsumerState<ChatChannelScreen> {
       appBar: AppBar(
         title: Text(channel?.channelDisplayName() ?? 'Chat'),
         actions: [
-          // Trainer: start call directly. (Video feature — Task 2 of Plan 2)
-          if (isModerator && channel?.type == ChannelType.direct)
+          // Trainer: start call + propose appointment
+          if (isModerator && channel?.type == ChannelType.direct) ...[
+            IconButton(
+              icon: const Icon(Icons.event_outlined),
+              tooltip: 'Termin vorschlagen',
+              onPressed: () => _proposeAppointment(context, ref),
+            ),
             IconButton(
               icon: const Icon(Icons.videocam_outlined),
               tooltip: 'Call starten',
               onPressed: _startCall,
             ),
+          ],
+          // Practitioner (client): request video call (premium gate)
+          if (isPractitioner)
+            Consumer(builder: (context, ref, _) {
+              final tier = ref.watch(subscriptionTierProvider).valueOrNull ?? 'free';
+              final isPremium = tier == 'premium';
+              return IconButton(
+                icon: Icon(
+                  isPremium ? Icons.videocam_outlined : Icons.videocam_off_outlined,
+                ),
+                tooltip: isPremium ? 'Video-Call anfragen' : 'Premium-Feature',
+                onPressed: isPremium ? _sendCallRequest : () => _showPremiumSheet(context),
+              );
+            }),
         ],
       ),
       body: Column(
