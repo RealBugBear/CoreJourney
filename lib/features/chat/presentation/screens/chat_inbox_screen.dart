@@ -36,11 +36,11 @@ class ChatInboxScreen extends ConsumerWidget {
           return ListView(
             children: [
               if (direct.isNotEmpty) ...[
-                const _SectionHeader(title: 'Direkt'),
+                const _SectionHeader(title: 'MEIN TRAINER'),
                 ...direct.map((c) => _ChannelListTile(channel: c, onTap: () => _open(context, c))),
               ],
               if (community.isNotEmpty) ...[
-                const _SectionHeader(title: 'Community'),
+                const _SectionHeader(title: 'MEINE PAKETE'),
                 ...community.map((c) => _ChannelListTile(channel: c, onTap: () => _open(context, c))),
               ],
             ],
@@ -67,9 +67,9 @@ class _SectionHeader extends StatelessWidget {
     padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
     child: Text(
       title,
-      style: Theme.of(context).textTheme.labelLarge?.copyWith(
-        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.55),
-        letterSpacing: 0.8,
+      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+        color: Theme.of(context).colorScheme.outline,
+        letterSpacing: 1.2,
       ),
     ),
   );
@@ -183,8 +183,8 @@ class _EmptyState extends StatelessWidget {
               style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 8),
           Text(
-            'Verlinke dich mit einem Trainer, um direkte Nachrichten zu nutzen.\n'
-            'Community-Channels erscheinen wenn du einem Block beitrittst.',
+            'Hier erscheinen deine Chats.\n'
+            'Absolviere dein erstes Training, um dem Community-Chat beizutreten.',
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
               color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.55),
