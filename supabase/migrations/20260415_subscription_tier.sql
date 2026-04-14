@@ -33,18 +33,20 @@ CREATE TRIGGER trg_prevent_direct_tier_change
 
 -- 3. Allow admin users to read all profiles
 --    (needed for admin panel user list; existing policy only allows reading own row)
-DO $$ BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_policies
-    WHERE tablename = 'profiles' AND policyname = 'profiles_admin_read_all'
-  ) THEN
-    CREATE POLICY profiles_admin_read_all ON public.profiles
-      FOR SELECT
-      USING (
-        EXISTS (
-          SELECT 1 FROM public.profiles p
-          WHERE p.id = auth.uid() AND p.role = 'admin'
-        )
-      );
-  END IF;
-END $$;
+--    Uses a SECURITY DEFINER function to avoid recursive RLS evaluation.
+CREATE OR REPLACE FUNCTION public.is_admin()
+RETURNS boolean
+LANGUAGE sql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM public.profiles
+    WHERE id = auth.uid() AND role = 'admin'
+  );
+$$;
+
+DROP POLICY IF EXISTS profiles_admin_read_all ON public.profiles;
+CREATE POLICY profiles_admin_read_all ON public.profiles
+  FOR SELECT
+  USING (public.is_admin());
