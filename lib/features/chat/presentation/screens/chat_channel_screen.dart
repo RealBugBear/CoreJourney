@@ -243,7 +243,9 @@ class _ChatChannelScreenState extends ConsumerState<ChatChannelScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(channel?.channelDisplayName() ?? 'Chat'),
+        title: channel?.type == ChannelType.direct
+            ? Text(ref.watch(chatPartnerNameProvider(widget.channelId)).valueOrNull ?? 'Chat')
+            : Text(channel?.channelDisplayName() ?? 'Chat'),
         actions: [
           // Trainer: start call + propose appointment
           if (isModerator && channel?.type == ChannelType.direct) ...[

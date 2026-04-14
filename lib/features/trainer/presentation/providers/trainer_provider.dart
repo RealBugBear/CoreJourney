@@ -250,3 +250,30 @@ final chatPartnerIdProvider =
   if (list.isEmpty) return null;
   return list.first['user_id'] as String?;
 });
+
+/// For a direct channel, returns the OTHER participant's display name.
+/// Falls back to 'Chat' if not found.
+final chatPartnerNameProvider =
+    FutureProvider.autoDispose.family<String, String>((ref, channelId) async {
+  final userId = Supabase.instance.client.auth.currentUser?.id;
+  if (userId == null) return 'Chat';
+
+  // Step 1: get partner's user_id
+  final rows = await Supabase.instance.client
+      .from('chat_channel_members')
+      .select('user_id')
+      .eq('channel_id', channelId)
+      .neq('user_id', userId);
+
+  final list = rows as List;
+  if (list.isEmpty) return 'Chat';
+  final partnerId = list.first['user_id'] as String;
+
+  // Step 2: fetch their display name
+  final profile = await Supabase.instance.client
+      .from('profiles')
+      .select('display_name')
+      .eq('id', partnerId)
+      .maybeSingle();
+  return profile?['display_name'] as String? ?? 'Chat';
+});

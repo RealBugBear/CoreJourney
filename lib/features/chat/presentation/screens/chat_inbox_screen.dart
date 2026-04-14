@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import '../../../../core/navigation/app_router.dart';
 import '../../domain/models/chat_channel.dart';
 import '../providers/chat_providers.dart';
+import '../../../trainer/presentation/providers/trainer_provider.dart';
 
 class ChatInboxScreen extends ConsumerWidget {
   const ChatInboxScreen({super.key});
@@ -75,15 +76,19 @@ class _SectionHeader extends StatelessWidget {
   );
 }
 
-class _ChannelListTile extends StatelessWidget {
+class _ChannelListTile extends ConsumerWidget {
   const _ChannelListTile({required this.channel, required this.onTap});
   final ChatChannel channel;
   final VoidCallback onTap;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final hasUnread = channel.unreadCount > 0;
+
+    final title = channel.type == ChannelType.direct
+        ? ref.watch(chatPartnerNameProvider(channel.id)).valueOrNull ?? channel.channelDisplayName()
+        : channel.channelDisplayName();
 
     return ListTile(
       leading: CircleAvatar(
@@ -99,7 +104,7 @@ class _ChannelListTile extends StatelessWidget {
         ),
       ),
       title: Text(
-        channel.channelDisplayName(),
+        title,
         style: theme.textTheme.bodyLarge?.copyWith(
           fontWeight: hasUnread ? FontWeight.bold : FontWeight.normal,
         ),
