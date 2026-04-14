@@ -119,7 +119,51 @@ class _TrainingSessionScreenState extends ConsumerState<TrainingSessionScreen> {
 
     if (!mounted) return;
 
-    if (mounted) context.pop();
+    // Offer to share experience in the package community chat
+    await _showShareWithCommunityPrompt(widget.packageId);
+
+    if (!mounted) return;
+    context.pop();
+  }
+
+  Future<void> _showShareWithCommunityPrompt(String packageId) async {
+    // Fetch community channel id for this package
+    final res = await Supabase.instance.client
+        .from('chat_channels')
+        .select('id')
+        .eq('type', 'community')
+        .eq('package_id', packageId)
+        .maybeSingle();
+
+    if (res == null || !mounted) return;
+    final channelId = res['id'] as String;
+
+    final share = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Erfahrung teilen?'),
+        content: const Text(
+          'Teile dein heutiges Training mit der Community.\n'
+          'Andere Teilnehmer desselben Pakets freuen sich über deinen Bericht.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Nein danke'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Teilen'),
+          ),
+        ],
+      ),
+    );
+
+    if (share == true && mounted) {
+      context.push(
+        Routes.chatChannel.replaceFirst(':channelId', channelId),
+      );
+    }
   }
 
   Future<bool> _onWillPop() async {
