@@ -56,3 +56,4 @@ supabase/.env
 # Local source video files are too large for normal Git history.
 assets/VIdeos/1 Moro/*.MOV
 assets/VIdeos/moro/*.mov
+.worktrees/
