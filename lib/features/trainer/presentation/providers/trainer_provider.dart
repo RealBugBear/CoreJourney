@@ -204,3 +204,39 @@ final clientTrainerProvider = FutureProvider<String?>((ref) async {
   final profile = res['profiles'] as Map<String, dynamic>?;
   return (profile?['display_name'] as String?) ?? 'Trainer';
 });
+
+// ── Subscription tier ─────────────────────────────────────────────────────────
+
+/// Returns 'free' or 'premium' for the currently signed-in user.
+/// Re-runs on auth state change (same pattern as userRoleProvider).
+final subscriptionTierProvider = FutureProvider<String>((ref) async {
+  ref.watch(authStateProvider);
+  final userId = Supabase.instance.client.auth.currentUser?.id;
+  if (userId == null) return 'free';
+  final res = await Supabase.instance.client
+      .from('profiles')
+      .select('subscription_tier')
+      .eq('id', userId)
+      .single();
+  return res['subscription_tier'] as String? ?? 'free';
+});
+
+// ── Chat partner ──────────────────────────────────────────────────────────────
+
+/// For a direct channel, returns the OTHER participant's user_id.
+/// Returns null for community channels or if not found.
+final chatPartnerIdProvider =
+    FutureProvider.autoDispose.family<String?, String>((ref, channelId) async {
+  final userId = Supabase.instance.client.auth.currentUser?.id;
+  if (userId == null) return null;
+
+  final rows = await Supabase.instance.client
+      .from('chat_channel_members')
+      .select('user_id')
+      .eq('channel_id', channelId)
+      .neq('user_id', userId);
+
+  final list = rows as List;
+  if (list.isEmpty) return null;
+  return list.first['user_id'] as String?;
+});
