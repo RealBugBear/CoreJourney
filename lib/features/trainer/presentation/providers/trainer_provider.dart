@@ -192,16 +192,26 @@ Future<void> switchTrainer(String newInviteCode) async {
 // ── Client's linked trainer ───────────────────────────────────────────────────
 
 final clientTrainerProvider = FutureProvider<String?>((ref) async {
+  ref.watch(authStateProvider);
   final userId = Supabase.instance.client.auth.currentUser?.id;
   if (userId == null) return null;
-  final res = await Supabase.instance.client
+
+  // Step 1: get trainer_id from relationship (avoid ambiguous multi-FK join)
+  final rel = await Supabase.instance.client
       .from('trainer_client_relationships')
-      .select('profiles!trainer_id(display_name)')
+      .select('trainer_id')
       .eq('client_id', userId)
       .eq('status', 'active')
       .maybeSingle();
-  if (res == null) return null;
-  final profile = res['profiles'] as Map<String, dynamic>?;
+  if (rel == null) return null;
+
+  // Step 2: fetch trainer's display name separately
+  final trainerId = rel['trainer_id'] as String;
+  final profile = await Supabase.instance.client
+      .from('profiles')
+      .select('display_name')
+      .eq('id', trainerId)
+      .maybeSingle();
   return (profile?['display_name'] as String?) ?? 'Trainer';
 });
 

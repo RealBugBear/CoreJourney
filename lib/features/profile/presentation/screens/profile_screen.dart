@@ -398,8 +398,47 @@ class _ConnectTrainerTile extends ConsumerWidget {
               ? null
               : () => _showInviteDialog(context, ref, l10n),
         ),
+        if (trainerName != null)
+          ListTile(
+            leading: const Icon(Icons.chat_bubble_outline),
+            title: const Text('Nachricht an Trainer'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => _openTrainerChat(context),
+          ),
       ],
     );
+  }
+
+  Future<void> _openTrainerChat(BuildContext context) async {
+    final userId = Supabase.instance.client.auth.currentUser?.id;
+    if (userId == null) return;
+    try {
+      // Find active trainer
+      final rel = await Supabase.instance.client
+          .from('trainer_client_relationships')
+          .select('trainer_id')
+          .eq('client_id', userId)
+          .eq('status', 'active')
+          .maybeSingle();
+      if (rel == null || !context.mounted) return;
+      final trainerId = rel['trainer_id'] as String;
+
+      // Get or create direct channel between trainee and trainer
+      final channelId = await Supabase.instance.client.rpc(
+        'get_or_create_direct_channel',
+        params: {'user_a': userId, 'user_b': trainerId},
+      ) as String;
+
+      if (context.mounted) {
+        context.push(Routes.chatChannel.replaceFirst(':channelId', channelId));
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Chat konnte nicht geöffnet werden: $e')),
+        );
+      }
+    }
   }
 
   Future<void> _showInviteDialog(
