@@ -46,7 +46,7 @@ class AdminNotifier extends AsyncNotifier<List<TrainerCode>> {
 
   Future<List<TrainerCode>> _fetch() async {
     final res = await Supabase.instance.client
-        .from('trainer_codes')
+        .from('trainer_invite_codes')
         .select()
         .order('created_at', ascending: false);
     return (res as List)
@@ -61,14 +61,21 @@ class AdminNotifier extends AsyncNotifier<List<TrainerCode>> {
   }
 
   Future<TrainerCode> generate() async {
-    final res = await Supabase.instance.client
-        .from('trainer_codes')
-        .insert({'created_by': Supabase.instance.client.auth.currentUser!.id})
-        .select()
-        .single();
-    final code = TrainerCode.fromJson(res);
-    state = state.whenData((codes) => [code, ...codes]);
-    return code;
+    final session = Supabase.instance.client.auth.currentSession;
+    final response = await Supabase.instance.client.functions.invoke(
+      'create-trainer-code',
+      headers: {
+        if (session != null) 'Authorization': 'Bearer ${session.accessToken}',
+      },
+    );
+    final data = response.data;
+    if (data is Map && data['error'] != null) {
+      throw Exception(data['error'] as String);
+    }
+    // Refresh the full list so the new code appears with all fields
+    state = const AsyncValue.loading();
+    state = await AsyncValue.guard(_fetch);
+    return state.value!.first;
   }
 }
 
@@ -127,8 +134,10 @@ class AdminUsersNotifier extends AsyncNotifier<List<AdminUser>> {
         if (session != null) 'Authorization': 'Bearer ${session.accessToken}',
       },
     );
-    final data = response.data as Map<String, dynamic>;
-    if (data['error'] != null) throw Exception(data['error'] as String);
+    final data = response.data;
+    if (data is Map && data['error'] != null) {
+      throw Exception(data['error'] as String);
+    }
     state = const AsyncValue.loading();
     state = await AsyncValue.guard(_fetch);
   }
