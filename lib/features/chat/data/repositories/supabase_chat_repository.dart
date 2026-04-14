@@ -20,72 +20,29 @@ class SupabaseChatRepository implements ChatRepository {
     final userId = _userId;
     if (userId == null) return [];
 
-    final memberships = await _client
-        .from('chat_channel_members')
-        .select('role, last_read_at, channel_id, chat_channels(*)')
-        .eq('user_id', userId);
+    final rows = await _client.rpc(
+      'get_channel_list',
+      params: {'p_user_id': userId},
+    ) as List;
 
-    final channels = <ChatChannel>[];
-
-    for (final m in memberships as List) {
-      final roleStr = m['role'] as String? ?? 'member';
+    return rows.map((row) {
+      final m = row as Map<String, dynamic>;
+      final roleStr = m['member_role'] as String? ?? 'member';
       final role = roleStr == 'moderator' ? MemberRole.moderator : MemberRole.member;
+      final lastMsgContent = m['last_message_content'] as String?;
+      final lastMsgAtStr = m['last_message_at'] as String?;
+      final lastMessageAt =
+          lastMsgAtStr != null ? DateTime.parse(lastMsgAtStr) : null;
+      final unreadCount = (m['unread_count'] as num?)?.toInt() ?? 0;
 
-      final lastReadAtStr = m['last_read_at'] as String?;
-      final lastReadAt = lastReadAtStr != null
-          ? DateTime.parse(lastReadAtStr)
-          : DateTime.fromMillisecondsSinceEpoch(0);
-
-      final channelJson = m['chat_channels'] as Map<String, dynamic>;
-      final channelId = channelJson['id'] as String;
-
-      // Fetch last message
-      final lastMsgRow = await _client
-          .from('chat_messages')
-          .select('content, created_at')
-          .eq('channel_id', channelId)
-          .isFilter('deleted_at', null)
-          .order('created_at', ascending: false)
-          .limit(1)
-          .maybeSingle();
-
-      final lastMessageContent = lastMsgRow?['content'] as String?;
-      final lastMessageAt = lastMsgRow != null
-          ? DateTime.parse(lastMsgRow['created_at'] as String)
-          : null;
-
-      // Fetch unread count
-      final unreadCount = await _client
-          .from('chat_messages')
-          .count(CountOption.exact)
-          .eq('channel_id', channelId)
-          .gt('created_at', lastReadAt.toIso8601String())
-          .neq('sender_id', userId);
-
-      channels.add(ChatChannel.fromJson(
-        channelJson,
+      return ChatChannel.fromJson(
+        m,
         currentUserRole: role,
-        lastMessageContent: lastMessageContent,
+        lastMessageContent: lastMsgContent,
         lastMessageAt: lastMessageAt,
         unreadCount: unreadCount,
-      ));
-    }
-
-    // Sort: direct channels first, then community; within each group sort by
-    // lastMessageAt descending (nulls last)
-    channels.sort((a, b) {
-      if (a.type != b.type) {
-        return a.type == ChannelType.direct ? -1 : 1;
-      }
-      final aTime = a.lastMessageAt;
-      final bTime = b.lastMessageAt;
-      if (aTime == null && bTime == null) return 0;
-      if (aTime == null) return 1;
-      if (bTime == null) return -1;
-      return bTime.compareTo(aTime);
-    });
-
-    return channels;
+      );
+    }).toList();
   }
 
   @override
@@ -108,41 +65,6 @@ class SupabaseChatRepository implements ChatRepository {
       channelJson,
       currentUserRole: MemberRole.member,
       unreadCount: 0,
-    );
-  }
-
-  @override
-  Future<void> joinCommunityChannel(String packageId) async {
-    final userId = _userId;
-    if (userId == null) return;
-
-    final channelRow = await _client
-        .from('chat_channels')
-        .select('id')
-        .eq('type', 'community')
-        .eq('package_id', packageId)
-        .maybeSingle();
-
-    if (channelRow == null) return;
-    final channelId = channelRow['id'] as String;
-
-    final profileRow = await _client
-        .from('profiles')
-        .select('role')
-        .eq('id', userId)
-        .single();
-
-    final profileRole = profileRow['role'] as String? ?? 'member';
-    final memberRole = profileRole == 'trainer' ? 'moderator' : 'member';
-
-    await _client.from('chat_channel_members').upsert(
-      {
-        'channel_id': channelId,
-        'user_id': userId,
-        'role': memberRole,
-        'joined_at': DateTime.now().toIso8601String(),
-      },
-      onConflict: 'channel_id,user_id',
     );
   }
 

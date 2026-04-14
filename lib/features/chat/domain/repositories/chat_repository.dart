@@ -8,8 +8,6 @@ abstract class ChatRepository {
 
   Future<ChatChannel> getOrCreateDirectChannel(String otherUserId);
 
-  Future<void> joinCommunityChannel(String packageId);
-
   Future<void> markChannelRead(String channelId);
 
   // ── Messages ──────────────────────────────────────────────────────────────
