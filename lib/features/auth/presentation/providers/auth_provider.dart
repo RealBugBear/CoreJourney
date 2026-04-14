@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../../bootstrap/providers.dart';
+import '../../../trainer/presentation/providers/trainer_provider.dart';
 import '../../data/repositories/supabase_auth_repository.dart';
 import '../../domain/repositories/auth_repository.dart';
 
@@ -48,6 +49,8 @@ class AuthNotifier extends StateNotifier<AsyncValue<void>> {
     state = const AsyncValue.loading();
     // Clear local DB before signing out to prevent data leaking to next session.
     await _ref.read(databaseProvider).clearUserData();
+    // Invalidate cached role so next login fetches fresh data from Supabase.
+    _ref.invalidate(userRoleProvider);
     state = await AsyncValue.guard(() => _repo.signOut());
   }
 
