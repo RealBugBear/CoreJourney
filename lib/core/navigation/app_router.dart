@@ -26,6 +26,7 @@ import '../../features/chat/domain/models/chat_channel.dart';
 import '../../features/admin/presentation/screens/admin_panel_screen.dart';
 import '../../features/chat/presentation/screens/chat_inbox_screen.dart';
 import '../../features/chat/presentation/screens/chat_channel_screen.dart';
+import 'app_shell.dart';
 
 // Route name constants
 class Routes {
@@ -95,11 +96,6 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const ConsentScreen(),
       ),
       GoRoute(
-        path: Routes.dashboard,
-        name: 'dashboard',
-        builder: (context, state) => const DashboardScreen(),
-      ),
-      GoRoute(
         path: Routes.intakeAssessment,
         name: 'intake-assessment',
         builder: (context, state) => const IntakeAssessmentScreen(),
@@ -136,19 +132,9 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const JournalScreen(),
       ),
       GoRoute(
-        path: Routes.packages,
-        name: 'packages',
-        builder: (context, state) => const PackagesScreen(),
-      ),
-      GoRoute(
         path: Routes.settings,
         name: 'settings',
         builder: (context, state) => const SettingsScreen(),
-      ),
-      GoRoute(
-        path: Routes.profile,
-        name: 'profile',
-        builder: (context, state) => const ProfileScreen(),
       ),
       GoRoute(
         path: Routes.trainerClients,
@@ -193,11 +179,6 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const AppointmentProposalScreen(),
       ),
       GoRoute(
-        path: Routes.chatInbox,
-        name: 'chat-inbox',
-        builder: (context, state) => const ChatInboxScreen(),
-      ),
-      GoRoute(
         path: Routes.chatChannel,
         name: 'chat-channel',
         builder: (context, state) {
@@ -215,6 +196,32 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: Routes.adminPanel,
         name: 'admin-panel',
         builder: (context, state) => const AdminPanelScreen(),
+      ),
+      // ── Shell: persists bottom navigation bar ────────────────────────────
+      ShellRoute(
+        builder: (context, state, child) => AppShell(child: child),
+        routes: [
+          GoRoute(
+            path: Routes.dashboard,
+            name: 'dashboard',
+            builder: (context, state) => const DashboardScreen(),
+          ),
+          GoRoute(
+            path: Routes.packages,
+            name: 'packages',
+            builder: (context, state) => const PackagesScreen(),
+          ),
+          GoRoute(
+            path: Routes.chatInbox,
+            name: 'chat-inbox',
+            builder: (context, state) => const ChatInboxScreen(),
+          ),
+          GoRoute(
+            path: Routes.profile,
+            name: 'profile',
+            builder: (context, state) => const ProfileScreen(),
+          ),
+        ],
       ),
     ],
     errorBuilder: (context, state) => Scaffold(
