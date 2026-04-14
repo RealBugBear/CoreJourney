@@ -1,12 +1,18 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../../features/auth/presentation/providers/auth_provider.dart';
 import '../../domain/models/appointment.dart';
 import '../../domain/models/trainer_client.dart';
 
 // ── User role ─────────────────────────────────────────────────────────────────
 
 final userRoleProvider = FutureProvider<String>((ref) async {
+  // Re-run automatically on every auth state change (sign-in / sign-out).
+  // Without this, a manual invalidate() during sign-out could race with the
+  // Supabase sign-out call and cache 'practitioner' for the next session.
+  ref.watch(authStateProvider);
+
   final userId = Supabase.instance.client.auth.currentUser?.id;
   if (userId == null) return 'practitioner';
   final res = await Supabase.instance.client
@@ -138,27 +144,29 @@ Future<void> confirmProposedSlot(String appointmentId, DateTime chosen) async {
 
 // ── Become trainer ───────────────────────────────────────────────────────────
 
-/// Activates the trainer role for the current user.
-/// [enteredCode] must match [trainerCode] from AppConfig (or be empty in dev).
-/// Returns null on success, or an error message string on failure.
-Future<String?> activateTrainerRole(String enteredCode, String trainerCode, bool isDev) async {
-  final userId = Supabase.instance.client.auth.currentUser?.id;
-  if (userId == null) return 'Nicht eingeloggt.';
+/// Sends [enteredCode] to the activate-trainer Edge Function for server-side
+/// validation. The code is never compared on the client — the secret lives
+/// only in Supabase project secrets.
+/// Returns null on success, or a localised error message on failure.
+Future<String?> activateTrainerRole(String enteredCode) async {
+  if (Supabase.instance.client.auth.currentUser == null) return 'Nicht eingeloggt.';
 
-  // In dev mode without a configured code, allow direct activation for testing.
-  final codeRequired = trainerCode.isNotEmpty;
-  if (codeRequired && enteredCode.trim().toUpperCase() != trainerCode.toUpperCase()) {
-    return 'Ungültiger Code.';
+  try {
+    final session = Supabase.instance.client.auth.currentSession;
+    final response = await Supabase.instance.client.functions.invoke(
+      'activate-trainer',
+      body: {'code': enteredCode.trim()},
+      headers: {
+        if (session != null)
+          'Authorization': 'Bearer ${session.accessToken}',
+      },
+    );
+    final data = response.data as Map<String, dynamic>?;
+    if (data?['error'] != null) return data!['error'] as String;
+    return null;
+  } catch (e) {
+    return 'Fehler beim Aktivieren. Bitte versuche es erneut.';
   }
-  if (!isDev && !codeRequired) {
-    return 'Trainer-Code nicht konfiguriert. Bitte TRAINER_CODE in .env setzen.';
-  }
-
-  await Supabase.instance.client
-      .from('profiles')
-      .update({'role': 'trainer'})
-      .eq('id', userId);
-  return null;
 }
 
 // ── Accept invite (client side) ───────────────────────────────────────────────

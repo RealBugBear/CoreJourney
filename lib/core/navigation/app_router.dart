@@ -23,6 +23,7 @@ import '../../features/trainer/domain/models/trainer_client.dart';
 import '../../features/journal/presentation/screens/journal_screen.dart';
 import '../../features/dev_tools/presentation/screens/dev_tools_screen.dart';
 import '../../features/chat/domain/models/chat_channel.dart';
+import '../../features/admin/presentation/screens/admin_panel_screen.dart';
 import '../../features/chat/presentation/screens/chat_inbox_screen.dart';
 import '../../features/chat/presentation/screens/chat_channel_screen.dart';
 
@@ -48,6 +49,7 @@ class Routes {
   static const appointmentProposals = '/appointments/proposals';
   static const chatInbox = '/chat';
   static const chatChannel = '/chat/:channelId';
+  static const adminPanel = '/admin';
 }
 
 /// Bridges a Stream into a [Listenable] so GoRouter can react to auth changes.
@@ -208,6 +210,11 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: Routes.devTools,
         name: 'dev-tools',
         builder: (context, state) => const DevToolsScreen(),
+      ),
+      GoRoute(
+        path: Routes.adminPanel,
+        name: 'admin-panel',
+        builder: (context, state) => const AdminPanelScreen(),
       ),
     ],
     errorBuilder: (context, state) => Scaffold(

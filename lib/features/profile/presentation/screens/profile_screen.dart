@@ -72,24 +72,27 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             const SizedBox(height: 32),
           ],
 
-          // ── Trainer View (if already trainer) ─────────────────────────────
+          // ── Admin Panel (role = admin only) ───────────────────────────────
+          _AdminTile(),
+
+          // ── Trainer View (role = trainer only) ────────────────────────────
           _TrainerViewTile(),
 
-          // ── Become trainer (if not yet trainer) ───────────────────────────
+          // ── Become trainer (practitioner only) ────────────────────────────
           _BecomeTrainerTile(),
 
-          // ── Connect to trainer (for non-trainer users) ────────────────────
+          // ── Connect to trainer (practitioner only) ────────────────────────
           _ConnectTrainerTile(),
 
           // ── Switch trainer (only when already connected) ──────────────────
           _SwitchTrainerTile(),
 
-          // ── Dev Tools (for @corejourney.dev accounts) ─────────────────────
+          // ── Dev Tools (for @corejourney.dev accounts in dev builds) ───────
           if (_isDevAccount) ...[
             _SectionHeader(title: 'Dev Tools'),
             ListTile(
               leading: const Icon(Icons.bug_report, color: Colors.orange),
-              title: const Text('Admin / Debug Tools'),
+              title: const Text('Debug Tools'),
               trailing: const Icon(Icons.chevron_right),
               onTap: () => context.push(Routes.devTools),
             ),
@@ -206,6 +209,37 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   }
 }
 
+// ── Admin tile ────────────────────────────────────────────────────────────────
+
+class _AdminTile extends ConsumerWidget {
+  const _AdminTile();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final role = ref.watch(userRoleProvider).valueOrNull;
+    if (role != 'admin') return const SizedBox.shrink();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _SectionHeader(title: 'Administration'),
+        ListTile(
+          leading: const Icon(Icons.admin_panel_settings_outlined),
+          title: const Text('Admin Panel'),
+          subtitle: const Text(
+            'Trainer-Codes generieren und verwalten',
+            style: TextStyle(fontSize: 12),
+          ),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: () => context.push(Routes.adminPanel),
+        ),
+      ],
+    );
+  }
+}
+
+// ── Trainer View tile ─────────────────────────────────────────────────────────
+
 class _TrainerViewTile extends ConsumerWidget {
   const _TrainerViewTile();
 
@@ -238,11 +272,10 @@ class _BecomeTrainerTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final roleAsync = ref.watch(userRoleProvider);
-    final isTrainer = roleAsync.valueOrNull == 'trainer';
-    if (isTrainer) return const SizedBox.shrink();
+    final role = ref.watch(userRoleProvider).valueOrNull;
+    if (role == 'trainer' || role == 'admin') return const SizedBox.shrink();
 
-    final config = ref.watch(appConfigProvider);
+    final isDev = ref.watch(appConfigProvider).isDevelopment;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -252,23 +285,19 @@ class _BecomeTrainerTile extends ConsumerWidget {
           leading: const Icon(Icons.verified_user_outlined),
           title: const Text('Trainer werden'),
           subtitle: Text(
-            config.isDevelopment && config.trainerCode.isEmpty
-                ? 'DEV: direkt aktivieren'
+            isDev
+                ? 'DEV: Code wird serverseitig geprüft'
                 : 'Code eingeben um Trainer-Rolle zu aktivieren',
             style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
           ),
           trailing: const Icon(Icons.chevron_right),
-          onTap: () => _showActivationDialog(context, ref, config),
+          onTap: () => _showActivationDialog(context, ref),
         ),
       ],
     );
   }
 
-  Future<void> _showActivationDialog(
-    BuildContext context,
-    WidgetRef ref,
-    dynamic config,
-  ) async {
+  Future<void> _showActivationDialog(BuildContext context, WidgetRef ref) async {
     final l10n = AppLocalizations.of(context);
     final codeCtrl = TextEditingController();
     String? errorMsg;
@@ -282,29 +311,19 @@ class _BecomeTrainerTile extends ConsumerWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              if (config.isDevelopment && config.trainerCode.isEmpty)
-                Text(
-                  'DEV-Modus: kein Code erforderlich.',
-                  style: TextStyle(
-                      color: AppColors.warning,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 13),
-                )
-              else ...[
-                const Text('Gib deinen Trainer-Aktivierungscode ein:'),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: codeCtrl,
-                  autofocus: true,
-                  textCapitalization: TextCapitalization.characters,
-                  decoration: InputDecoration(
-                    labelText: 'Trainer-Code',
-                    border: const OutlineInputBorder(),
-                    errorText: errorMsg,
-                  ),
-                  onChanged: (_) => setDialogState(() => errorMsg = null),
+              const Text('Gib deinen Trainer-Aktivierungscode ein:'),
+              const SizedBox(height: 12),
+              TextField(
+                controller: codeCtrl,
+                autofocus: true,
+                textCapitalization: TextCapitalization.characters,
+                decoration: InputDecoration(
+                  labelText: 'Trainer-Code',
+                  border: const OutlineInputBorder(),
+                  errorText: errorMsg,
                 ),
-              ],
+                onChanged: (_) => setDialogState(() => errorMsg = null),
+              ),
             ],
           ),
           actions: [
@@ -314,22 +333,20 @@ class _BecomeTrainerTile extends ConsumerWidget {
             ),
             ElevatedButton(
               onPressed: () async {
-                final err = await activateTrainerRole(
-                  codeCtrl.text,
-                  config.trainerCode as String,
-                  config.isDevelopment as bool,
-                );
+                // Code validation happens server-side in the activate-trainer
+                // Edge Function — the secret never leaves Supabase.
+                final err = await activateTrainerRole(codeCtrl.text);
                 if (err != null) {
                   setDialogState(() => errorMsg = err);
                   return;
                 }
                 if (ctx.mounted) Navigator.pop(ctx);
+                // userRoleProvider will refresh automatically via authStateProvider,
+                // but we also invalidate explicitly to make the UI update instantly.
                 ref.invalidate(userRoleProvider);
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                        content: Text('Trainer-Rolle aktiviert! '
-                            'Bitte App neu starten.')),
+                    const SnackBar(content: Text('Trainer-Rolle aktiviert!')),
                   );
                 }
               },
@@ -350,8 +367,8 @@ class _ConnectTrainerTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final roleAsync = ref.watch(userRoleProvider);
-    if (roleAsync.valueOrNull == 'trainer') return const SizedBox.shrink();
+    final role = ref.watch(userRoleProvider).valueOrNull;
+    if (role == 'trainer' || role == 'admin') return const SizedBox.shrink();
 
     final trainerAsync = ref.watch(clientTrainerProvider);
     final l10n = AppLocalizations.of(context);
@@ -468,95 +485,19 @@ class _SwitchTrainerTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final roleAsync = ref.watch(userRoleProvider);
-    if (roleAsync.valueOrNull == 'trainer') return const SizedBox.shrink();
+    final role = ref.watch(userRoleProvider).valueOrNull;
+    if (role == 'trainer' || role == 'admin') return const SizedBox.shrink();
 
     final trainerAsync = ref.watch(clientTrainerProvider);
     final trainerName = trainerAsync.valueOrNull;
     if (trainerName == null) return const SizedBox.shrink();
 
-    final config = ref.watch(appConfigProvider);
-
     return ListTile(
       leading: const Icon(Icons.swap_horiz),
       title: const Text('Trainer wechseln'),
       trailing: const Icon(Icons.chevron_right),
-      onTap: () => _showCodeGuardDialog(context, ref, config),
+      onTap: () => _showNewTrainerDialog(context, ref),
     );
-  }
-
-  Future<void> _showCodeGuardDialog(
-    BuildContext context,
-    WidgetRef ref,
-    dynamic config,
-  ) async {
-    final skipCode = config.isDevelopment as bool && (config.trainerCode as String).isEmpty;
-
-    if (skipCode) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('DEV: Code-Guard übersprungen'),
-            duration: Duration(seconds: 1),
-          ),
-        );
-      }
-      if (context.mounted) await _showNewTrainerDialog(context, ref);
-      return;
-    }
-
-    final codeCtrl = TextEditingController();
-    String? errorMsg;
-
-    final passed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setDialogState) => AlertDialog(
-          title: const Text('Trainer wechseln'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text('Trainer-Wechsel-Code eingeben:'),
-              const SizedBox(height: 12),
-              TextField(
-                controller: codeCtrl,
-                autofocus: true,
-                textCapitalization: TextCapitalization.characters,
-                decoration: InputDecoration(
-                  labelText: 'Trainer-Wechsel-Code',
-                  border: const OutlineInputBorder(),
-                  errorText: errorMsg,
-                ),
-                onChanged: (_) => setDialogState(() => errorMsg = null),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Abbrechen'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                final entered = codeCtrl.text.trim().toUpperCase();
-                final expected = (config.trainerCode as String).toUpperCase();
-                if (entered != expected) {
-                  setDialogState(() => errorMsg = 'Ungültiger Code.');
-                  return;
-                }
-                Navigator.pop(ctx, true);
-              },
-              child: const Text('Weiter'),
-            ),
-          ],
-        ),
-      ),
-    );
-    codeCtrl.dispose();
-
-    if (passed != true || !context.mounted) return;
-    await _showNewTrainerDialog(context, ref);
   }
 
   Future<void> _showNewTrainerDialog(
