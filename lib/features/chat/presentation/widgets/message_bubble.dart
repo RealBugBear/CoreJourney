@@ -10,11 +10,15 @@ class MessageBubble extends StatelessWidget {
     required this.message,
     required this.isModerator,
     this.onDeleteRequested,
+    this.onAcceptCall,
+    this.onProposeAppointment,
   });
 
   final ChatMessage message;
   final bool isModerator;
   final VoidCallback? onDeleteRequested;
+  final VoidCallback? onAcceptCall;
+  final VoidCallback? onProposeAppointment;
 
   @override
   Widget build(BuildContext context) {
@@ -24,7 +28,11 @@ class MessageBubble extends StatelessWidget {
 
     if (message.isDeleted) return _DeletedBubble(isOwn: isOwn);
     if (message.isBotResponse) return _BotBubble(message: message);
-    if (message.isCallRequest) return _CallRequestBubble(isOwn: isOwn);
+    if (message.isCallRequest) return _CallRequestBubble(
+      isOwn: isOwn,
+      onAccept: isModerator ? onAcceptCall : null,
+      onProposeAppointment: isModerator ? onProposeAppointment : null,
+    );
 
     final theme = Theme.of(context);
     final canDelete = isOwn || isModerator;
@@ -157,37 +165,91 @@ class _BotBubble extends StatelessWidget {
 }
 
 class _CallRequestBubble extends StatelessWidget {
-  const _CallRequestBubble({required this.isOwn});
+  const _CallRequestBubble({
+    required this.isOwn,
+    this.onAccept,
+    this.onProposeAppointment,
+  });
   final bool isOwn;
+  final VoidCallback? onAccept;
+  final VoidCallback? onProposeAppointment;
 
   @override
-  Widget build(BuildContext context) => Align(
-    alignment: isOwn ? Alignment.centerRight : Alignment.centerLeft,
-    child: Container(
-      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 3),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-      decoration: BoxDecoration(
-        color: Colors.teal.shade50,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.teal.shade200),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(Icons.videocam_outlined, color: Colors.teal.shade700, size: 20),
-          const SizedBox(width: 8),
-          Text(
-            isOwn
-                ? 'Call-Anfrage gesendet'
-                : 'Klient möchte einen Video-Call',
-            style: TextStyle(
-              color: Colors.teal.shade800,
-              fontWeight: FontWeight.w500,
-              fontSize: 13,
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final showActions = !isOwn && (onAccept != null || onProposeAppointment != null);
+
+    return Align(
+      alignment: isOwn ? Alignment.centerRight : Alignment.centerLeft,
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 3),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        constraints: BoxConstraints(
+          maxWidth: MediaQuery.of(context).size.width * 0.80,
+        ),
+        decoration: BoxDecoration(
+          color: Colors.teal.shade50,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.teal.shade200),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.videocam_outlined, color: Colors.teal.shade700, size: 20),
+                const SizedBox(width: 8),
+                Text(
+                  isOwn
+                      ? 'Call-Anfrage gesendet'
+                      : 'Klient möchte einen Video-Call',
+                  style: TextStyle(
+                    color: Colors.teal.shade800,
+                    fontWeight: FontWeight.w500,
+                    fontSize: 13,
+                  ),
+                ),
+              ],
             ),
-          ),
-        ],
+            if (showActions) ...[
+              const SizedBox(height: 10),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (onAccept != null)
+                    FilledButton.tonal(
+                      onPressed: onAccept,
+                      style: FilledButton.styleFrom(
+                        backgroundColor: Colors.teal.shade100,
+                        foregroundColor: Colors.teal.shade900,
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                      child: const Text('Annehmen', style: TextStyle(fontSize: 12)),
+                    ),
+                  if (onAccept != null && onProposeAppointment != null)
+                    const SizedBox(width: 8),
+                  if (onProposeAppointment != null)
+                    OutlinedButton(
+                      onPressed: onProposeAppointment,
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.teal.shade900,
+                        side: BorderSide(color: Colors.teal.shade300),
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                      child: const Text('Termin', style: TextStyle(fontSize: 12)),
+                    ),
+                ],
+              ),
+            ],
+          ],
+        ),
       ),
-    ),
-  );
+    );
+  }
 }

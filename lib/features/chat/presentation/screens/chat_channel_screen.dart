@@ -334,6 +334,10 @@ class _ChatChannelScreenState extends ConsumerState<ChatChannelScreen> {
                                       _currentUserId()))
                               ? () => _confirmDelete(msg)
                               : null,
+                          onAcceptCall: isModerator ? _startCall : null,
+                          onProposeAppointment: isModerator
+                              ? () => _proposeAppointment(context, ref)
+                              : null,
                         );
                       },
                     ),
