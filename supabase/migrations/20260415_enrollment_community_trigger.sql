@@ -7,7 +7,8 @@
 --    (community, <id>))
 ALTER TABLE public.chat_channels
   ADD CONSTRAINT uq_chat_channels_community_package
-  UNIQUE (type, package_id);
+  UNIQUE (type, package_id)
+  DEFERRABLE INITIALLY DEFERRED;
 
 -- 2. Trigger function
 CREATE OR REPLACE FUNCTION public.fn_enrollment_join_community()

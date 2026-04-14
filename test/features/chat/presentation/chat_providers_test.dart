@@ -22,9 +22,6 @@ class _StubChatRepository implements ChatRepository {
   }
 
   @override
-  Future<void> joinCommunityChannel(String packageId) async {}
-
-  @override
   Future<void> markChannelRead(String channelId) async {}
 
   @override

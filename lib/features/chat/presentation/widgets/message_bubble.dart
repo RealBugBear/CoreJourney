@@ -176,7 +176,6 @@ class _CallRequestBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final showActions = !isOwn && (onAccept != null || onProposeAppointment != null);
 
     return Align(

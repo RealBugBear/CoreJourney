@@ -7,7 +7,6 @@ class _FakeChatRepository implements ChatRepository {
   @override Future<List<ChatChannel>> getChannels() async => [];
   @override Future<ChatChannel> getOrCreateDirectChannel(String o) async =>
     ChatChannel(id:'c',type:ChannelType.direct,createdAt:DateTime(2026),currentUserRole:MemberRole.member,unreadCount:0);
-  @override Future<void> joinCommunityChannel(String p) async {}
   @override Future<void> markChannelRead(String c) async {}
   @override Stream<List<ChatMessage>> watchMessages(String c,{int pageSize=30}) => const Stream.empty();
   @override Future<List<ChatMessage>> fetchOlderMessages(String c,{required DateTime before,int limit=30}) async => [];

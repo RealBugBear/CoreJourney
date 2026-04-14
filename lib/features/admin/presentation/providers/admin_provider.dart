@@ -66,7 +66,7 @@ class AdminNotifier extends AsyncNotifier<List<TrainerCode>> {
         .insert({'created_by': Supabase.instance.client.auth.currentUser!.id})
         .select()
         .single();
-    final code = TrainerCode.fromJson(res as Map<String, dynamic>);
+    final code = TrainerCode.fromJson(res);
     state = state.whenData((codes) => [code, ...codes]);
     return code;
   }
@@ -110,7 +110,8 @@ class AdminUsersNotifier extends AsyncNotifier<List<AdminUser>> {
     final res = await Supabase.instance.client
         .from('profiles')
         .select('id, display_name, role, subscription_tier')
-        .order('display_name');
+        .order('display_name')
+        .limit(500);
     return (res as List)
         .cast<Map<String, dynamic>>()
         .map(AdminUser.fromJson)

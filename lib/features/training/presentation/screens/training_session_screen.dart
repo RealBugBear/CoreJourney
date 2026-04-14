@@ -6,6 +6,8 @@ import 'package:wakelock_plus/wakelock_plus.dart';
 
 import '../../../../core/navigation/app_router.dart';
 
+import '../../../chat/domain/models/chat_channel.dart';
+import '../../../chat/presentation/providers/chat_providers.dart';
 import '../../../../bootstrap/providers.dart';
 import '../../../../core/database/app_database.dart';
 import '../../../../core/notifications/notification_service.dart';
@@ -127,16 +129,14 @@ class _TrainingSessionScreenState extends ConsumerState<TrainingSessionScreen> {
   }
 
   Future<void> _showShareWithCommunityPrompt(String packageId) async {
-    // Fetch community channel id for this package
-    final res = await Supabase.instance.client
-        .from('chat_channels')
-        .select('id')
-        .eq('type', 'community')
-        .eq('package_id', packageId)
-        .maybeSingle();
+    // Use cached channels instead of extra DB round-trip
+    final channels = ref.read(chatChannelsProvider).valueOrNull ?? [];
+    final communityChannel = channels
+        .where((c) => c.type == ChannelType.community && c.packageId == packageId)
+        .firstOrNull;
 
-    if (res == null || !mounted) return;
-    final channelId = res['id'] as String;
+    if (communityChannel == null || !mounted) return;
+    final channelId = communityChannel.id;
 
     final share = await showDialog<bool>(
       context: context,

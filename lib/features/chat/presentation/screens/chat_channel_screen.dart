@@ -150,12 +150,7 @@ class _ChatChannelScreenState extends ConsumerState<ChatChannelScreen> {
   }
 
   Future<void> _proposeAppointment(BuildContext context, WidgetRef ref) async {
-    final partnerIdAsync = ref.read(chatPartnerIdProvider(widget.channelId));
-    final clientId = await partnerIdAsync.when(
-      data: (id) async => id,
-      loading: () async => null,
-      error: (_, __) async => null,
-    );
+    final clientId = await ref.read(chatPartnerIdProvider(widget.channelId).future);
     if (clientId == null || !mounted) return;
     context.push(
       Routes.appointmentScheduler.replaceFirst(':clientId', clientId),
