@@ -102,8 +102,7 @@ class _TrainerCodesTab extends ConsumerWidget {
     return codesAsync.when(
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (e, _) => Center(
-        child: Text('Fehler: $e',
-            style: TextStyle(color: AppColors.error)),
+        child: Text('Fehler: $e', style: TextStyle(color: AppColors.error)),
       ),
       data: (codes) {
         if (codes.isEmpty) {
@@ -154,9 +153,8 @@ class _PremiumTab extends ConsumerWidget {
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (e, _) => Center(child: Text('Fehler: $e')),
       data: (users) {
-        final practitioners = users
-            .where((u) => u.role == 'practitioner')
-            .toList();
+        final practitioners =
+            users.where((u) => u.role == 'practitioner').toList();
         if (practitioners.isEmpty) {
           return const Center(child: Text('Keine Nutzer gefunden.'));
         }

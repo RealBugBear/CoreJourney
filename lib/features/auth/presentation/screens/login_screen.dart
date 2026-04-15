@@ -10,7 +10,8 @@ import '../../../consent/presentation/providers/consent_provider.dart';
 import '../providers/auth_provider.dart';
 
 // RFC 5322-lite email pattern — catches obvious typos without being overly strict.
-final _emailRegex = RegExp(r'^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$');
+final _emailRegex =
+    RegExp(r'^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$');
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -67,7 +68,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final isDE = l10n.localeName == 'de';
     if ((value ?? '').isEmpty) return l10n.validationRequired;
     if (value != _passwordController.text) {
-      return isDE ? 'Passwörter stimmen nicht überein.' : 'Passwords do not match.';
+      return isDE
+          ? 'Passwörter stimmen nicht überein.'
+          : 'Passwords do not match.';
     }
     return null;
   }
@@ -101,7 +104,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     if (!(_formKey.currentState?.validate() ?? false)) return;
 
     final email = _emailController.text.trim();
-    await ref.read(authNotifierProvider.notifier).sendPasswordReset(email: email);
+    await ref
+        .read(authNotifierProvider.notifier)
+        .sendPasswordReset(email: email);
 
     if (mounted) {
       setState(() => _showPasswordReset = false);
@@ -177,9 +182,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     controller: _passwordController,
                     focusNode: _passwordFocusNode,
                     obscureText: _obscurePassword,
-                    textInputAction: _isSignUp
-                        ? TextInputAction.next
-                        : TextInputAction.done,
+                    textInputAction:
+                        _isSignUp ? TextInputAction.next : TextInputAction.done,
                     decoration: InputDecoration(
                       labelText: l10n.password,
                       border: const OutlineInputBorder(),
@@ -189,8 +193,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               ? Icons.visibility_outlined
                               : Icons.visibility_off_outlined,
                         ),
-                        onPressed: () =>
-                            setState(() => _obscurePassword = !_obscurePassword),
+                        onPressed: () => setState(
+                            () => _obscurePassword = !_obscurePassword),
                       ),
                     ),
                     validator: _validatePassword,
@@ -314,8 +318,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   style: SegmentedButton.styleFrom(
                     selectedBackgroundColor: AppColors.primary,
                     selectedForegroundColor: Colors.white,
-                    textStyle:
-                        const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+                    textStyle: const TextStyle(
+                        fontSize: 13, fontWeight: FontWeight.w500),
                   ),
                 ),
               ],

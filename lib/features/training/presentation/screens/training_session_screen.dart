@@ -59,8 +59,8 @@ class _TrainingSessionScreenState extends ConsumerState<TrainingSessionScreen> {
     // user has multiple packages. Query the DB directly for this package.
     final db = ref.read(databaseProvider);
     final syncService = ref.read(syncServiceProvider);
-    final userId = ref.read(authStateProvider).valueOrNull?.session?.user.id
-        ?? Supabase.instance.client.auth.currentUser?.id;
+    final userId = ref.read(authStateProvider).valueOrNull?.session?.user.id ??
+        Supabase.instance.client.auth.currentUser?.id;
 
     EnrollmentsTableData? enrollment;
     ProgressEntriesTableData? progress;
@@ -132,7 +132,8 @@ class _TrainingSessionScreenState extends ConsumerState<TrainingSessionScreen> {
     // Use cached channels instead of extra DB round-trip
     final channels = ref.read(chatChannelsProvider).valueOrNull ?? [];
     final communityChannel = channels
-        .where((c) => c.type == ChannelType.community && c.packageId == packageId)
+        .where(
+            (c) => c.type == ChannelType.community && c.packageId == packageId)
         .firstOrNull;
 
     if (communityChannel == null || !mounted) return;

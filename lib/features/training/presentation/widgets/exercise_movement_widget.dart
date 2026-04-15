@@ -33,8 +33,7 @@ class ExerciseMovementWidget extends ConsumerStatefulWidget {
 
 enum _TickPhase { holding, resting, switching }
 
-class _ExerciseMovementWidgetState
-    extends ConsumerState<ExerciseMovementWidget>
+class _ExerciseMovementWidgetState extends ConsumerState<ExerciseMovementWidget>
     with SingleTickerProviderStateMixin {
   // Initialized with a silent no-op default; replaced in _initFeedback.
   TrainingFeedbackService _feedback = TrainingFeedbackService(
@@ -73,7 +72,8 @@ class _ExerciseMovementWidgetState
     if (!mounted) return;
     final settings = ref.read(settingsProvider);
     final locale = settings.languageCode;
-    _feedback = TrainingFeedbackService(mode: settings.feedbackMode, locale: locale);
+    _feedback =
+        TrainingFeedbackService(mode: settings.feedbackMode, locale: locale);
     await _feedback.init();
     if (!mounted) return;
     _feedback.hapticHeavy();
@@ -211,11 +211,13 @@ class _ExerciseMovementWidgetState
             children: [
               Text(
                 '${widget.exerciseIndex + 1} / ${widget.totalExercises}',
-                style: TextStyle(color: AppColors.textSecondaryDark, fontSize: 14),
+                style:
+                    TextStyle(color: AppColors.textSecondaryDark, fontSize: 14),
               ),
               Text(
                 '${l10n.exerciseReps(_currentRep)} / ${ex.repetitions}',
-                style: TextStyle(color: AppColors.textSecondaryDark, fontSize: 14),
+                style:
+                    TextStyle(color: AppColors.textSecondaryDark, fontSize: 14),
               ),
             ],
           ),
@@ -340,20 +342,19 @@ class _ExerciseMovementWidgetState
         return ('', 1.0, AppColors.primary);
       }
       final phase = ex.phases[_phaseIndex];
-      final progress = 1 - (_secondsLeft / phase.durationSeconds).clamp(0.0, 1.0);
+      final progress =
+          1 - (_secondsLeft / phase.durationSeconds).clamp(0.0, 1.0);
       return (phase.label(locale), progress, AppColors.primary);
     }
 
     // holdRest
     if (_phase == _TickPhase.holding) {
-      final progress =
-          1 - (_secondsLeft / ex.holdSeconds).clamp(0.0, 1.0);
+      final progress = 1 - (_secondsLeft / ex.holdSeconds).clamp(0.0, 1.0);
       final label = locale == 'de' ? ex.holdCueDe : ex.holdCueEn;
       return (label, progress, AppColors.primary);
     } else {
       // resting
-      final progress =
-          1 - (_secondsLeft / ex.restSeconds).clamp(0.0, 1.0);
+      final progress = 1 - (_secondsLeft / ex.restSeconds).clamp(0.0, 1.0);
       final label = locale == 'de' ? 'Pause' : 'Rest';
       return (label, progress, AppColors.textSecondaryDark);
     }

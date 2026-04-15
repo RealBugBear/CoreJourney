@@ -102,7 +102,6 @@ class _ExerciseVideoWidgetState extends State<ExerciseVideoWidget> {
             ),
           ),
           const SizedBox(height: 24),
-
           Expanded(
             child: ClipRRect(
               borderRadius: BorderRadius.circular(16),
@@ -110,7 +109,6 @@ class _ExerciseVideoWidgetState extends State<ExerciseVideoWidget> {
             ),
           ),
           const SizedBox(height: 24),
-
           ElevatedButton(
             onPressed: widget.onReady,
             style: ElevatedButton.styleFrom(
@@ -118,7 +116,8 @@ class _ExerciseVideoWidgetState extends State<ExerciseVideoWidget> {
               backgroundColor: AppColors.primary,
             ),
             child: Text(l10n.next,
-                style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w600)),
+                style:
+                    const TextStyle(fontSize: 17, fontWeight: FontWeight.w600)),
           ),
         ],
       ),

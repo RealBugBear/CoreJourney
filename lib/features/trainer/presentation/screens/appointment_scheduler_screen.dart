@@ -66,7 +66,8 @@ class _AppointmentSchedulerScreenState
     if (!mounted) return;
     if (cals.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(AppLocalizations.of(context).appointmentNoCalendars)),
+        SnackBar(
+            content: Text(AppLocalizations.of(context).appointmentNoCalendars)),
       );
       return;
     }
@@ -114,11 +115,13 @@ class _AppointmentSchedulerScreenState
     );
     if (time == null || !mounted) return;
 
-    final custom = DateTime(date.year, date.month, date.day, time.hour, time.minute);
+    final custom =
+        DateTime(date.year, date.month, date.day, time.hour, time.minute);
     setState(() {
       _customTime = custom;
       // Add as a virtual slot
-      _selectedSlots.add(TimeSlot(start: custom, end: custom.add(const Duration(hours: 1))));
+      _selectedSlots.add(
+          TimeSlot(start: custom, end: custom.add(const Duration(hours: 1))));
     });
   }
 
@@ -149,7 +152,9 @@ class _AppointmentSchedulerScreenState
         scheduledFor: null,
         proposedSlots: slots,
         durationMinutes: 60,
-        location: _locationCtrl.text.trim().isEmpty ? null : _locationCtrl.text.trim(),
+        location: _locationCtrl.text.trim().isEmpty
+            ? null
+            : _locationCtrl.text.trim(),
         notes: _notesCtrl.text.trim().isEmpty ? null : _notesCtrl.text.trim(),
         status: 'proposed',
         trigger: 'manual',
@@ -189,7 +194,8 @@ class _AppointmentSchedulerScreenState
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.send_rounded, size: 64, color: AppColors.primary),
+                const Icon(Icons.send_rounded,
+                    size: 64, color: AppColors.primary),
                 const SizedBox(height: 16),
                 Text(
                   '${_selectedSlots.length} Terminvorschlag${_selectedSlots.length > 1 ? "schläge" : ""} an ${widget.client.displayName} gesendet.',
@@ -246,11 +252,13 @@ class _AppointmentSchedulerScreenState
               decoration: BoxDecoration(
                 color: AppColors.primary.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: AppColors.primary.withValues(alpha: 0.25)),
+                border: Border.all(
+                    color: AppColors.primary.withValues(alpha: 0.25)),
               ),
               child: Row(
                 children: [
-                  Icon(Icons.check_circle_outline, color: AppColors.primary, size: 18),
+                  Icon(Icons.check_circle_outline,
+                      color: AppColors.primary, size: 18),
                   const SizedBox(width: 8),
                   Text(
                     '${_selectedSlots.length} Slot${_selectedSlots.length > 1 ? "s" : ""} ausgewählt',
@@ -264,7 +272,8 @@ class _AppointmentSchedulerScreenState
                     onTap: () => setState(() => _selectedSlots.clear()),
                     child: Text(
                       'Zurücksetzen',
-                      style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
+                      style: TextStyle(
+                          color: AppColors.textSecondary, fontSize: 12),
                     ),
                   ),
                 ],
@@ -288,7 +297,8 @@ class _AppointmentSchedulerScreenState
               child: Row(
                 children: [
                   const SizedBox(
-                      width: 20, height: 20,
+                      width: 20,
+                      height: 20,
                       child: CircularProgressIndicator(strokeWidth: 2)),
                   const SizedBox(width: 12),
                   Text(l10n.appointmentLoadingSlots,
@@ -322,7 +332,8 @@ class _AppointmentSchedulerScreenState
             icon: const Icon(Icons.add, size: 16),
             label: Text(l10n.appointmentOtherTime),
             onPressed: _pickCustomTime,
-            style: TextButton.styleFrom(foregroundColor: AppColors.textSecondary),
+            style:
+                TextButton.styleFrom(foregroundColor: AppColors.textSecondary),
           ),
 
           const Divider(height: 28),
@@ -332,7 +343,8 @@ class _AppointmentSchedulerScreenState
             controller: _locationCtrl,
             decoration: InputDecoration(
               labelText: l10n.appointmentLocationLabel,
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              border:
+                  OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
               prefixIcon: const Icon(Icons.location_on_outlined),
             ),
           ),
@@ -342,7 +354,8 @@ class _AppointmentSchedulerScreenState
             maxLines: 3,
             decoration: InputDecoration(
               labelText: l10n.appointmentNotesLabel,
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              border:
+                  OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
               prefixIcon: const Icon(Icons.notes_outlined),
             ),
           ),
@@ -356,12 +369,16 @@ class _AppointmentSchedulerScreenState
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 backgroundColor: AppColors.primary,
                 foregroundColor: AppColors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
               ),
               onPressed: _selectedSlots.isEmpty || _sending ? null : _propose,
               icon: _sending
-                  ? const SizedBox(width: 18, height: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                          strokeWidth: 2, color: Colors.white))
                   : const Icon(Icons.send_rounded, size: 18),
               label: Text(
                 _selectedSlots.isEmpty
@@ -403,7 +420,8 @@ class _SlotGrid extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: byDay.entries.map((entry) {
         final daySlots = entry.value;
-        final dayLabel = DateFormat('EEE, d. MMM', 'de_DE').format(daySlots.first.start);
+        final dayLabel =
+            DateFormat('EEE, d. MMM', 'de_DE').format(daySlots.first.start);
 
         return Padding(
           padding: const EdgeInsets.only(bottom: 12),
@@ -429,7 +447,8 @@ class _SlotGrid extends StatelessWidget {
                   return GestureDetector(
                     onTap: () => onTap(slot),
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 14, vertical: 8),
                       decoration: BoxDecoration(
                         color: selected
                             ? AppColors.primary

@@ -146,7 +146,9 @@ class _DevelopmentBootstrapAppState extends State<_DevelopmentBootstrapApp> {
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  _error == null ? 'CoreJourney DEV booting' : 'Bootstrap failed',
+                  _error == null
+                      ? 'CoreJourney DEV booting'
+                      : 'Bootstrap failed',
                   style: const TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,

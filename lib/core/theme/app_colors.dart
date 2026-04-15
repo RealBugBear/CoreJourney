@@ -44,6 +44,8 @@ class AppColors {
   static const Color moodGold = Color(0xFFE0B867);
 
   static Color getContrastText(Color backgroundColor) {
-    return backgroundColor.computeLuminance() > 0.5 ? textPrimary : textPrimaryDark;
+    return backgroundColor.computeLuminance() > 0.5
+        ? textPrimary
+        : textPrimaryDark;
   }
 }

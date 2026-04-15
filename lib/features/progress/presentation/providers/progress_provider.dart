@@ -49,19 +49,18 @@ final selectedPackageIdProvider =
   final prefs = ref.watch(sharedPreferencesProvider);
   // Watch auth state so the notifier is re-created on sign-out/sign-in,
   // loading the correct user-scoped key from SharedPreferences.
-  final userId = ref.watch(authStateProvider).valueOrNull?.session?.user.id
-      ?? Supabase.instance.client.auth.currentUser?.id;
+  final userId = ref.watch(authStateProvider).valueOrNull?.session?.user.id ??
+      Supabase.instance.client.auth.currentUser?.id;
   return _SelectedPackageNotifier(prefs, userId);
 });
 
 // ── Active enrollment (for the currently selected package) ────────────────────
 
-final activeEnrollmentProvider =
-    StreamProvider<EnrollmentsTableData?>((ref) {
+final activeEnrollmentProvider = StreamProvider<EnrollmentsTableData?>((ref) {
   final db = ref.watch(databaseProvider);
   // Watch auth state so this provider re-evaluates when the user changes.
-  final userId = ref.watch(authStateProvider).valueOrNull?.session?.user.id
-      ?? Supabase.instance.client.auth.currentUser?.id;
+  final userId = ref.watch(authStateProvider).valueOrNull?.session?.user.id ??
+      Supabase.instance.client.auth.currentUser?.id;
   final packageId = ref.watch(selectedPackageIdProvider);
   if (userId == null) return Stream.value(null);
 
@@ -76,8 +75,7 @@ final activeEnrollmentProvider =
 
 // ── Active progress entry ─────────────────────────────────────────────────────
 
-final activeProgressProvider =
-    StreamProvider<ProgressEntriesTableData?>((ref) {
+final activeProgressProvider = StreamProvider<ProgressEntriesTableData?>((ref) {
   final db = ref.watch(databaseProvider);
   final enrollment = ref.watch(activeEnrollmentProvider).valueOrNull;
   if (enrollment == null) return Stream.value(null);
@@ -157,8 +155,7 @@ Future<void> createEnrollment({
           packageId: packageId,
           assignedDurationWeeks: durationWeeks,
           startDate: DateTime(now.year, now.month, now.day),
-          targetCompletionDate:
-              DateTime(target.year, target.month, target.day),
+          targetCompletionDate: DateTime(target.year, target.month, target.day),
         ),
       );
 
@@ -200,12 +197,11 @@ Future<void> createEnrollment({
 final allUserEnrollmentsProvider =
     StreamProvider<List<EnrollmentsTableData>>((ref) {
   final db = ref.watch(databaseProvider);
-  final userId = ref.watch(authStateProvider).valueOrNull?.session?.user.id
-      ?? Supabase.instance.client.auth.currentUser?.id;
+  final userId = ref.watch(authStateProvider).valueOrNull?.session?.user.id ??
+      Supabase.instance.client.auth.currentUser?.id;
   if (userId == null) return Stream.value([]);
 
-  return (db.select(db.enrollmentsTable)
-        ..where((t) => t.userId.equals(userId)))
+  return (db.select(db.enrollmentsTable)..where((t) => t.userId.equals(userId)))
       .watch();
 });
 

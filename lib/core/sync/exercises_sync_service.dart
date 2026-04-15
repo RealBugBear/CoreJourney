@@ -28,7 +28,8 @@ class ExercisesSyncService {
   Future<void> syncIfNeeded() async {
     final count = await (_db.select(_db.exercisesTable)).get();
     if (count.isNotEmpty) {
-      appLogger.d('ExercisesSyncService: cache has ${count.length} rows — skipping');
+      appLogger
+          .d('ExercisesSyncService: cache has ${count.length} rows — skipping');
       return;
     }
     await _fetchAndCache();
@@ -60,43 +61,49 @@ class ExercisesSyncService {
 
           // Encode Postgres array fields to JSON strings for SQLite storage
           final companion = ExercisesTableCompanion.insert(
-            id:                     row['id'] as String,
-            packageId:              row['package_id'] as String,
-            sequenceNumber:         row['sequence_number'] as int,
-            titleDe:                row['title_de'] as String,
-            titleEn:                row['title_en'] as String,
-            positionInstructionsDe: _encodeList(row['position_instructions_de']),
-            positionInstructionsEn: _encodeList(row['position_instructions_en']),
-            movementInstructionsDe: _encodeList(row['movement_instructions_de']),
-            movementInstructionsEn: _encodeList(row['movement_instructions_en']),
-            hintsDe:                Value(_encodeNullableList(row['hints_de'])),
-            hintsEn:                Value(_encodeNullableList(row['hints_en'])),
-            executionGuideDe:       row['execution_guide_de'] as String,
-            executionGuideEn:       row['execution_guide_en'] as String,
-            durationSeconds:        row['duration_seconds'] as int,
-            repetitions:            row['repetitions'] as int,
-            imagePath:              row['image_path'] as String,
-            videoPath:              Value(row['video_path'] as String?),
-            audioCuePath:           Value(row['audio_cue_path'] as String?),
-            rhythmType:             Value(row['rhythm_type'] as String? ?? 'holdRest'),
-            phasesJson:             Value(_encodePhasesJson(row['phases_json'])),
-            hasRepSwitch:           Value(row['has_rep_switch'] as bool? ?? false),
-            holdCueDe:              Value(row['hold_cue_de'] as String? ?? 'Halten'),
-            holdCueEn:              Value(row['hold_cue_en'] as String? ?? 'Hold'),
-            holdSeconds:            Value(row['hold_seconds'] as int? ?? 7),
-            restSeconds:            Value(row['rest_seconds'] as int? ?? 3),
-            halfwaySwitch:          Value(row['halfway_switch'] as bool? ?? false),
+            id: row['id'] as String,
+            packageId: row['package_id'] as String,
+            sequenceNumber: row['sequence_number'] as int,
+            titleDe: row['title_de'] as String,
+            titleEn: row['title_en'] as String,
+            positionInstructionsDe:
+                _encodeList(row['position_instructions_de']),
+            positionInstructionsEn:
+                _encodeList(row['position_instructions_en']),
+            movementInstructionsDe:
+                _encodeList(row['movement_instructions_de']),
+            movementInstructionsEn:
+                _encodeList(row['movement_instructions_en']),
+            hintsDe: Value(_encodeNullableList(row['hints_de'])),
+            hintsEn: Value(_encodeNullableList(row['hints_en'])),
+            executionGuideDe: row['execution_guide_de'] as String,
+            executionGuideEn: row['execution_guide_en'] as String,
+            durationSeconds: row['duration_seconds'] as int,
+            repetitions: row['repetitions'] as int,
+            imagePath: row['image_path'] as String,
+            videoPath: Value(row['video_path'] as String?),
+            audioCuePath: Value(row['audio_cue_path'] as String?),
+            rhythmType: Value(row['rhythm_type'] as String? ?? 'holdRest'),
+            phasesJson: Value(_encodePhasesJson(row['phases_json'])),
+            hasRepSwitch: Value(row['has_rep_switch'] as bool? ?? false),
+            holdCueDe: Value(row['hold_cue_de'] as String? ?? 'Halten'),
+            holdCueEn: Value(row['hold_cue_en'] as String? ?? 'Hold'),
+            holdSeconds: Value(row['hold_seconds'] as int? ?? 7),
+            restSeconds: Value(row['rest_seconds'] as int? ?? 3),
+            halfwaySwitch: Value(row['halfway_switch'] as bool? ?? false),
           );
 
           await _db.into(_db.exercisesTable).insertOnConflictUpdate(companion);
         }
       });
 
-      appLogger.i('ExercisesSyncService: cached ${rows.length} exercises from Supabase');
+      appLogger.i(
+          'ExercisesSyncService: cached ${rows.length} exercises from Supabase');
     } on AuthException {
       appLogger.w('ExercisesSyncService: auth error — using fallback');
     } catch (e, st) {
-      appLogger.e('ExercisesSyncService: fetch failed', error: e, stackTrace: st);
+      appLogger.e('ExercisesSyncService: fetch failed',
+          error: e, stackTrace: st);
     }
   }
 

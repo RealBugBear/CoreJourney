@@ -28,7 +28,8 @@ class SupabaseChatRepository implements ChatRepository {
     return rows.map((row) {
       final m = row as Map<String, dynamic>;
       final roleStr = m['member_role'] as String? ?? 'member';
-      final role = roleStr == 'moderator' ? MemberRole.moderator : MemberRole.member;
+      final role =
+          roleStr == 'moderator' ? MemberRole.moderator : MemberRole.member;
       final lastMsgContent = m['last_message_content'] as String?;
       final lastMsgAtStr = m['last_message_at'] as String?;
       final lastMessageAt =
@@ -73,15 +74,20 @@ class SupabaseChatRepository implements ChatRepository {
     final userId = _userId;
     if (userId == null) return;
 
-    await _client.from('chat_channel_members').update(
-      {'last_read_at': DateTime.now().toIso8601String()},
-    ).eq('channel_id', channelId).eq('user_id', userId);
+    await _client
+        .from('chat_channel_members')
+        .update(
+          {'last_read_at': DateTime.now().toIso8601String()},
+        )
+        .eq('channel_id', channelId)
+        .eq('user_id', userId);
   }
 
   // ── Messages ──────────────────────────────────────────────────────────────
 
   @override
-  Stream<List<ChatMessage>> watchMessages(String channelId, {int pageSize = 30}) {
+  Stream<List<ChatMessage>> watchMessages(String channelId,
+      {int pageSize = 30}) {
     return _client
         .from('chat_messages')
         .stream(primaryKey: ['id'])
@@ -157,11 +163,12 @@ class SupabaseChatRepository implements ChatRepository {
 
     final ch = _presenceChannels.putIfAbsent(
       channelId,
-      () => _client
-          .channel('typing:$channelId', opts: const RealtimeChannelConfig(ack: false))
+      () => _client.channel('typing:$channelId',
+          opts: const RealtimeChannelConfig(ack: false))
         ..subscribe(),
     );
-    await ch.track({'user_id': userId, 'ts': DateTime.now().millisecondsSinceEpoch});
+    await ch.track(
+        {'user_id': userId, 'ts': DateTime.now().millisecondsSinceEpoch});
   }
 
   @override
@@ -172,22 +179,23 @@ class SupabaseChatRepository implements ChatRepository {
 
     late final RealtimeChannel ch;
     ch = _client
-        .channel('presence:typing:$channelId', opts: const RealtimeChannelConfig(ack: false))
+        .channel('presence:typing:$channelId',
+            opts: const RealtimeChannelConfig(ack: false))
         .onPresenceSync((payload) {
-          final state = ch.presenceState();
-          final now = DateTime.now().millisecondsSinceEpoch;
-          final active = state
-              .expand((s) => s.presences)
-              .where((p) {
-                final ts = p.payload['ts'] as int?;
-                return ts != null && (now - ts) < cutoffMs.inMilliseconds;
-              })
-              .map((p) => p.payload['user_id'] as String?)
-              .whereType<String>()
-              .where((id) => id != userId)
-              .toSet();
-          controller.add(active);
-        })
+      final state = ch.presenceState();
+      final now = DateTime.now().millisecondsSinceEpoch;
+      final active = state
+          .expand((s) => s.presences)
+          .where((p) {
+            final ts = p.payload['ts'] as int?;
+            return ts != null && (now - ts) < cutoffMs.inMilliseconds;
+          })
+          .map((p) => p.payload['user_id'] as String?)
+          .whereType<String>()
+          .where((id) => id != userId)
+          .toSet();
+      controller.add(active);
+    })
       ..subscribe();
 
     controller.onCancel = () => ch.unsubscribe();

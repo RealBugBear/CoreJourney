@@ -46,7 +46,7 @@ enum AppLogLevel {
 }
 
 /// Structured logging service
-/// 
+///
 /// Provides environment-aware logging with:
 /// - Log level filtering based on AppConfig
 /// - Structured data support
@@ -174,9 +174,7 @@ class LoggerService {
   String _formatMessage(String message, Map<String, dynamic>? data) {
     if (data == null || data.isEmpty) return message;
 
-    final dataStr = data.entries
-        .map((e) => '${e.key}=${e.value}')
-        .join(', ');
+    final dataStr = data.entries.map((e) => '${e.key}=${e.value}').join(', ');
     return '$message | $dataStr';
   }
 
@@ -221,23 +219,33 @@ class ScopedLogger {
 
   ScopedLogger(this._logger, this._tag);
 
-  void debug(String message, {Map<String, dynamic>? data, Object? error, StackTrace? stackTrace}) {
-    _logger.debug('[$_tag] $message', data: data, error: error, stackTrace: stackTrace);
+  void debug(String message,
+      {Map<String, dynamic>? data, Object? error, StackTrace? stackTrace}) {
+    _logger.debug('[$_tag] $message',
+        data: data, error: error, stackTrace: stackTrace);
   }
 
-  void info(String message, {Map<String, dynamic>? data, Object? error, StackTrace? stackTrace}) {
-    _logger.info('[$_tag] $message', data: data, error: error, stackTrace: stackTrace);
+  void info(String message,
+      {Map<String, dynamic>? data, Object? error, StackTrace? stackTrace}) {
+    _logger.info('[$_tag] $message',
+        data: data, error: error, stackTrace: stackTrace);
   }
 
-  void warning(String message, {Map<String, dynamic>? data, Object? error, StackTrace? stackTrace}) {
-    _logger.warning('[$_tag] $message', data: data, error: error, stackTrace: stackTrace);
+  void warning(String message,
+      {Map<String, dynamic>? data, Object? error, StackTrace? stackTrace}) {
+    _logger.warning('[$_tag] $message',
+        data: data, error: error, stackTrace: stackTrace);
   }
 
-  void error(String message, {Map<String, dynamic>? data, Object? error, StackTrace? stackTrace}) {
-    _logger.error('[$_tag] $message', data: data, error: error, stackTrace: stackTrace);
+  void error(String message,
+      {Map<String, dynamic>? data, Object? error, StackTrace? stackTrace}) {
+    _logger.error('[$_tag] $message',
+        data: data, error: error, stackTrace: stackTrace);
   }
 
-  void fatal(String message, {Map<String, dynamic>? data, Object? error, StackTrace? stackTrace}) {
-    _logger.fatal('[$_tag] $message', data: data, error: error, stackTrace: stackTrace);
+  void fatal(String message,
+      {Map<String, dynamic>? data, Object? error, StackTrace? stackTrace}) {
+    _logger.fatal('[$_tag] $message',
+        data: data, error: error, stackTrace: stackTrace);
   }
 }

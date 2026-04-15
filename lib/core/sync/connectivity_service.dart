@@ -3,8 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 final connectivityProvider = StreamProvider<bool>((ref) {
   return Connectivity().onConnectivityChanged.map(
-    (results) => results.any((r) => r != ConnectivityResult.none),
-  );
+        (results) => results.any((r) => r != ConnectivityResult.none),
+      );
 });
 
 class ConnectivityService {

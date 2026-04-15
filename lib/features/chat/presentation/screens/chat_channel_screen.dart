@@ -64,12 +64,13 @@ class _ChatChannelScreenState extends ConsumerState<ChatChannelScreen> {
   }
 
   Future<void> _loadMoreOlder() async {
-    final messages = ref.read(chatMessagesProvider(widget.channelId)).valueOrNull;
+    final messages =
+        ref.read(chatMessagesProvider(widget.channelId)).valueOrNull;
     final allMessages = [..._olderMessages, ...(messages ?? [])];
     if (allMessages.isEmpty) return;
 
-    final oldest = allMessages.reduce((a, b) =>
-        a.createdAt.isBefore(b.createdAt) ? a : b);
+    final oldest =
+        allMessages.reduce((a, b) => a.createdAt.isBefore(b.createdAt) ? a : b);
 
     setState(() => _loadingOlder = true);
     try {
@@ -99,7 +100,8 @@ class _ChatChannelScreenState extends ConsumerState<ChatChannelScreen> {
   }
 
   Future<void> _startCall() async {
-    final call = await ref.read(startCallProvider.notifier).start(widget.channelId);
+    final call =
+        await ref.read(startCallProvider.notifier).start(widget.channelId);
     if (call == null) return;
     final token = await ref
         .read(videoRepositoryProvider)
@@ -150,7 +152,8 @@ class _ChatChannelScreenState extends ConsumerState<ChatChannelScreen> {
   }
 
   Future<void> _proposeAppointment(BuildContext context, WidgetRef ref) async {
-    final clientId = await ref.read(chatPartnerIdProvider(widget.channelId).future);
+    final clientId =
+        await ref.read(chatPartnerIdProvider(widget.channelId).future);
     if (clientId == null || !mounted) return;
     context.push(
       Routes.appointmentScheduler.replaceFirst(':clientId', clientId),
@@ -232,8 +235,7 @@ class _ChatChannelScreenState extends ConsumerState<ChatChannelScreen> {
     ref.listen(activeCallProvider(widget.channelId), (prev, next) {
       final call = next.valueOrNull;
       if (call == null) return;
-      final currentUserId =
-          Supabase.instance.client.auth.currentUser?.id ?? '';
+      final currentUserId = Supabase.instance.client.auth.currentUser?.id ?? '';
       // Don't show incoming call dialog to the person who started it.
       if (call.startedBy == currentUserId) return;
       // Only show if this is a new call (prev had no active call for this id).
@@ -244,7 +246,10 @@ class _ChatChannelScreenState extends ConsumerState<ChatChannelScreen> {
     return Scaffold(
       appBar: AppBar(
         title: channel?.type == ChannelType.direct
-            ? Text(ref.watch(chatPartnerNameProvider(widget.channelId)).valueOrNull ?? 'Chat')
+            ? Text(ref
+                    .watch(chatPartnerNameProvider(widget.channelId))
+                    .valueOrNull ??
+                'Chat')
             : Text(channel?.channelDisplayName() ?? 'Chat'),
         actions: [
           // Trainer: start call + propose appointment
@@ -263,14 +268,19 @@ class _ChatChannelScreenState extends ConsumerState<ChatChannelScreen> {
           // Practitioner (client): request video call (premium gate)
           if (isPractitioner)
             Consumer(builder: (context, ref, _) {
-              final tier = ref.watch(subscriptionTierProvider).valueOrNull ?? 'free';
+              final tier =
+                  ref.watch(subscriptionTierProvider).valueOrNull ?? 'free';
               final isPremium = tier == 'premium';
               return IconButton(
                 icon: Icon(
-                  isPremium ? Icons.videocam_outlined : Icons.videocam_off_outlined,
+                  isPremium
+                      ? Icons.videocam_outlined
+                      : Icons.videocam_off_outlined,
                 ),
                 tooltip: isPremium ? 'Video-Call anfragen' : 'Premium-Feature',
-                onPressed: isPremium ? _sendCallRequest : () => _showPremiumSheet(context),
+                onPressed: isPremium
+                    ? _sendCallRequest
+                    : () => _showPremiumSheet(context),
               );
             }),
         ],
@@ -320,15 +330,13 @@ class _ChatChannelScreenState extends ConsumerState<ChatChannelScreen> {
                                         strokeWidth: 2))),
                           );
                         }
-                        final msgIndex =
-                            _loadingOlder ? index - 1 : index;
+                        final msgIndex = _loadingOlder ? index - 1 : index;
                         final msg = allMessages[msgIndex];
                         return MessageBubble(
                           message: msg,
                           isModerator: isModerator,
                           onDeleteRequested: (isModerator ||
-                                  msg.isOwnMessage(
-                                      _currentUserId()))
+                                  msg.isOwnMessage(_currentUserId()))
                               ? () => _confirmDelete(msg)
                               : null,
                           onAcceptCall: isModerator ? _startCall : null,
@@ -373,8 +381,8 @@ class _ChatChannelScreenState extends ConsumerState<ChatChannelScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Nachricht entfernen?'),
-        content: const Text(
-            'Die Nachricht wird für alle als entfernt angezeigt.'),
+        content:
+            const Text('Die Nachricht wird für alle als entfernt angezeigt.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
@@ -383,9 +391,7 @@ class _ChatChannelScreenState extends ConsumerState<ChatChannelScreen> {
           TextButton(
             onPressed: () {
               Navigator.pop(ctx);
-              ref
-                  .read(deleteMessageProvider.notifier)
-                  .delete(message.id);
+              ref.read(deleteMessageProvider.notifier).delete(message.id);
             },
             style: TextButton.styleFrom(foregroundColor: Colors.red),
             child: const Text('Entfernen'),

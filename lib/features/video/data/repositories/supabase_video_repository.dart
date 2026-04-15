@@ -18,11 +18,15 @@ class SupabaseVideoRepository implements VideoRepository {
     final agoraChannelName = 'cj_${shortId}_${now.millisecondsSinceEpoch}';
     final userId = _client.auth.currentUser!.id;
 
-    final data = await _client.from('video_calls').insert({
-      'channel_id': channelId,
-      'agora_channel_name': agoraChannelName,
-      'started_by': userId,
-    }).select().single();
+    final data = await _client
+        .from('video_calls')
+        .insert({
+          'channel_id': channelId,
+          'agora_channel_name': agoraChannelName,
+          'started_by': userId,
+        })
+        .select()
+        .single();
 
     return VideoCall.fromJson(data);
   }
@@ -31,8 +35,8 @@ class SupabaseVideoRepository implements VideoRepository {
   Future<void> endCall(String callId) async {
     await _client
         .from('video_calls')
-        .update({'ended_at': DateTime.now().toUtc().toIso8601String()})
-        .eq('id', callId);
+        .update({'ended_at': DateTime.now().toUtc().toIso8601String()}).eq(
+            'id', callId);
   }
 
   @override

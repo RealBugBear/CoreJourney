@@ -40,10 +40,7 @@ class Appointment {
   factory Appointment.fromJson(Map<String, dynamic> json) {
     final rawSlots = json['proposed_slots'];
     final proposedSlots = rawSlots is List
-        ? rawSlots
-            .whereType<String>()
-            .map(DateTime.parse)
-            .toList()
+        ? rawSlots.whereType<String>().map(DateTime.parse).toList()
         : <DateTime>[];
 
     final scheduledRaw = json['scheduled_for'] as String?;
@@ -54,8 +51,7 @@ class Appointment {
       traineeId: json['trainee_id'] as String,
       traineeName: json['trainee_name'] as String? ?? 'Trainee',
       title: json['title'] as String? ?? 'Isometrische Partnerübung',
-      scheduledFor:
-          scheduledRaw != null ? DateTime.parse(scheduledRaw) : null,
+      scheduledFor: scheduledRaw != null ? DateTime.parse(scheduledRaw) : null,
       proposedSlots: proposedSlots,
       durationMinutes: (json['duration_minutes'] as num?)?.toInt() ?? 60,
       location: json['location'] as String?,

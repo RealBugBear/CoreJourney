@@ -20,9 +20,7 @@ class TrainerCode {
 
   bool get isUsed => usedAt != null;
   bool get isExpired =>
-      !isUsed &&
-      expiresAt != null &&
-      expiresAt!.isBefore(DateTime.now());
+      !isUsed && expiresAt != null && expiresAt!.isBefore(DateTime.now());
   bool get isActive => !isUsed && !isExpired;
 
   factory TrainerCode.fromJson(Map<String, dynamic> json) => TrainerCode(
@@ -79,8 +77,7 @@ class AdminNotifier extends AsyncNotifier<List<TrainerCode>> {
   }
 }
 
-final adminProvider =
-    AsyncNotifierProvider<AdminNotifier, List<TrainerCode>>(
+final adminProvider = AsyncNotifierProvider<AdminNotifier, List<TrainerCode>>(
   AdminNotifier.new,
 );
 

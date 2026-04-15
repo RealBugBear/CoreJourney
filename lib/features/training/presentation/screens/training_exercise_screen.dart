@@ -553,7 +553,8 @@ class _TrainingExerciseScreenState
                         ? 'Übung abschließen'
                         : 'Weiter zur nächsten Übung',
                     child: FilledButton(
-                      onPressed: _isCompleting ? null : _completeAndPersistTempo,
+                      onPressed:
+                          _isCompleting ? null : _completeAndPersistTempo,
                       style: FilledButton.styleFrom(
                         backgroundColor: theme.colorScheme.primary,
                         foregroundColor: theme.colorScheme.onPrimary,

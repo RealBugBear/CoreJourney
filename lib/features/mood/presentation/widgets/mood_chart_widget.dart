@@ -72,8 +72,7 @@ class _MoodChartWidgetState extends ConsumerState<MoodChartWidget> {
     final l10n = AppLocalizations.of(context);
     final aggregatesAsync = ref.watch(moodDailyAggregatesProvider(_rangeDays));
     final notesAsync = ref.watch(moodNotesProvider(_rangeDays));
-    final enrollmentId =
-        ref.watch(activeEnrollmentProvider).valueOrNull?.id;
+    final enrollmentId = ref.watch(activeEnrollmentProvider).valueOrNull?.id;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

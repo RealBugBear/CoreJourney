@@ -8,7 +8,6 @@ import '../../../../core/settings/settings_provider.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../l10n/app_localizations.dart';
 
-
 // ── Screen ────────────────────────────────────────────────────────────────────
 
 class ConsentScreen extends ConsumerStatefulWidget {
@@ -217,8 +216,7 @@ class _SafetyTab extends StatelessWidget {
         _ConsentPoint(
           icon: Icons.self_improvement_outlined,
           title: 'Deine Verantwortung',
-          body:
-              'Nur du kennst deinen Körper und deine Grenzen. '
+          body: 'Nur du kennst deinen Körper und deine Grenzen. '
               'Mache Pausen wenn nötig und suche professionelle Hilfe bei Überforderung.',
         ),
       ],
@@ -268,15 +266,13 @@ class _SafetyTab extends StatelessWidget {
         _ConsentPoint(
           icon: Icons.bedtime_outlined,
           title: 'Sleep changes are possible',
-          body:
-              'Temporary sleep disturbances may occur, '
+          body: 'Temporary sleep disturbances may occur, '
               'especially during more intensive phases.',
         ),
         _ConsentPoint(
           icon: Icons.self_improvement_outlined,
           title: 'Your responsibility',
-          body:
-              'Only you know your limits. Take breaks when needed and seek '
+          body: 'Only you know your limits. Take breaks when needed and seek '
               'professional help if overwhelmed.',
         ),
       ],
@@ -320,8 +316,7 @@ class _TermsTab extends StatelessWidget {
         _ConsentPoint(
           icon: Icons.person_outlined,
           title: '§ 2 Nutzerberechtigung',
-          body:
-              'Die App richtet sich an Erwachsene ab 18 Jahren. '
+          body: 'Die App richtet sich an Erwachsene ab 18 Jahren. '
               'Du bestätigst, dass du das 18. Lebensjahr vollendet hast. '
               'Die Nutzung durch Minderjährige ist nur mit ausdrücklicher Einwilligung '
               'eines Erziehungsberechtigten gestattet.',
@@ -361,8 +356,7 @@ class _TermsTab extends StatelessWidget {
         _ConsentPoint(
           icon: Icons.flag_outlined,
           title: '§ 7 Anwendbares Recht',
-          body:
-              'Es gilt das Recht der Bundesrepublik Deutschland. '
+          body: 'Es gilt das Recht der Bundesrepublik Deutschland. '
               'Gerichtsstand ist, soweit gesetzlich zulässig, der Sitz des Anbieters.',
         ),
       ],
@@ -391,8 +385,7 @@ class _TermsTab extends StatelessWidget {
         _ConsentPoint(
           icon: Icons.person_outlined,
           title: '§ 2 Eligibility',
-          body:
-              'The app is intended for adults aged 18 and over. '
+          body: 'The app is intended for adults aged 18 and over. '
               'You confirm that you are at least 18 years old. '
               'Use by minors is only permitted with the express consent of a parent or guardian.',
         ),
@@ -430,8 +423,7 @@ class _TermsTab extends StatelessWidget {
         _ConsentPoint(
           icon: Icons.flag_outlined,
           title: '§ 7 Governing Law',
-          body:
-              'The law of the Federal Republic of Germany applies. '
+          body: 'The law of the Federal Republic of Germany applies. '
               'The place of jurisdiction is, to the extent permitted by law, the Provider\'s place of business.',
         ),
       ],
@@ -466,8 +458,7 @@ class _PrivacyTab extends StatelessWidget {
         _ConsentPoint(
           icon: Icons.person_pin_outlined,
           title: 'Verantwortlicher',
-          body:
-              'Verantwortlicher im Sinne der DSGVO: Alexander Messinger. '
+          body: 'Verantwortlicher im Sinne der DSGVO: Alexander Messinger. '
               'Kontakt für Datenschutzanfragen: über die in der App hinterlegten Kontaktdaten.',
         ),
         _ConsentPoint(
@@ -553,8 +544,7 @@ class _PrivacyTab extends StatelessWidget {
         _ConsentPoint(
           icon: Icons.storage_outlined,
           title: 'Data Collected',
-          body:
-              'We collect: email address and password (for registration), '
+          body: 'We collect: email address and password (for registration), '
               'progress data (training sessions, intake assessment), '
               'mood data (mood check-ins, journal entries), and '
               'device information (OS, app version).',
@@ -562,8 +552,7 @@ class _PrivacyTab extends StatelessWidget {
         _ConsentPoint(
           icon: Icons.task_alt_outlined,
           title: 'Purpose of Processing',
-          body:
-              'Data is used for: providing and improving app features, '
+          body: 'Data is used for: providing and improving app features, '
               'storing and syncing your training progress, '
               'anonymised product analytics, and '
               'communication during the test phase.',

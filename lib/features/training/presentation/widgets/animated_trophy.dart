@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 /// Animated trophy widget with celebration effects
-/// 
+///
 /// Displays an animated trophy icon with scale bounce and glow effects
 class AnimatedTrophy extends StatefulWidget {
   final double size;
@@ -26,7 +26,7 @@ class _AnimatedTrophyState extends State<AnimatedTrophy>
   @override
   void initState() {
     super.initState();
-    
+
     _controller = AnimationController(
       duration: const Duration(milliseconds: 1200),
       vsync: this,

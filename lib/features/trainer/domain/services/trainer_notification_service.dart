@@ -33,7 +33,8 @@ class TrainerNotificationService {
         await _notify(
           traineeId: traineeId,
           title: 'Termin vorbereiten — ${relation.traineeName}',
-          body: '${relation.traineeName} ist bei Tag 25. In ~3 Tagen ist die Isometrische Partnerübung fällig.',
+          body:
+              '${relation.traineeName} ist bei Tag 25. In ~3 Tagen ist die Isometrische Partnerübung fällig.',
           trigger: 'early_warning',
         );
       } else {
@@ -59,7 +60,8 @@ class TrainerNotificationService {
 
       final rows = await _client
           .from('trainer_client_relationships')
-          .select('trainer_id, client_id, profiles!client_id(display_name, email)')
+          .select(
+              'trainer_id, client_id, profiles!client_id(display_name, email)')
           .eq('client_id', traineeId)
           .eq('trainer_id', currentUserId)
           .eq('status', 'active')
@@ -101,8 +103,7 @@ class TrainerNotificationService {
   }
 
   /// Deterministic ID in range 500–899.
-  int _notificationId(String traineeId) =>
-      500 + traineeId.hashCode.abs() % 400;
+  int _notificationId(String traineeId) => 500 + traineeId.hashCode.abs() % 400;
 }
 
 class _TrainerRelation {

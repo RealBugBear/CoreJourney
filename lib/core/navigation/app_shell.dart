@@ -50,16 +50,12 @@ class AppShell extends ConsumerWidget {
           NavigationDestination(
             icon: Badge(
               isLabelVisible: unread > 0,
-              label: unread > 99
-                  ? const Text('99+')
-                  : Text('$unread'),
+              label: unread > 99 ? const Text('99+') : Text('$unread'),
               child: const Icon(Icons.chat_bubble_outline),
             ),
             selectedIcon: Badge(
               isLabelVisible: unread > 0,
-              label: unread > 99
-                  ? const Text('99+')
-                  : Text('$unread'),
+              label: unread > 99 ? const Text('99+') : Text('$unread'),
               child: const Icon(Icons.chat_bubble),
             ),
             label: 'Nachrichten',

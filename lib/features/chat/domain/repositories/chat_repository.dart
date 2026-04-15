@@ -13,7 +13,8 @@ abstract class ChatRepository {
   // ── Messages ──────────────────────────────────────────────────────────────
 
   /// Real-time stream of the most recent [pageSize] messages.
-  Stream<List<ChatMessage>> watchMessages(String channelId, {int pageSize = 30});
+  Stream<List<ChatMessage>> watchMessages(String channelId,
+      {int pageSize = 30});
 
   /// Load messages older than [before] for infinite scroll.
   Future<List<ChatMessage>> fetchOlderMessages(

@@ -1,18 +1,18 @@
 import 'package:flutter/material.dart';
 
 /// Theme Extensions für semantische Farben
-/// 
+///
 /// Diese Extension fügt dem ThemeData semantische Farben hinzu,
 /// die im gesamten Code wiederverwendet werden können.
 class AppSemanticColors extends ThemeExtension<AppSemanticColors> {
   final Color success;
   final Color successContainer;
   final Color onSuccess;
-  
+
   final Color warning;
   final Color warningContainer;
   final Color onWarning;
-  
+
   final Color info;
   final Color infoContainer;
   final Color onInfo;
@@ -65,10 +65,12 @@ class AppSemanticColors extends ThemeExtension<AppSemanticColors> {
 
     return AppSemanticColors(
       success: Color.lerp(success, other.success, t)!,
-      successContainer: Color.lerp(successContainer, other.successContainer, t)!,
+      successContainer:
+          Color.lerp(successContainer, other.successContainer, t)!,
       onSuccess: Color.lerp(onSuccess, other.onSuccess, t)!,
       warning: Color.lerp(warning, other.warning, t)!,
-      warningContainer: Color.lerp(warningContainer, other.warningContainer, t)!,
+      warningContainer:
+          Color.lerp(warningContainer, other.warningContainer, t)!,
       onWarning: Color.lerp(onWarning, other.onWarning, t)!,
       info: Color.lerp(info, other.info, t)!,
       infoContainer: Color.lerp(infoContainer, other.infoContainer, t)!,

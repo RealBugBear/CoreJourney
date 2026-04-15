@@ -33,7 +33,8 @@ class Bootstrap {
   static void _dbg(String msg) {
     dev.log('[bootstrap] $msg', name: 'cj');
     try {
-      _debugFile?.writeAsStringSync('$msg\n', mode: FileMode.append, flush: true);
+      _debugFile?.writeAsStringSync('$msg\n',
+          mode: FileMode.append, flush: true);
     } catch (_) {}
   }
 
@@ -118,7 +119,8 @@ class Bootstrap {
       prefs = await SharedPreferences.getInstance();
       _dbg('SharedPreferences: real instance obtained');
     } catch (e) {
-      _dbg('SharedPreferences: channel error ($e) — falling back to in-memory stub');
+      _dbg(
+          'SharedPreferences: channel error ($e) — falling back to in-memory stub');
       appLogger.w('SharedPreferences: using in-memory stub ($e)');
       // ignore: invalid_use_of_visible_for_testing_member
       SharedPreferences.setMockInitialValues({});

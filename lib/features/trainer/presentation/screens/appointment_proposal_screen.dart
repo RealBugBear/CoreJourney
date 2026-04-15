@@ -162,19 +162,23 @@ class _ProposalCardState extends State<_ProposalCard> {
                 CircleAvatar(
                   backgroundColor: AppColors.primary.withValues(alpha: 0.12),
                   radius: 18,
-                  child: Icon(Icons.person_outline, color: AppColors.primary, size: 20),
+                  child: Icon(Icons.person_outline,
+                      color: AppColors.primary, size: 20),
                 ),
                 const SizedBox(width: 10),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      proposal.traineeName, // trainer name here (fromJson sets it)
-                      style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
+                      proposal
+                          .traineeName, // trainer name here (fromJson sets it)
+                      style: const TextStyle(
+                          fontWeight: FontWeight.w700, fontSize: 15),
                     ),
                     Text(
                       proposal.title,
-                      style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
+                      style: TextStyle(
+                          color: AppColors.textSecondary, fontSize: 12),
                     ),
                   ],
                 ),
@@ -194,7 +198,8 @@ class _ProposalCardState extends State<_ProposalCard> {
             // Slot options
             ...proposal.proposedSlots.map((slot) {
               final isSelected = _chosen == slot;
-              final label = DateFormat('EEE, d. MMM · HH:mm', 'de_DE').format(slot);
+              final label =
+                  DateFormat('EEE, d. MMM · HH:mm', 'de_DE').format(slot);
               return GestureDetector(
                 onTap: () => setState(() => _chosen = slot),
                 child: Container(
@@ -207,9 +212,7 @@ class _ProposalCardState extends State<_ProposalCard> {
                         : Theme.of(context).colorScheme.surfaceContainerHighest,
                     borderRadius: BorderRadius.circular(10),
                     border: Border.all(
-                      color: isSelected
-                          ? AppColors.primary
-                          : AppColors.divider,
+                      color: isSelected ? AppColors.primary : AppColors.divider,
                       width: isSelected ? 1.5 : 1,
                     ),
                   ),
@@ -227,7 +230,8 @@ class _ProposalCardState extends State<_ProposalCard> {
                         label,
                         style: TextStyle(
                           fontWeight: FontWeight.w600,
-                          color: isSelected ? Colors.white : AppColors.textPrimary,
+                          color:
+                              isSelected ? Colors.white : AppColors.textPrimary,
                         ),
                       ),
                     ],
@@ -247,13 +251,14 @@ class _ProposalCardState extends State<_ProposalCard> {
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10)),
                 ),
-                onPressed: _chosen == null || _confirming
-                    ? null
-                    : () => _confirm(ref),
+                onPressed:
+                    _chosen == null || _confirming ? null : () => _confirm(ref),
                 child: _confirming
                     ? const SizedBox(
-                        width: 18, height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                            strokeWidth: 2, color: Colors.white))
                     : const Text('Termin bestätigen',
                         style: TextStyle(fontWeight: FontWeight.w600)),
               ),

@@ -13,7 +13,8 @@ final chatRepositoryProvider = Provider<ChatRepository>((ref) {
 
 // ── Channels ──────────────────────────────────────────────────────────────────
 
-final chatChannelsProvider = FutureProvider.autoDispose<List<ChatChannel>>((ref) {
+final chatChannelsProvider =
+    FutureProvider.autoDispose<List<ChatChannel>>((ref) {
   return ref.read(chatRepositoryProvider).getChannels();
 });
 
@@ -21,9 +22,9 @@ final chatChannelsProvider = FutureProvider.autoDispose<List<ChatChannel>>((ref)
 
 final totalUnreadCountProvider = Provider.autoDispose<int>((ref) {
   return ref.watch(chatChannelsProvider).maybeWhen(
-    data: (channels) => channels.fold(0, (sum, c) => sum + c.unreadCount),
-    orElse: () => 0,
-  );
+        data: (channels) => channels.fold(0, (sum, c) => sum + c.unreadCount),
+        orElse: () => 0,
+      );
 });
 
 // ── Messages stream ───────────────────────────────────────────────────────────
@@ -35,8 +36,8 @@ final chatMessagesProvider = StreamProvider.autoDispose
 
 // ── Typing users stream ───────────────────────────────────────────────────────
 
-final typingUsersProvider = StreamProvider.autoDispose
-    .family<Set<String>, String>((ref, channelId) {
+final typingUsersProvider =
+    StreamProvider.autoDispose.family<Set<String>, String>((ref, channelId) {
   return ref.read(chatRepositoryProvider).watchTypingUsers(channelId);
 });
 

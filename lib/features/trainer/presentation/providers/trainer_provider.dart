@@ -41,7 +41,8 @@ class TrainerClientsNotifier extends AsyncNotifier<List<TrainerClient>> {
   }
 
   Future<String> generateInviteCode() async {
-    final code = await Supabase.instance.client.rpc('create_invite_code') as String;
+    final code =
+        await Supabase.instance.client.rpc('create_invite_code') as String;
     await refresh();
     return code;
   }
@@ -49,8 +50,7 @@ class TrainerClientsNotifier extends AsyncNotifier<List<TrainerClient>> {
   Future<void> saveNotes(String relationshipId, String notes) async {
     await Supabase.instance.client
         .from('trainer_client_relationships')
-        .update({'trainer_notes': notes})
-        .eq('id', relationshipId);
+        .update({'trainer_notes': notes}).eq('id', relationshipId);
     await refresh();
   }
 }
@@ -149,7 +149,8 @@ Future<void> confirmProposedSlot(String appointmentId, DateTime chosen) async {
 /// only in Supabase project secrets.
 /// Returns null on success, or a localised error message on failure.
 Future<String?> activateTrainerRole(String enteredCode) async {
-  if (Supabase.instance.client.auth.currentUser == null) return 'Nicht eingeloggt.';
+  if (Supabase.instance.client.auth.currentUser == null)
+    return 'Nicht eingeloggt.';
 
   try {
     final session = Supabase.instance.client.auth.currentSession;
@@ -157,8 +158,7 @@ Future<String?> activateTrainerRole(String enteredCode) async {
       'activate-trainer',
       body: {'code': enteredCode.trim()},
       headers: {
-        if (session != null)
-          'Authorization': 'Bearer ${session.accessToken}',
+        if (session != null) 'Authorization': 'Bearer ${session.accessToken}',
       },
     );
     final data = response.data as Map<String, dynamic>?;

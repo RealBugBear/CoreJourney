@@ -8,6 +8,7 @@ import 'package:corejourney/core/feature_flags/feature_flag_service.dart';
 import 'package:corejourney/core/feature_flags/feature_flags.dart';
 
 class MockFirebaseRemoteConfig extends Mock implements FirebaseRemoteConfig {}
+
 class MockSharedPreferences extends Mock implements SharedPreferences {}
 
 void main() {
@@ -21,7 +22,7 @@ void main() {
       mockRemoteConfig = MockFirebaseRemoteConfig();
       mockPrefs = MockSharedPreferences();
       config = AppConfig.development;
-      
+
       service = FeatureFlagService(
         remoteConfig: mockRemoteConfig,
         prefs: mockPrefs,
@@ -152,8 +153,7 @@ void main() {
         // Assert
         verify(() => mockPrefs.remove('ff_override_new_training_flow'))
             .called(1);
-        verify(() => mockPrefs.remove('ff_override_social_sharing'))
-            .called(1);
+        verify(() => mockPrefs.remove('ff_override_social_sharing')).called(1);
         verifyNever(() => mockPrefs.remove('other_key'));
       });
     });
@@ -199,7 +199,7 @@ void main() {
         // Assert
         expect(result, isA<Map<String, dynamic>>());
         expect(result.length, FeatureFlag.values.length);
-        
+
         final newTrainingFlowData = result['new_training_flow'];
         expect(newTrainingFlowData['enabled'], true);
         expect(newTrainingFlowData['hasOverride'], false);

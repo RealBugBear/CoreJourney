@@ -4,7 +4,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/theme_provider.dart';
 
 /// Widget für Theme-Auswahl
-/// 
+///
 /// Zeigt die verfügbaren Theme-Modi (Hell, Dunkel, System) und
 /// ermöglicht dem Nutzer die Auswahl.
 class ThemeSelector extends ConsumerWidget {
@@ -87,7 +87,7 @@ class ThemeSelector extends ConsumerWidget {
             ),
       onTap: () {
         ref.read(themeProvider.notifier).setThemeMode(mode);
-        
+
         // Optional: Feedback für den Nutzer
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

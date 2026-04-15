@@ -25,7 +25,8 @@ class _StubChatRepository implements ChatRepository {
   Future<void> markChannelRead(String channelId) async {}
 
   @override
-  Stream<List<ChatMessage>> watchMessages(String channelId, {int pageSize = 30}) {
+  Stream<List<ChatMessage>> watchMessages(String channelId,
+      {int pageSize = 30}) {
     return const Stream.empty();
   }
 

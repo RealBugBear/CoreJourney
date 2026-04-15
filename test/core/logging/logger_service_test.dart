@@ -106,7 +106,7 @@ void main() {
 
       test('creates scoped logger with tag', () {
         final scopedLogger = logger.scope('TestScope');
-        
+
         expect(
           () => scopedLogger.info('Test message'),
           returnsNormally,
@@ -115,7 +115,7 @@ void main() {
 
       test('scoped logger includes tag in messages', () {
         final scopedLogger = logger.scope('Authentication');
-        
+
         expect(
           () => scopedLogger.debug('Login attempted', data: {
             'userId': '123',

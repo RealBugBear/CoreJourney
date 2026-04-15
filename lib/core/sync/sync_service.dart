@@ -151,8 +151,7 @@ class SyncService {
           await client.from(job.tableName_).delete().eq('id', job.recordId);
         }
 
-        await (_db.delete(_db.syncJobsTable)
-              ..where((t) => t.id.equals(job.id)))
+        await (_db.delete(_db.syncJobsTable)..where((t) => t.id.equals(job.id)))
             .go();
 
         appLogger.d('Synced ${job.tableName_}:${job.recordId}');
@@ -162,8 +161,7 @@ class SyncService {
         return;
       } catch (e, st) {
         appLogger.e('Sync error for job ${job.id}', error: e, stackTrace: st);
-        await (_db.update(_db.syncJobsTable)
-              ..where((t) => t.id.equals(job.id)))
+        await (_db.update(_db.syncJobsTable)..where((t) => t.id.equals(job.id)))
             .write(SyncJobsTableCompanion(
           retryCount: Value(job.retryCount + 1),
           lastAttemptAt: Value(DateTime.now()),
@@ -223,8 +221,7 @@ class SyncService {
                 assignedDurationWeeks:
                     row['assigned_duration_weeks'] as int? ?? 8,
                 startDate: _parseDate(row['start_date']),
-                targetCompletionDate:
-                    _parseDate(row['target_completion_date']),
+                targetCompletionDate: _parseDate(row['target_completion_date']),
                 completedAt: Value(
                   row['completed_at'] != null
                       ? DateTime.parse(row['completed_at'] as String)
@@ -275,12 +272,10 @@ class SyncService {
                       ? DateTime.parse(row['last_activity_date'] as String)
                       : null,
                 ),
-                consecutiveInactiveDays: Value(
-                    row['consecutive_inactive_days'] as int? ?? 0),
-                dailyStreak:
-                    Value(row['daily_streak'] as int? ?? 0),
-                weeklyStreak:
-                    Value(row['weekly_streak'] as int? ?? 0),
+                consecutiveInactiveDays:
+                    Value(row['consecutive_inactive_days'] as int? ?? 0),
+                dailyStreak: Value(row['daily_streak'] as int? ?? 0),
+                weeklyStreak: Value(row['weekly_streak'] as int? ?? 0),
                 trainingsThisWeek:
                     Value(row['trainings_this_week'] as int? ?? 0),
                 lastTrainingWeekStart: Value(
@@ -289,10 +284,9 @@ class SyncService {
                           row['last_training_week_start'] as String)
                       : null,
                 ),
-                weeklyGoal:
-                    Value(row['weekly_goal'] as int? ?? 5),
-                totalSessionsSinceDisclaimer: Value(
-                    row['total_sessions_since_disclaimer'] as int? ?? 0),
+                weeklyGoal: Value(row['weekly_goal'] as int? ?? 5),
+                totalSessionsSinceDisclaimer:
+                    Value(row['total_sessions_since_disclaimer'] as int? ?? 0),
                 needsSync: const Value(false),
                 updatedAt: Value(
                   row['updated_at'] != null
@@ -334,8 +328,7 @@ class SyncService {
                 sessionDate: _parseDate(row['session_date']),
                 dayNumber: row['day_number'] as int,
                 completedExerciseIds: exerciseIdsStr,
-                isCompleted:
-                    Value(row['is_completed'] as bool? ?? false),
+                isCompleted: Value(row['is_completed'] as bool? ?? false),
                 completedAt: Value(
                   row['completed_at'] != null
                       ? DateTime.parse(row['completed_at'] as String)

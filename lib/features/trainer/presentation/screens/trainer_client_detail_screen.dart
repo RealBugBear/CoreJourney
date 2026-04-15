@@ -241,12 +241,11 @@ class _SessionList extends StatelessWidget {
             color: s.isCompleted ? AppColors.success : AppColors.textDisabled,
             size: 20,
           ),
-          title: Text('Day ${s.dayNumber}',
-              style: const TextStyle(fontSize: 14)),
+          title:
+              Text('Day ${s.dayNumber}', style: const TextStyle(fontSize: 14)),
           trailing: Text(
             dayStr,
-            style: TextStyle(
-                fontSize: 12, color: AppColors.textSecondary),
+            style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
           ),
         );
       }).toList(),

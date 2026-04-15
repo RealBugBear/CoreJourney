@@ -64,7 +64,8 @@ class SettingsScreen extends ConsumerWidget {
                       icon: const Icon(Icons.remove_circle_outline),
                       onPressed: settings.weeklyGoal <= 3
                           ? null
-                          : () => notifier.setWeeklyGoal(settings.weeklyGoal - 1),
+                          : () =>
+                              notifier.setWeeklyGoal(settings.weeklyGoal - 1),
                     ),
                     Text(
                       '${settings.weeklyGoal}',
@@ -77,7 +78,8 @@ class SettingsScreen extends ConsumerWidget {
                       icon: const Icon(Icons.add_circle_outline),
                       onPressed: settings.weeklyGoal >= 7
                           ? null
-                          : () => notifier.setWeeklyGoal(settings.weeklyGoal + 1),
+                          : () =>
+                              notifier.setWeeklyGoal(settings.weeklyGoal + 1),
                     ),
                   ],
                 ),
@@ -272,7 +274,8 @@ class _ConnectTrainerTile extends ConsumerStatefulWidget {
   const _ConnectTrainerTile();
 
   @override
-  ConsumerState<_ConnectTrainerTile> createState() => _ConnectTrainerTileState();
+  ConsumerState<_ConnectTrainerTile> createState() =>
+      _ConnectTrainerTileState();
 }
 
 class _ConnectTrainerTileState extends ConsumerState<_ConnectTrainerTile> {
@@ -307,7 +310,11 @@ class _ConnectTrainerTileState extends ConsumerState<_ConnectTrainerTile> {
               ),
               textCapitalization: TextCapitalization.characters,
               maxLength: 6,
-              buildCounter: (_, {required currentLength, required isFocused, maxLength}) => null,
+              buildCounter: (_,
+                      {required currentLength,
+                      required isFocused,
+                      maxLength}) =>
+                  null,
             ),
           ),
           const SizedBox(width: 8),

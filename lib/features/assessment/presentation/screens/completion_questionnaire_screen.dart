@@ -56,16 +56,19 @@ class _CompletionQuestionnaireScreenState
       );
 
       final currentIndex = _packageOrder.indexOf(enrollment.packageId);
-      final nextId = currentIndex >= 0 && currentIndex < _packageOrder.length - 1
-          ? _packageOrder[currentIndex + 1]
-          : null;
+      final nextId =
+          currentIndex >= 0 && currentIndex < _packageOrder.length - 1
+              ? _packageOrder[currentIndex + 1]
+              : null;
 
       setState(() {
         _nextPackageId = nextId;
         _state = _ScreenState.celebrating;
       });
     } catch (_) {
-      if (mounted) showErrorSnackBar(context, AppLocalizations.of(context).errorSaveFailed);
+      if (mounted)
+        showErrorSnackBar(
+            context, AppLocalizations.of(context).errorSaveFailed);
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -85,7 +88,9 @@ class _CompletionQuestionnaireScreenState
 
       setState(() => _state = _ScreenState.extended);
     } catch (_) {
-      if (mounted) showErrorSnackBar(context, AppLocalizations.of(context).errorSaveFailed);
+      if (mounted)
+        showErrorSnackBar(
+            context, AppLocalizations.of(context).errorSaveFailed);
     } finally {
       if (mounted) setState(() => _saving = false);
     }

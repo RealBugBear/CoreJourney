@@ -23,8 +23,7 @@ class TrainerDashboardScreen extends ConsumerStatefulWidget {
       _TrainerDashboardScreenState();
 }
 
-class _TrainerDashboardScreenState
-    extends ConsumerState<TrainerDashboardScreen>
+class _TrainerDashboardScreenState extends ConsumerState<TrainerDashboardScreen>
     with SingleTickerProviderStateMixin {
   late final TabController _tabController;
 
@@ -74,10 +73,12 @@ class _TrainerDashboardScreenState
                         color: Colors.red,
                         shape: BoxShape.circle,
                       ),
-                      constraints: const BoxConstraints(minWidth: 14, minHeight: 14),
+                      constraints:
+                          const BoxConstraints(minWidth: 14, minHeight: 14),
                       child: Text(
                         unread > 99 ? '99+' : '$unread',
-                        style: const TextStyle(color: Colors.white, fontSize: 9),
+                        style:
+                            const TextStyle(color: Colors.white, fontSize: 9),
                         textAlign: TextAlign.center,
                       ),
                     ),
@@ -137,16 +138,16 @@ class _TraineesTab extends ConsumerWidget {
             ),
           ),
           clientsAsync.when(
-            loading: () =>
-                const Center(child: Padding(
-                  padding: EdgeInsets.all(32),
-                  child: CircularProgressIndicator(),
-                )),
+            loading: () => const Center(
+                child: Padding(
+              padding: EdgeInsets.all(32),
+              child: CircularProgressIndicator(),
+            )),
             error: (e, _) => Center(
                 child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Text(e.toString()),
-                )),
+              padding: const EdgeInsets.all(16),
+              child: Text(e.toString()),
+            )),
             data: (clients) {
               if (clients.isEmpty) {
                 return Padding(
@@ -252,11 +253,15 @@ class _InviteBannerState extends State<_InviteBanner> {
                 const SizedBox(width: 8),
                 OutlinedButton.icon(
                   icon: _loading
-                      ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2))
+                      ? const SizedBox(
+                          width: 14,
+                          height: 14,
+                          child: CircularProgressIndicator(strokeWidth: 2))
                       : const Icon(Icons.refresh, size: 16),
                   label: const Text('Neu'),
                   onPressed: _loading ? null : () => _generate(context),
-                  style: OutlinedButton.styleFrom(foregroundColor: AppColors.textSecondary),
+                  style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.textSecondary),
                 ),
               ],
             ),
@@ -266,15 +271,22 @@ class _InviteBannerState extends State<_InviteBanner> {
               width: double.infinity,
               child: ElevatedButton.icon(
                 icon: _loading
-                    ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(
+                            strokeWidth: 2, color: Colors.white))
                     : const Icon(Icons.add_link, size: 18),
-                label: Text(_loading ? 'Wird erstellt…' : widget.l10n.trainerGenerateCode),
+                label: Text(_loading
+                    ? 'Wird erstellt…'
+                    : widget.l10n.trainerGenerateCode),
                 onPressed: _loading ? null : () => _generate(context),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 12),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10)),
                 ),
               ),
             ),
@@ -290,13 +302,18 @@ class _InviteBannerState extends State<_InviteBanner> {
       final code = await widget.ref
           .read(trainerClientsProvider.notifier)
           .generateInviteCode();
-      setState(() { _code = code; _loading = false; });
+      setState(() {
+        _code = code;
+        _loading = false;
+      });
       if (context.mounted) _copyCode(context);
     } catch (e) {
       setState(() => _loading = false);
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.toString()), duration: const Duration(seconds: 8)),
+          SnackBar(
+              content: Text(e.toString()),
+              duration: const Duration(seconds: 8)),
         );
       }
     }
@@ -327,8 +344,7 @@ class _ClientCard extends StatelessWidget {
         a.traineeId == client.clientId &&
         (a.scheduledFor?.isAfter(DateTime.now()) ?? false) &&
         a.status != 'cancelled');
-    return !hasUpcoming &&
-        (client.currentDay >= 25 || client.currentDay >= 28);
+    return !hasUpcoming && (client.currentDay >= 25 || client.currentDay >= 28);
   }
 
   bool get _isNearCompletion => client.currentDay == 25;
@@ -345,7 +361,9 @@ class _ClientCard extends StatelessWidget {
     if (_isComplete) {
       badgeColor = AppColors.success;
       badgeLabel = 'Tag 28 ✓';
-      buttonLabel = _needsAppointment ? l10n.trainerAppointmentMissing : l10n.trainerScheduleAppointment;
+      buttonLabel = _needsAppointment
+          ? l10n.trainerAppointmentMissing
+          : l10n.trainerScheduleAppointment;
     } else if (_isNearCompletion) {
       badgeColor = AppColors.warning;
       badgeLabel = 'Tag 25';
@@ -372,7 +390,8 @@ class _ClientCard extends StatelessWidget {
                   backgroundColor: badgeColor.withValues(alpha: 0.15),
                   child: Text(
                     client.displayName[0].toUpperCase(),
-                    style: TextStyle(color: badgeColor, fontWeight: FontWeight.w700),
+                    style: TextStyle(
+                        color: badgeColor, fontWeight: FontWeight.w700),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -445,8 +464,8 @@ class _ClientCard extends StatelessWidget {
                       const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 ),
                 onPressed: () => context.push(
-                  Routes.appointmentScheduler.replaceFirst(
-                      ':clientId', client.clientId),
+                  Routes.appointmentScheduler
+                      .replaceFirst(':clientId', client.clientId),
                   extra: client,
                 ),
                 child: Text(buttonLabel, style: const TextStyle(fontSize: 13)),
@@ -471,8 +490,7 @@ class _AppointmentsTab extends ConsumerWidget {
 
     return async.when(
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (e, _) =>
-          Center(child: Text(e.toString())),
+      error: (e, _) => Center(child: Text(e.toString())),
       data: (appointments) {
         if (appointments.isEmpty) {
           return Center(
@@ -486,8 +504,7 @@ class _AppointmentsTab extends ConsumerWidget {
                   const SizedBox(height: 16),
                   Text(
                     l10n.trainerNoAppointments,
-                    style:
-                        TextStyle(color: AppColors.textSecondary),
+                    style: TextStyle(color: AppColors.textSecondary),
                     textAlign: TextAlign.center,
                   ),
                 ],
@@ -500,8 +517,7 @@ class _AppointmentsTab extends ConsumerWidget {
           child: ListView.separated(
             padding: const EdgeInsets.symmetric(vertical: 8),
             itemCount: appointments.length,
-            separatorBuilder: (_, __) =>
-                const Divider(height: 1, indent: 72),
+            separatorBuilder: (_, __) => const Divider(height: 1, indent: 72),
             itemBuilder: (context, i) =>
                 _AppointmentTile(appointment: appointments[i], l10n: l10n),
           ),
@@ -546,16 +562,16 @@ class _AppointmentTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final date = appointment.scheduledFor != null
-        ? DateFormat('E, d. MMM · HH:mm', 'de_DE').format(appointment.scheduledFor!)
+        ? DateFormat('E, d. MMM · HH:mm', 'de_DE')
+            .format(appointment.scheduledFor!)
         : '–';
 
     return ListTile(
-      contentPadding:
-          const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       leading: CircleAvatar(
         backgroundColor: _statusColor.withValues(alpha: 0.12),
-        child: Icon(Icons.calendar_today_outlined,
-            size: 20, color: _statusColor),
+        child:
+            Icon(Icons.calendar_today_outlined, size: 20, color: _statusColor),
       ),
       title: Text(
         appointment.traineeName,
@@ -564,11 +580,11 @@ class _AppointmentTile extends StatelessWidget {
       subtitle: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(date, style: TextStyle(color: AppColors.textSecondary, fontSize: 13)),
+          Text(date,
+              style: TextStyle(color: AppColors.textSecondary, fontSize: 13)),
           const SizedBox(height: 2),
           Container(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
             decoration: BoxDecoration(
               color: _statusColor.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(6),

@@ -47,10 +47,10 @@ class AppSettings {
     this.childAssistMode = false,
   });
 
-  TimeOfDay get reminderStart =>
-      TimeOfDay(hour: reminderStartMinutes ~/ 60, minute: reminderStartMinutes % 60);
-  TimeOfDay get reminderEnd =>
-      TimeOfDay(hour: reminderEndMinutes ~/ 60, minute: reminderEndMinutes % 60);
+  TimeOfDay get reminderStart => TimeOfDay(
+      hour: reminderStartMinutes ~/ 60, minute: reminderStartMinutes % 60);
+  TimeOfDay get reminderEnd => TimeOfDay(
+      hour: reminderEndMinutes ~/ 60, minute: reminderEndMinutes % 60);
 
   AppSettings copyWith({
     TrainingFeedbackMode? feedbackMode,
@@ -78,23 +78,23 @@ class AppSettings {
 // ── Provider ──────────────────────────────────────────────────────────────────
 
 final sharedPreferencesProvider = Provider<SharedPreferences>((ref) {
-  throw UnimplementedError('sharedPreferencesProvider must be overridden in main');
+  throw UnimplementedError(
+      'sharedPreferencesProvider must be overridden in main');
 });
 
 class SettingsNotifier extends StateNotifier<AppSettings> {
   final SharedPreferences _prefs;
   final String? _userId;
 
-  SettingsNotifier(this._prefs, this._userId)
-      : super(_load(_prefs, _userId));
+  SettingsNotifier(this._prefs, this._userId) : super(_load(_prefs, _userId));
 
   static AppSettings _load(SharedPreferences prefs, String? userId) {
     final modeIndex = prefs.getInt(_kFeedbackMode) ?? 1;
     // Read theme from user-scoped key; fall back to global key for migration
     // (users who saved a theme before this change still get their preference).
-    final themeModeIndex = prefs.getInt(_themeModeKey(userId))
-        ?? prefs.getInt(_kThemeModeGlobal)
-        ?? 0;
+    final themeModeIndex = prefs.getInt(_themeModeKey(userId)) ??
+        prefs.getInt(_kThemeModeGlobal) ??
+        0;
 
     // If no language has been saved yet (first launch), detect from device locale.
     // We support 'de' and 'en'; everything else defaults to 'en'.
@@ -105,8 +105,8 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
             : 'en');
 
     return AppSettings(
-      feedbackMode: TrainingFeedbackMode.values[modeIndex.clamp(
-          0, TrainingFeedbackMode.values.length - 1)],
+      feedbackMode: TrainingFeedbackMode
+          .values[modeIndex.clamp(0, TrainingFeedbackMode.values.length - 1)],
       weeklyGoal: prefs.getInt(_kWeeklyGoal) ?? 5,
       languageCode: languageCode,
       themeMode: ThemeMode.values[themeModeIndex.clamp(0, 2)],
@@ -166,8 +166,8 @@ final settingsProvider =
   final prefs = ref.watch(sharedPreferencesProvider);
   // Watch auth state so the notifier re-creates on sign-in/sign-out,
   // loading the correct user-scoped theme key each time.
-  final userId = ref.watch(authStateProvider).valueOrNull?.session?.user.id
-      ?? Supabase.instance.client.auth.currentUser?.id;
+  final userId = ref.watch(authStateProvider).valueOrNull?.session?.user.id ??
+      Supabase.instance.client.auth.currentUser?.id;
   return SettingsNotifier(prefs, userId);
 });
 

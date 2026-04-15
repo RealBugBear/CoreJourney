@@ -30,7 +30,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   void initState() {
     super.initState();
     PackageInfo.fromPlatform().then((info) {
-      if (mounted) setState(() => _version = '${info.version} (${info.buildNumber})');
+      if (mounted)
+        setState(() => _version = '${info.version} (${info.buildNumber})');
     });
   }
 
@@ -297,7 +298,8 @@ class _BecomeTrainerTile extends ConsumerWidget {
     );
   }
 
-  Future<void> _showActivationDialog(BuildContext context, WidgetRef ref) async {
+  Future<void> _showActivationDialog(
+      BuildContext context, WidgetRef ref) async {
     final l10n = AppLocalizations.of(context);
     final codeCtrl = TextEditingController();
     String? errorMsg;
@@ -391,9 +393,8 @@ class _ConnectTrainerTile extends ConsumerWidget {
               ? const Text('Einladungscode vom Trainer eingeben',
                   style: TextStyle(fontSize: 12))
               : null,
-          trailing: trainerName == null
-              ? const Icon(Icons.chevron_right)
-              : null,
+          trailing:
+              trainerName == null ? const Icon(Icons.chevron_right) : null,
           onTap: trainerName != null
               ? null
               : () => _showInviteDialog(context, ref, l10n),
@@ -458,7 +459,8 @@ class _ConnectTrainerTile extends ConsumerWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('Gib den 6-stelligen Code ein, den du von deinem Trainer erhalten hast:'),
+              const Text(
+                  'Gib den 6-stelligen Code ein, den du von deinem Trainer erhalten hast:'),
               const SizedBox(height: 12),
               TextField(
                 controller: ctrl,
@@ -491,7 +493,8 @@ class _ConnectTrainerTile extends ConsumerWidget {
               onPressed: () async {
                 final code = ctrl.text.replaceAll(RegExp(r'\s'), '').trim();
                 if (code.length != 6) {
-                  setDialogState(() => errorMsg = 'Bitte 6-stelligen Code eingeben.');
+                  setDialogState(
+                      () => errorMsg = 'Bitte 6-stelligen Code eingeben.');
                   return;
                 }
                 try {
@@ -555,7 +558,8 @@ class _SwitchTrainerTile extends ConsumerWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('Gib den 6-stelligen Einladungscode deines neuen Trainers ein:'),
+              const Text(
+                  'Gib den 6-stelligen Einladungscode deines neuen Trainers ein:'),
               const SizedBox(height: 12),
               TextField(
                 controller: ctrl,
@@ -588,7 +592,8 @@ class _SwitchTrainerTile extends ConsumerWidget {
               onPressed: () async {
                 final code = ctrl.text.replaceAll(RegExp(r'\s'), '').trim();
                 if (code.length != 6) {
-                  setDialogState(() => errorMsg = 'Bitte 6-stelligen Code eingeben.');
+                  setDialogState(
+                      () => errorMsg = 'Bitte 6-stelligen Code eingeben.');
                   return;
                 }
                 try {
@@ -597,11 +602,13 @@ class _SwitchTrainerTile extends ConsumerWidget {
                   if (ctx.mounted) Navigator.pop(ctx);
                   if (context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Trainer erfolgreich gewechselt')),
+                      const SnackBar(
+                          content: Text('Trainer erfolgreich gewechselt')),
                     );
                   }
                 } catch (_) {
-                  setDialogState(() => errorMsg = 'Fehler beim Trainer-Wechsel.');
+                  setDialogState(
+                      () => errorMsg = 'Fehler beim Trainer-Wechsel.');
                 }
               },
               child: const Text('Bestätigen'),
@@ -633,4 +640,3 @@ class _SectionHeader extends StatelessWidget {
     );
   }
 }
-

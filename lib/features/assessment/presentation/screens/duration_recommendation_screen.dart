@@ -30,11 +30,9 @@ class _DurationRecommendationScreenState
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    final extra =
-        GoRouterState.of(context).extra as Map<String, dynamic>?;
+    final extra = GoRouterState.of(context).extra as Map<String, dynamic>?;
     _packageId = extra?['packageId'] as String? ?? 'moro';
-    final hadTrainer =
-        extra?['hadIsometricWithTrainer'] as bool? ?? false;
+    final hadTrainer = extra?['hadIsometricWithTrainer'] as bool? ?? false;
     _selectedWeeks =
         _computeRecommendedWeeks(hadIsometricWithTrainer: hadTrainer);
   }
@@ -58,7 +56,8 @@ class _DurationRecommendationScreenState
 
       if (mounted) context.go(Routes.dashboard);
     } catch (_) {
-      if (mounted) showErrorSnackBar(context, AppLocalizations.of(context).errorGeneric);
+      if (mounted)
+        showErrorSnackBar(context, AppLocalizations.of(context).errorGeneric);
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -97,14 +96,15 @@ class _DurationRecommendationScreenState
                 max: 8,
                 divisions: 4,
                 label: l10n.weeksCount(_selectedWeeks),
-                onChanged: (v) =>
-                    setState(() => _selectedWeeks = v.round()),
+                onChanged: (v) => setState(() => _selectedWeeks = v.round()),
               ),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(l10n.weeksCount(4), style: Theme.of(context).textTheme.bodySmall),
-                  Text(l10n.weeksCount(8), style: Theme.of(context).textTheme.bodySmall),
+                  Text(l10n.weeksCount(4),
+                      style: Theme.of(context).textTheme.bodySmall),
+                  Text(l10n.weeksCount(8),
+                      style: Theme.of(context).textTheme.bodySmall),
                 ],
               ),
               const Spacer(),

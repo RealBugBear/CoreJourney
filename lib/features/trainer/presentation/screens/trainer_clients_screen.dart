@@ -35,7 +35,8 @@ class TrainerClientsScreen extends ConsumerWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
-            onPressed: () => ref.read(trainerClientsProvider.notifier).refresh(),
+            onPressed: () =>
+                ref.read(trainerClientsProvider.notifier).refresh(),
           ),
         ],
       ),
@@ -79,8 +80,7 @@ class TrainerClientsScreen extends ConsumerWidget {
                   itemCount: clients.length,
                   separatorBuilder: (_, __) =>
                       const Divider(height: 1, indent: 72),
-                  itemBuilder: (context, i) =>
-                      _ClientTile(client: clients[i]),
+                  itemBuilder: (context, i) => _ClientTile(client: clients[i]),
                 ),
               ),
       ),
@@ -128,8 +128,8 @@ class TrainerClientsScreen extends ConsumerWidget {
               ),
               const SizedBox(height: 20),
               Container(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 24, vertical: 16),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
                 decoration: BoxDecoration(
                   color: AppColors.primary.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(12),
@@ -183,16 +183,18 @@ class _ClientTile extends StatelessWidget {
   const _ClientTile({required this.client});
 
   @override
-  Widget build(BuildContext context, ) {
+  Widget build(
+    BuildContext context,
+  ) {
     final l10n = AppLocalizations.of(context);
-    final packageName = _packageNames[client.packageId] ?? client.packageId ?? '—';
+    final packageName =
+        _packageNames[client.packageId] ?? client.packageId ?? '—';
     final daysSince = client.lastActivityDate != null
         ? DateTime.now().difference(client.lastActivityDate!).inDays
         : null;
 
     return ListTile(
-      contentPadding:
-          const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       leading: CircleAvatar(
         backgroundColor: client.isAtRisk
             ? AppColors.warning.withValues(alpha: 0.15)
@@ -215,8 +217,7 @@ class _ClientTile extends StatelessWidget {
           ),
           if (client.isAtRisk)
             Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
               decoration: BoxDecoration(
                 color: AppColors.warning.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(8),
@@ -240,8 +241,7 @@ class _ClientTile extends StatelessWidget {
             client.packageId != null
                 ? '$packageName · ${l10n.dayNumber(client.currentDay)} · ${client.dailyStreak} 🔥'
                 : l10n.packageLocked,
-            style: TextStyle(
-                color: AppColors.textSecondary, fontSize: 13),
+            style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
           ),
           if (daysSince != null)
             Text(
@@ -257,8 +257,7 @@ class _ClientTile extends StatelessWidget {
       ),
       trailing: const Icon(Icons.chevron_right),
       onTap: () => context.push(
-        Routes.trainerClientDetail.replaceFirst(
-            ':clientId', client.clientId),
+        Routes.trainerClientDetail.replaceFirst(':clientId', client.clientId),
         extra: client,
       ),
     );

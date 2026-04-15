@@ -22,7 +22,8 @@ class ErrorRetryWidget extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.error_outline, size: 48, color: AppColors.error.withValues(alpha: 0.7)),
+            Icon(Icons.error_outline,
+                size: 48, color: AppColors.error.withValues(alpha: 0.7)),
             const SizedBox(height: 16),
             Text(
               message,
@@ -60,7 +61,8 @@ class InlineErrorWidget extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.cloud_off_outlined, size: 28, color: AppColors.textSecondary),
+          Icon(Icons.cloud_off_outlined,
+              size: 28, color: AppColors.textSecondary),
           const SizedBox(height: 8),
           Text(
             l10n.errorLoadFailedInline,
@@ -73,7 +75,8 @@ class InlineErrorWidget extends StatelessWidget {
             TextButton(
               onPressed: onRetry,
               style: TextButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                 minimumSize: Size.zero,
                 tapTargetSize: MaterialTapTargetSize.shrinkWrap,
               ),

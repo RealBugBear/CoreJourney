@@ -27,22 +27,27 @@ class ChatInboxScreen extends ConsumerWidget {
       ),
       body: channelsAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => _ErrorState(onRetry: () => ref.invalidate(chatChannelsProvider)),
+        error: (e, _) =>
+            _ErrorState(onRetry: () => ref.invalidate(chatChannelsProvider)),
         data: (channels) {
           if (channels.isEmpty) return const _EmptyState();
 
-          final direct = channels.where((c) => c.type == ChannelType.direct).toList();
-          final community = channels.where((c) => c.type == ChannelType.community).toList();
+          final direct =
+              channels.where((c) => c.type == ChannelType.direct).toList();
+          final community =
+              channels.where((c) => c.type == ChannelType.community).toList();
 
           return ListView(
             children: [
               if (direct.isNotEmpty) ...[
                 const _SectionHeader(title: 'MEIN TRAINER'),
-                ...direct.map((c) => _ChannelListTile(channel: c, onTap: () => _open(context, c))),
+                ...direct.map((c) => _ChannelListTile(
+                    channel: c, onTap: () => _open(context, c))),
               ],
               if (community.isNotEmpty) ...[
                 const _SectionHeader(title: 'MEINE PAKETE'),
-                ...community.map((c) => _ChannelListTile(channel: c, onTap: () => _open(context, c))),
+                ...community.map((c) => _ChannelListTile(
+                    channel: c, onTap: () => _open(context, c))),
               ],
             ],
           );
@@ -65,15 +70,15 @@ class _SectionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
-    child: Text(
-      title,
-      style: Theme.of(context).textTheme.labelSmall?.copyWith(
-        color: Theme.of(context).colorScheme.outline,
-        letterSpacing: 1.2,
-      ),
-    ),
-  );
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
+        child: Text(
+          title,
+          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                color: Theme.of(context).colorScheme.outline,
+                letterSpacing: 1.2,
+              ),
+        ),
+      );
 }
 
 class _ChannelListTile extends ConsumerWidget {
@@ -87,7 +92,8 @@ class _ChannelListTile extends ConsumerWidget {
     final hasUnread = channel.unreadCount > 0;
 
     final title = channel.type == ChannelType.direct
-        ? ref.watch(chatPartnerNameProvider(channel.id)).valueOrNull ?? channel.channelDisplayName()
+        ? ref.watch(chatPartnerNameProvider(channel.id)).valueOrNull ??
+            channel.channelDisplayName()
         : channel.channelDisplayName();
 
     return ListTile(
@@ -175,30 +181,36 @@ class _EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Center(
-    child: Padding(
-      padding: const EdgeInsets.all(32),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(Icons.chat_bubble_outline,
-              size: 64,
-              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.25)),
-          const SizedBox(height: 16),
-          Text('Noch keine Nachrichten',
-              style: Theme.of(context).textTheme.titleMedium),
-          const SizedBox(height: 8),
-          Text(
-            'Hier erscheinen deine Chats.\n'
-            'Absolviere dein erstes Training, um dem Community-Chat beizutreten.',
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.55),
-            ),
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.chat_bubble_outline,
+                  size: 64,
+                  color: Theme.of(context)
+                      .colorScheme
+                      .onSurface
+                      .withValues(alpha: 0.25)),
+              const SizedBox(height: 16),
+              Text('Noch keine Nachrichten',
+                  style: Theme.of(context).textTheme.titleMedium),
+              const SizedBox(height: 8),
+              Text(
+                'Hier erscheinen deine Chats.\n'
+                'Absolviere dein erstes Training, um dem Community-Chat beizutreten.',
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Theme.of(context)
+                          .colorScheme
+                          .onSurface
+                          .withValues(alpha: 0.55),
+                    ),
+              ),
+            ],
           ),
-        ],
-      ),
-    ),
-  );
+        ),
+      );
 }
 
 class _ErrorState extends StatelessWidget {
@@ -207,15 +219,17 @@ class _ErrorState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Center(
-    child: Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        const Icon(Icons.error_outline, size: 48),
-        const SizedBox(height: 8),
-        Text('Fehler beim Laden', style: Theme.of(context).textTheme.bodyLarge),
-        const SizedBox(height: 8),
-        TextButton(onPressed: onRetry, child: const Text('Erneut versuchen')),
-      ],
-    ),
-  );
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.error_outline, size: 48),
+            const SizedBox(height: 8),
+            Text('Fehler beim Laden',
+                style: Theme.of(context).textTheme.bodyLarge),
+            const SizedBox(height: 8),
+            TextButton(
+                onPressed: onRetry, child: const Text('Erneut versuchen')),
+          ],
+        ),
+      );
 }

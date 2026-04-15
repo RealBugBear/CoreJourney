@@ -18,7 +18,7 @@ class ChatMessage extends Equatable {
   final String content;
   final bool isBotResponse;
   final bool isCallRequest;
-  final DateTime? deletedAt;    // non-null = soft-deleted
+  final DateTime? deletedAt; // non-null = soft-deleted
   final DateTime createdAt;
 
   bool get isDeleted => deletedAt != null;
@@ -41,6 +41,14 @@ class ChatMessage extends Equatable {
   }
 
   @override
-  List<Object?> get props => [id, channelId, senderId, content,
-      isBotResponse, isCallRequest, deletedAt, createdAt];
+  List<Object?> get props => [
+        id,
+        channelId,
+        senderId,
+        content,
+        isBotResponse,
+        isCallRequest,
+        deletedAt,
+        createdAt
+      ];
 }

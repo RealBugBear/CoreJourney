@@ -100,8 +100,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     final config = ref.watch(appConfigProvider);
     final currentEmail = Supabase.instance.client.auth.currentUser?.email ?? '';
     // Dev tools: only for @corejourney.dev accounts in development builds.
-    final showDevTools = config.isDevelopment &&
-        currentEmail.endsWith('@corejourney.dev');
+    final showDevTools =
+        config.isDevelopment && currentEmail.endsWith('@corejourney.dev');
 
     return Scaffold(
       appBar: AppBar(
@@ -119,7 +119,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 ),
               ),
             ),
-IconButton(
+          IconButton(
             icon: const Icon(Icons.person_outline),
             onPressed: () => context.push(Routes.profile),
           ),

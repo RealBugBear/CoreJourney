@@ -32,7 +32,8 @@ class PackagesScreen extends ConsumerWidget {
 
     // Read all user enrollments to derive real per-package status.
     // Do NOT use static frontend logic to determine completion.
-    final allEnrollments = ref.watch(allUserEnrollmentsProvider).valueOrNull ?? [];
+    final allEnrollments =
+        ref.watch(allUserEnrollmentsProvider).valueOrNull ?? [];
     final completedPackageIds = {
       for (final e in allEnrollments)
         if (e.status == 'completed') e.packageId,
@@ -66,7 +67,9 @@ class PackagesScreen extends ConsumerWidget {
               onTap: isLocked
                   ? null
                   : () {
-                      ref.read(selectedPackageIdProvider.notifier).select(packageId);
+                      ref
+                          .read(selectedPackageIdProvider.notifier)
+                          .select(packageId);
                       context.pop();
                     },
               leading: Container(

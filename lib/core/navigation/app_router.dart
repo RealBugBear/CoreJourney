@@ -227,7 +227,8 @@ final routerProvider = Provider<GoRouter>((ref) {
                 builder: (context, state) {
                   final channelId = state.pathParameters['channelId']!;
                   final channel = state.extra as ChatChannel?;
-                  return ChatChannelScreen(channelId: channelId, channel: channel);
+                  return ChatChannelScreen(
+                      channelId: channelId, channel: channel);
                 },
               ),
             ],

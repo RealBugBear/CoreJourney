@@ -19,10 +19,10 @@ class TrainingPreparationScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return Scaffold(
       appBar: AppBar(
-        title: Text('Übung $exerciseNumber von 7'),  
+        title: Text('Übung $exerciseNumber von 7'),
         centerTitle: true,
         elevation: 0,
         backgroundColor: Colors.transparent,
@@ -48,14 +48,16 @@ class TrainingPreparationScreen extends StatelessWidget {
                   borderRadius: BorderRadius.circular(4),
                   child: LinearProgressIndicator(
                     value: exerciseNumber / 7,
-                    backgroundColor: theme.colorScheme.surfaceContainerHighest.withOpacity(0.3),
+                    backgroundColor: theme.colorScheme.surfaceContainerHighest
+                        .withOpacity(0.3),
                     minHeight: 6,
-                    valueColor: AlwaysStoppedAnimation<Color>(theme.colorScheme.primary),
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                        theme.colorScheme.primary),
                   ),
                 ),
-                
+
                 const SizedBox(height: 40),
-                
+
                 // Icon - Larger and more prominent
                 Container(
                   padding: const EdgeInsets.all(28),
@@ -81,21 +83,21 @@ class TrainingPreparationScreen extends StatelessWidget {
                     color: theme.colorScheme.primary,
                   ),
                 ),
-                
+
                 const SizedBox(height: 32),
-                
+
                 // Title - Bold and clear
                 Text(
                   title,
                   style: theme.textTheme.headlineMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 28,
-                      ),
+                    fontWeight: FontWeight.bold,
+                    fontSize: 28,
+                  ),
                   textAlign: TextAlign.center,
                 ),
-                
+
                 const SizedBox(height: 32),
-                
+
                 // Glassmorphic Content Card
                 Expanded(
                   child: PremiumGlassmorphicCard(
@@ -114,9 +116,9 @@ class TrainingPreparationScreen extends StatelessWidget {
                     ),
                   ),
                 ),
-                
+
                 const SizedBox(height: 24),
-                
+
                 // Continue Button - Prominent
                 SizedBox(
                   width: double.infinity,

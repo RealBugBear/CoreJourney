@@ -10,9 +10,9 @@ class MoodCheckinsTable extends Table {
   TextColumn get sessionId => text().nullable()();
   DateTimeColumn get recordedAt => dateTime()();
   IntColumn get dayKey => integer()(); // epoch days
-  IntColumn get mood => integer().nullable()();    // 1-5
-  IntColumn get energy => integer().nullable()();  // 1-5
-  IntColumn get stress => integer().nullable()();  // 1-5
+  IntColumn get mood => integer().nullable()(); // 1-5
+  IntColumn get energy => integer().nullable()(); // 1-5
+  IntColumn get stress => integer().nullable()(); // 1-5
   TextColumn get note => text().nullable()();
   // 'post_training' | 'manual'
   TextColumn get source => text()();

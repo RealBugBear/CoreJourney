@@ -184,8 +184,7 @@ class _AnswerButton extends StatelessWidget {
           width: selected ? 2 : 1,
         ),
         padding: const EdgeInsets.symmetric(vertical: 16),
-        shape:
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
       child: Text(
         label,

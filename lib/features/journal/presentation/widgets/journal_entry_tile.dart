@@ -53,9 +53,8 @@ class _JournalEntryTileState extends ConsumerState<JournalEntryTile> {
     final checkinId = widget.entry.checkinId;
     if (checkinId == null) return; // standalone entry — no edit UI yet
 
-    final linkedCheckin = await ref
-        .read(journalRepositoryProvider)
-        .getLinkedCheckin(checkinId);
+    final linkedCheckin =
+        await ref.read(journalRepositoryProvider).getLinkedCheckin(checkinId);
 
     if (linkedCheckin == null || !mounted) return;
 

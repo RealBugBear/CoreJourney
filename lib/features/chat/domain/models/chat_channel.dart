@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 
 enum ChannelType { direct, community }
+
 enum MemberRole { member, moderator }
 
 class ChatChannel extends Equatable {
@@ -17,7 +18,7 @@ class ChatChannel extends Equatable {
 
   final String id;
   final ChannelType type;
-  final String? packageId;        // non-null for community channels
+  final String? packageId; // non-null for community channels
   final DateTime createdAt;
   final MemberRole currentUserRole;
   final String? lastMessageContent;
@@ -28,7 +29,7 @@ class ChatChannel extends Equatable {
 
   String channelDisplayName({String? packageName}) {
     return switch (type) {
-      ChannelType.direct    => 'Trainer',
+      ChannelType.direct => 'Trainer',
       ChannelType.community => packageName ?? packageId ?? 'Community',
     };
   }
@@ -42,7 +43,8 @@ class ChatChannel extends Equatable {
   }) {
     return ChatChannel(
       id: json['id'] as String,
-      type: json['type'] == 'direct' ? ChannelType.direct : ChannelType.community,
+      type:
+          json['type'] == 'direct' ? ChannelType.direct : ChannelType.community,
       packageId: json['package_id'] as String?,
       createdAt: DateTime.parse(json['created_at'] as String),
       currentUserRole: currentUserRole,
@@ -53,5 +55,6 @@ class ChatChannel extends Equatable {
   }
 
   @override
-  List<Object?> get props => [id, type, packageId, createdAt, currentUserRole, unreadCount];
+  List<Object?> get props =>
+      [id, type, packageId, createdAt, currentUserRole, unreadCount];
 }
