@@ -37,3 +37,6 @@
 # Don't obfuscate Gson classes
 -keep class sun.misc.Unsafe { *; }
 -keep class com.google.gson.stream.** { *; }
+
+# Flutter Play Store split/deferred components (not used, suppress R8 warnings)
+-dontwarn com.google.android.play.core.**
