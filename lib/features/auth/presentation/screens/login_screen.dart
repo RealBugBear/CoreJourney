@@ -107,7 +107,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final email = _emailController.text.trim();
     await ref
         .read(authNotifierProvider.notifier)
-        .sendPasswordReset(email: email);
+        .sendPasswordReset(
+          email: email,
+          redirectTo: 'https://corejourney.care/auth/reset-password',
+        );
 
     if (mounted) {
       setState(() => _showPasswordReset = false);
