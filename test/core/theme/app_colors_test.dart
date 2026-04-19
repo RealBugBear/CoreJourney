@@ -28,8 +28,8 @@ void main() {
       expect(AppColors.textPrimary, const Color(0xFF0D1F15));
     });
 
-    test('textSecondary is muted green-grey', () {
-      expect(AppColors.textSecondary, const Color(0xFF5A8A6A));
+    test('textSecondary is muted green-grey (WCAG AA compliant)', () {
+      expect(AppColors.textSecondary, const Color(0xFF3D6B4F));
     });
 
     test('divider is light green-tinted border', () {
