@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -20,8 +22,15 @@ void main() {
         // The GoogleFonts library will raise exceptions asynchronously if fonts aren't found
         // when allowRuntimeFetching is false. Since we're testing theme structure (colors,
         // sizes, radii), not fonts, we suppress these font-loading errors.
-        await Future.delayed(const Duration(milliseconds: 100));
-        theme = AppTheme.light;
+        await runZonedGuarded(
+          () async {
+            theme = AppTheme.light;
+            await Future.delayed(const Duration(milliseconds: 100));
+          },
+          (Object error, StackTrace stack) {
+            // Ignore GoogleFonts font loading errors in tests
+          },
+        );
       });
 
       test('scaffold background is green-tinted', () {
@@ -61,8 +70,15 @@ void main() {
         // The GoogleFonts library will raise exceptions asynchronously if fonts aren't found
         // when allowRuntimeFetching is false. Since we're testing theme structure (colors,
         // sizes, radii), not fonts, we suppress these font-loading errors.
-        await Future.delayed(const Duration(milliseconds: 100));
-        theme = AppTheme.dark;
+        await runZonedGuarded(
+          () async {
+            theme = AppTheme.dark;
+            await Future.delayed(const Duration(milliseconds: 100));
+          },
+          (Object error, StackTrace stack) {
+            // Ignore GoogleFonts font loading errors in tests
+          },
+        );
       });
 
       test('scaffold background is pure neutral dark', () {
