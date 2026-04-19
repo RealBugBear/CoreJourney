@@ -54,7 +54,7 @@ class _CoreJourneyAppState extends ConsumerState<CoreJourneyApp>
   }
 
   Future<void> _handleDeepLink(Uri uri) async {
-    if (uri.path.startsWith('/auth/')) {
+    if (uri.path == '/auth/reset-password') {
       try {
         ref.read(passwordRecoveryActiveProvider.notifier).state = true;
         await Supabase.instance.client.auth.getSessionFromUrl(uri);

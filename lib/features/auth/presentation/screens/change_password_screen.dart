@@ -93,6 +93,7 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
     }
 
     // Erfolg
+    ref.read(passwordRecoveryActiveProvider.notifier).state = false;
     if (mounted) {
       Navigator.of(context).pop();
       ScaffoldMessenger.of(context).showSnackBar(
