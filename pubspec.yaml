@@ -1,7 +1,7 @@
 name: corejourney
 description: CoreJourney — Nervous System Training
 publish_to: none
-version: 1.0.0+2026041401
+version: 1.0.1+2026041901
 
 environment:
   sdk: '>=3.3.0 <4.0.0'
@@ -94,6 +94,7 @@ flutter:
     - .env.dev
     - .env.prod
     # Images — one folder per reflex package
+    - assets/images/brand/
     - assets/images/trainings/moro/
     - assets/images/trainings/spinal_galant/
     - assets/images/trainings/tlr/
