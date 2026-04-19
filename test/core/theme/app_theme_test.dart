@@ -9,8 +9,6 @@ import 'package:corejourney/core/theme/app_colors.dart';
 void main() {
   setUpAll(() {
     TestWidgetsFlutterBinding.ensureInitialized();
-    // Disable runtime font fetching; use system defaults instead.
-    // This prevents GoogleFonts from trying to download fonts during tests.
     GoogleFonts.config.allowRuntimeFetching = false;
   });
 
@@ -19,25 +17,28 @@ void main() {
       late ThemeData theme;
 
       setUpAll(() async {
-        // The GoogleFonts library will raise exceptions asynchronously if fonts aren't found
-        // when allowRuntimeFetching is false. Since we're testing theme structure (colors,
-        // sizes, radii), not fonts, we suppress these font-loading errors.
+        // GoogleFonts raises async exceptions when fonts aren't found and
+        // allowRuntimeFetching is false. We suppress them since we're testing
+        // theme structure, not font loading.
+        var error;
         await runZonedGuarded(
           () async {
             theme = AppTheme.light;
-            await Future.delayed(const Duration(milliseconds: 100));
+            // Yield to allow async errors to surface
+            await Future.delayed(Duration.zero);
           },
-          (Object error, StackTrace stack) {
-            // Ignore GoogleFonts font loading errors in tests
+          (Object e, StackTrace st) {
+            error = e;
           },
         );
+        // If there was an error, we still have the theme, so we ignore it.
       });
 
       test('scaffold background is green-tinted', () {
         expect(theme.scaffoldBackgroundColor, AppColors.backgroundLight);
       });
 
-      test('primary color seed is Free Place green', () {
+      test('scaffold background hex matches design spec', () {
         expect(theme.scaffoldBackgroundColor, const Color(0xFFF4FAF6));
       });
 
@@ -67,18 +68,21 @@ void main() {
       late ThemeData theme;
 
       setUpAll(() async {
-        // The GoogleFonts library will raise exceptions asynchronously if fonts aren't found
-        // when allowRuntimeFetching is false. Since we're testing theme structure (colors,
-        // sizes, radii), not fonts, we suppress these font-loading errors.
+        // GoogleFonts raises async exceptions when fonts aren't found and
+        // allowRuntimeFetching is false. We suppress them since we're testing
+        // theme structure, not font loading.
+        var error;
         await runZonedGuarded(
           () async {
             theme = AppTheme.dark;
-            await Future.delayed(const Duration(milliseconds: 100));
+            // Yield to allow async errors to surface
+            await Future.delayed(Duration.zero);
           },
-          (Object error, StackTrace stack) {
-            // Ignore GoogleFonts font loading errors in tests
+          (Object e, StackTrace st) {
+            error = e;
           },
         );
+        // If there was an error, we still have the theme, so we ignore it.
       });
 
       test('scaffold background is pure neutral dark', () {
