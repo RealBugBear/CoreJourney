@@ -236,6 +236,7 @@
   "passwordSet": "Neues Passwort gesetzt. Bitte einloggen.",
   "authErrorSamePassword": "Das neue Passwort muss sich vom bisherigen unterscheiden.",
   "authErrorInvalidCurrentPassword": "Das aktuelle Passwort ist falsch.",
+  "validationPasswordMismatch": "Passwörter stimmen nicht überein.",
   "profileDeleteAccount": "Konto löschen",
   "profileDeleteAccountTitle": "Konto löschen?",
   "profileDeleteAccountBody": "Dein Konto und alle deine Daten werden dauerhaft gelöscht. Dies kann nicht rückgängig gemacht werden.",

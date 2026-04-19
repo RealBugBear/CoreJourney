@@ -236,6 +236,7 @@
   "passwordSet": "Password set. Please log in.",
   "authErrorSamePassword": "New password must differ from the current one.",
   "authErrorInvalidCurrentPassword": "Current password is incorrect.",
+  "validationPasswordMismatch": "Passwords do not match.",
   "profileDeleteAccount": "Delete Account",
   "profileDeleteAccountTitle": "Delete Account?",
   "profileDeleteAccountBody": "This permanently deletes your account and all your data. This cannot be undone.",

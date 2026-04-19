@@ -43,9 +43,7 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
     final v = (value ?? '').trim();
     if (v.isEmpty) return l10n.validationRequired;
     if (v != _passwordController.text) {
-      return l10n.localeName == 'de'
-          ? 'Passwörter stimmen nicht überein.'
-          : 'Passwords do not match.';
+      return l10n.validationPasswordMismatch;
     }
     return null;
   }
