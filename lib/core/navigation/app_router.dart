@@ -3,7 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../features/auth/presentation/providers/auth_provider.dart';
 import '../../features/auth/presentation/screens/login_screen.dart';
+import '../../features/auth/presentation/screens/reset_password_screen.dart';
+import '../../features/auth/presentation/screens/change_password_screen.dart';
 import '../../features/consent/presentation/screens/consent_screen.dart';
 import '../../features/dashboard/presentation/screens/dashboard_screen.dart';
 import '../../features/assessment/presentation/screens/intake_assessment_screen.dart';
@@ -31,6 +34,8 @@ import 'app_shell.dart';
 // Route name constants
 class Routes {
   static const login = '/login';
+  static const resetPassword = '/auth/reset-password';
+  static const changePassword = '/profile/change-password';
   static const devTools = '/dev-tools';
   static const consent = '/consent';
   static const dashboard = '/dashboard';
@@ -81,10 +86,21 @@ final routerProvider = Provider<GoRouter>((ref) {
     refreshListenable: authRefresh,
     redirect: (context, state) {
       final user = Supabase.instance.client.auth.currentUser;
-      final isOnLogin = state.matchedLocation == Routes.login;
+      final isPasswordRecovery = ref.read(passwordRecoveryActiveProvider);
+      final loc = state.matchedLocation;
 
-      if (user == null && !isOnLogin) return Routes.login;
-      if (user != null && isOnLogin) return Routes.dashboard;
+      // Password-Recovery Deep Link: Vorrang vor allem anderen
+      if (isPasswordRecovery && loc != Routes.resetPassword) {
+        return Routes.resetPassword;
+      }
+      // Nicht eingeloggt → Login (außer während Recovery)
+      if (user == null && loc != Routes.login && loc != Routes.resetPassword) {
+        return Routes.login;
+      }
+      // Eingeloggt und auf Login → Dashboard
+      if (user != null && !isPasswordRecovery && loc == Routes.login) {
+        return Routes.dashboard;
+      }
       return null;
     },
     routes: [
@@ -92,6 +108,16 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: Routes.login,
         name: 'login',
         builder: (context, state) => const LoginScreen(),
+      ),
+      GoRoute(
+        path: Routes.resetPassword,
+        name: 'reset-password',
+        builder: (context, state) => const ResetPasswordScreen(),
+      ),
+      GoRoute(
+        path: Routes.changePassword,
+        name: 'change-password',
+        builder: (context, state) => const ChangePasswordScreen(),
       ),
       GoRoute(
         path: Routes.consent,
