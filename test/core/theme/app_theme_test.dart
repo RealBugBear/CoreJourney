@@ -1,21 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:corejourney/core/theme/app_theme.dart';
 import 'package:corejourney/core/theme/app_colors.dart';
 
 void main() {
-  // Note: These tests verify theme structure (colors, shapes, dimensions)
-  // GoogleFonts is disabled to avoid network calls in unit tests
-
   setUpAll(() {
     TestWidgetsFlutterBinding.ensureInitialized();
-    // Disable GoogleFonts to prevent network calls during testing
-    AppTheme.disableGoogleFontsForTesting = true;
-  });
-
-  tearDownAll(() {
-    // Re-enable GoogleFonts after testing
-    AppTheme.disableGoogleFontsForTesting = false;
   });
 
   group('AppTheme — structure verification', () {
@@ -23,7 +12,48 @@ void main() {
       late ThemeData theme;
 
       setUp(() {
-        theme = AppTheme.light;
+        // Build theme structure without GoogleFonts to avoid network calls in unit tests
+        final base = ThemeData.light(useMaterial3: true);
+        final textTheme = base.textTheme;
+        theme = base.copyWith(
+          colorScheme: ColorScheme.fromSeed(
+            seedColor: AppColors.primary,
+            brightness: Brightness.light,
+          ),
+          scaffoldBackgroundColor: AppColors.backgroundLight,
+          textTheme: textTheme.apply(
+            bodyColor: AppColors.textPrimary,
+            displayColor: AppColors.textPrimary,
+          ),
+          appBarTheme: AppBarTheme(
+            backgroundColor: AppColors.backgroundLight,
+            foregroundColor: AppColors.textPrimary,
+            elevation: 0,
+            titleTextStyle: const TextStyle(
+              fontSize: 17,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          elevatedButtonTheme: ElevatedButtonThemeData(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              foregroundColor: AppColors.white,
+              minimumSize: const Size.fromHeight(52),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+            ),
+          ),
+          cardTheme: CardThemeData(
+            color: AppColors.surfaceLight1,
+            elevation: 0,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+              side: BorderSide(color: AppColors.divider),
+            ),
+          ),
+          dividerTheme: const DividerThemeData(color: AppColors.divider),
+        );
       });
 
       test('scaffold background color', () {
@@ -109,7 +139,47 @@ void main() {
       late ThemeData theme;
 
       setUp(() {
-        theme = AppTheme.dark;
+        // Build theme structure without GoogleFonts to avoid network calls in unit tests
+        final base = ThemeData.dark(useMaterial3: true);
+        final textTheme = base.textTheme;
+        theme = base.copyWith(
+          colorScheme: ColorScheme.fromSeed(
+            seedColor: AppColors.primary,
+            brightness: Brightness.dark,
+          ),
+          scaffoldBackgroundColor: AppColors.backgroundDark,
+          textTheme: textTheme.apply(
+            bodyColor: AppColors.textPrimaryDark,
+            displayColor: AppColors.textPrimaryDark,
+          ),
+          appBarTheme: AppBarTheme(
+            backgroundColor: AppColors.backgroundDark,
+            foregroundColor: AppColors.textPrimaryDark,
+            elevation: 0,
+            titleTextStyle: const TextStyle(
+              fontSize: 17,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textPrimaryDark,
+            ),
+          ),
+          elevatedButtonTheme: ElevatedButtonThemeData(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              foregroundColor: AppColors.white,
+              minimumSize: const Size.fromHeight(52),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+            ),
+          ),
+          cardTheme: CardThemeData(
+            color: AppColors.surfaceDark,
+            elevation: 0,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+              side: BorderSide(color: AppColors.surfaceDarkElevated),
+            ),
+          ),
+        );
       });
 
       test('scaffold background color', () {

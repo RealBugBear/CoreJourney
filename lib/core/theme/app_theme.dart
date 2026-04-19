@@ -7,12 +7,7 @@ import 'app_colors.dart';
 class AppTheme {
   AppTheme._();
 
-  // For testing: allow disabling GoogleFonts to avoid network calls in unit tests
-  @visibleForTesting
-  static bool disableGoogleFontsForTesting = false;
-
-  static bool get _useGoogleFonts =>
-      !Platform.isIOS && !disableGoogleFontsForTesting;
+  static bool get _useGoogleFonts => !Platform.isIOS;
 
   static ThemeData get light {
     final base = ThemeData.light(useMaterial3: true);
