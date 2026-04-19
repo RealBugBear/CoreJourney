@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'app_colors.dart';
@@ -7,7 +8,9 @@ import 'app_colors.dart';
 class AppTheme {
   AppTheme._();
 
-  static bool get _useGoogleFonts => !Platform.isIOS;
+  static bool get _useGoogleFonts => !Platform.isIOS && !kIsWeb && !_isTest;
+
+  static bool get _isTest => Platform.environment.containsKey('FLUTTER_TEST');
 
   static ThemeData get light {
     final base = ThemeData.light(useMaterial3: true);
