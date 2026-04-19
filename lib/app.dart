@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:app_links/app_links.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'bootstrap/providers.dart';
@@ -23,16 +24,45 @@ class CoreJourneyApp extends ConsumerStatefulWidget {
 
 class _CoreJourneyAppState extends ConsumerState<CoreJourneyApp>
     with WidgetsBindingObserver {
+  StreamSubscription<Uri>? _deepLinkSub;
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    _initDeepLinks(); // NEU
   }
 
   @override
   void dispose() {
+    _deepLinkSub?.cancel(); // NEU
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
+  }
+
+  Future<void> _initDeepLinks() async {
+    final appLinks = AppLinks();
+
+    // Cold start: App war geschlossen, Link öffnet sie neu
+    final initialUri = await appLinks.getInitialLink();
+    if (initialUri != null) {
+      await _handleDeepLink(initialUri);
+    }
+
+    // Warm start: App läuft im Hintergrund
+    _deepLinkSub = appLinks.uriLinkStream.listen(_handleDeepLink);
+  }
+
+  Future<void> _handleDeepLink(Uri uri) async {
+    if (uri.path.startsWith('/auth/')) {
+      try {
+        ref.read(passwordRecoveryActiveProvider.notifier).state = true;
+        await Supabase.instance.client.auth.getSessionFromUrl(uri);
+      } catch (_) {
+        // Reset flag if session retrieval fails (e.g. expired or malformed link)
+        ref.read(passwordRecoveryActiveProvider.notifier).state = false;
+      }
+    }
   }
 
   /// Flush the sync queue whenever the app moves to background or is suspended.
