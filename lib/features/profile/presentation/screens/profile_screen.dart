@@ -105,7 +105,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           ListTile(
             leading: const Icon(Icons.lock_outline),
             title: Text(l10n.profileChangePassword),
-            onTap: () => _sendPasswordReset(context, l10n, user?.email),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => context.push(Routes.changePassword),
           ),
 
           // ── Account ───────────────────────────────────────────────────────
@@ -143,28 +144,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         ],
       ),
     );
-  }
-
-  Future<void> _sendPasswordReset(
-    BuildContext context,
-    AppLocalizations l10n,
-    String? email,
-  ) async {
-    if (email == null) return;
-    try {
-      await Supabase.instance.client.auth.resetPasswordForEmail(email);
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(l10n.profileChangePasswordSent)),
-        );
-      }
-    } catch (_) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(l10n.errorGeneric)),
-        );
-      }
-    }
   }
 
   Future<void> _confirmDeleteAccount(
