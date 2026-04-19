@@ -65,14 +65,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   String? _validatePasswordConfirm(String? value) {
     final l10n = AppLocalizations.of(context);
-    final isDE = l10n.localeName == 'de';
     final v = (value ?? '').trim();
     if (v.isEmpty) return l10n.validationRequired;
-    if (v != _passwordController.text) {
-      return isDE
-          ? 'Passwörter stimmen nicht überein.'
-          : 'Passwords do not match.';
-    }
+    if (v != _passwordController.text) return l10n.validationPasswordMismatch;
     return null;
   }
 
@@ -223,9 +218,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       autocorrect: false,
                       enableSuggestions: false,
                       decoration: InputDecoration(
-                        labelText: l10n.localeName == 'de'
-                            ? 'Passwort bestätigen'
-                            : 'Confirm password',
+                        labelText: l10n.passwordConfirm,
                         border: const OutlineInputBorder(),
                         suffixIcon: IconButton(
                           icon: Icon(
