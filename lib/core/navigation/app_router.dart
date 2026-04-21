@@ -14,7 +14,6 @@ import '../../features/assessment/presentation/screens/duration_recommendation_s
 import '../../features/assessment/presentation/screens/completion_questionnaire_screen.dart';
 import '../../features/training/presentation/screens/training_session_screen.dart';
 import '../../features/mood/presentation/screens/mood_history_screen.dart';
-import '../../features/packages/presentation/screens/packages_screen.dart';
 import '../../features/settings/presentation/screens/settings_screen.dart';
 import '../../features/profile/presentation/screens/profile_screen.dart';
 import '../../features/trainer/presentation/screens/trainer_clients_screen.dart';
@@ -27,8 +26,9 @@ import '../../features/journal/presentation/screens/journal_screen.dart';
 import '../../features/dev_tools/presentation/screens/dev_tools_screen.dart';
 import '../../features/chat/domain/models/chat_channel.dart';
 import '../../features/admin/presentation/screens/admin_panel_screen.dart';
-import '../../features/chat/presentation/screens/chat_inbox_screen.dart';
 import '../../features/chat/presentation/screens/chat_channel_screen.dart';
+import '../../features/community/presentation/screens/community_screen.dart';
+import '../../features/chat/presentation/screens/dm_screen.dart';
 import 'app_shell.dart';
 
 // Route name constants
@@ -234,31 +234,39 @@ final routerProvider = Provider<GoRouter>((ref) {
             ),
           ),
           GoRoute(
-            path: Routes.packages,
-            name: 'packages',
+            path: Routes.community,
+            name: 'community',
             pageBuilder: (context, state) => NoTransitionPage(
               key: state.pageKey,
-              child: const PackagesScreen(),
-            ),
-          ),
-          GoRoute(
-            path: Routes.chatInbox,
-            name: 'chat-inbox',
-            pageBuilder: (context, state) => NoTransitionPage(
-              key: state.pageKey,
-              child: const ChatInboxScreen(),
+              child: const CommunityScreen(),
             ),
             routes: [
               GoRoute(
-                // Renders on root navigator → no shell nav bar
-                parentNavigatorKey: _rootNavigatorKey,
                 path: ':channelId',
-                name: 'chat-channel',
+                name: 'community-channel',
                 builder: (context, state) {
                   final channelId = state.pathParameters['channelId']!;
                   final channel = state.extra as ChatChannel?;
-                  return ChatChannelScreen(
-                      channelId: channelId, channel: channel);
+                  return ChatChannelScreen(channelId: channelId, channel: channel);
+                },
+              ),
+            ],
+          ),
+          GoRoute(
+            path: Routes.dm,
+            name: 'dm',
+            pageBuilder: (context, state) => NoTransitionPage(
+              key: state.pageKey,
+              child: const DmScreen(),
+            ),
+            routes: [
+              GoRoute(
+                path: ':channelId',
+                name: 'dm-channel',
+                builder: (context, state) {
+                  final channelId = state.pathParameters['channelId']!;
+                  final channel = state.extra as ChatChannel?;
+                  return ChatChannelScreen(channelId: channelId, channel: channel);
                 },
               ),
             ],
