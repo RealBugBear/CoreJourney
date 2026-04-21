@@ -231,6 +231,14 @@ final subscriptionTierProvider = FutureProvider<String>((ref) async {
   return res['subscription_tier'] as String? ?? 'free';
 });
 
+// ── Trainer linked (bool) ─────────────────────────────────────────────────────
+
+/// True wenn der aktuelle User einen aktiv verknüpften Trainer hat.
+/// Leitet sich von clientTrainerProvider ab — kein extra DB-Call.
+final trainerLinkedProvider = Provider<bool>((ref) {
+  return ref.watch(clientTrainerProvider).valueOrNull != null;
+});
+
 // ── Chat partner ──────────────────────────────────────────────────────────────
 
 /// For a direct channel, returns the OTHER participant's user_id.
