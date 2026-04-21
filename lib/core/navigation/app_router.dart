@@ -13,14 +13,12 @@ import '../../features/assessment/presentation/screens/intake_assessment_screen.
 import '../../features/assessment/presentation/screens/duration_recommendation_screen.dart';
 import '../../features/assessment/presentation/screens/completion_questionnaire_screen.dart';
 import '../../features/training/presentation/screens/training_session_screen.dart';
-import '../../features/mood/presentation/screens/mood_history_screen.dart';
 import '../../features/settings/presentation/screens/settings_screen.dart';
 import '../../features/profile/presentation/screens/profile_screen.dart';
 import '../../features/trainer/presentation/screens/trainer_clients_screen.dart';
 import '../../features/trainer/presentation/screens/trainer_client_detail_screen.dart';
 import '../../features/trainer/presentation/screens/trainer_dashboard_screen.dart';
 import '../../features/trainer/presentation/screens/appointment_scheduler_screen.dart';
-import '../../features/trainer/presentation/screens/appointment_proposal_screen.dart';
 import '../../features/trainer/domain/models/trainer_client.dart';
 import '../../features/journal/presentation/screens/journal_screen.dart';
 import '../../features/dev_tools/presentation/screens/dev_tools_screen.dart';
@@ -43,7 +41,6 @@ class Routes {
   static const durationRecommendation = '/intake-assessment/duration';
   static const completionQuestionnaire = '/completion-questionnaire';
   static const trainingSession = '/training/session';
-  static const moodHistory = '/mood/history';
   static const journal = '/journal';
   static const packages = '/packages';
   static const settings = '/settings';
@@ -52,13 +49,10 @@ class Routes {
   static const trainerClientDetail = '/trainer/clients/:clientId';
   static const trainerDashboard = '/trainer/dashboard';
   static const appointmentScheduler = '/trainer/appointment/:clientId';
-  static const appointmentProposals = '/appointments/proposals';
   static const community = '/community';
   static const communityChannel = '/community/:channelId';
   static const dm = '/dm';
   static const dmChannel = '/dm/:channelId';
-  static const chatInbox = '/chat';
-  static const chatChannel = '/chat/:channelId';
   static const adminPanel = '/admin';
 }
 
@@ -155,11 +149,6 @@ final routerProvider = Provider<GoRouter>((ref) {
         },
       ),
       GoRoute(
-        path: Routes.moodHistory,
-        name: 'mood-history',
-        builder: (context, state) => const MoodHistoryScreen(),
-      ),
-      GoRoute(
         path: Routes.journal,
         name: 'journal',
         builder: (context, state) => const JournalScreen(),
@@ -205,11 +194,6 @@ final routerProvider = Provider<GoRouter>((ref) {
                 ),
           );
         },
-      ),
-      GoRoute(
-        path: Routes.appointmentProposals,
-        name: 'appointment-proposals',
-        builder: (context, state) => const AppointmentProposalScreen(),
       ),
       GoRoute(
         path: Routes.devTools,

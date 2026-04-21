@@ -162,7 +162,7 @@ class _TrainingSessionScreenState extends ConsumerState<TrainingSessionScreen> {
 
     if (share == true && mounted) {
       context.push(
-        Routes.chatChannel.replaceFirst(':channelId', channelId),
+        Routes.communityChannel.replaceFirst(':channelId', channelId),
       );
     }
   }

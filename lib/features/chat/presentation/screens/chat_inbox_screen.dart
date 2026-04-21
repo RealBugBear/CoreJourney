@@ -58,7 +58,7 @@ class ChatInboxScreen extends ConsumerWidget {
 
   void _open(BuildContext context, ChatChannel channel) {
     context.push(
-      Routes.chatChannel.replaceFirst(':channelId', channel.id),
+      Routes.dmChannel.replaceFirst(':channelId', channel.id),
       extra: channel,
     );
   }

@@ -9,10 +9,7 @@ import '../../../../core/navigation/app_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/time/app_clock_provider.dart';
 import '../../../../l10n/app_localizations.dart';
-import '../../../journal/presentation/providers/journal_provider.dart';
-import '../../../mood/presentation/providers/mood_provider.dart';
 import '../../../mood/presentation/widgets/mood_chart_widget.dart';
-import '../../../mood/presentation/widgets/mood_checkin_sheet.dart';
 import '../../../consent/presentation/providers/consent_provider.dart';
 import '../../../progress/presentation/providers/progress_provider.dart';
 import '../../../trainer/presentation/providers/trainer_provider.dart';
@@ -120,11 +117,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               ),
             ),
           IconButton(
-            icon: const Icon(Icons.person_outline),
-            onPressed: () => context.push(Routes.profile),
-          ),
-          IconButton(
             icon: const Icon(Icons.settings_outlined),
+            tooltip: 'Einstellungen',
             onPressed: () => context.push(Routes.settings),
           ),
         ],
@@ -163,10 +157,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               _WeeklyCalendarStrip(weekSessions: weekSessions, now: now),
               const SizedBox(height: 20),
 
-              // Mode selector
-              _ModeSelector(l10n: l10n),
-              const SizedBox(height: 20),
-
               // Start Training CTA
               ElevatedButton.icon(
                 onPressed: () => context.push(
@@ -190,13 +180,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               _MoodChartCard(l10n: l10n),
               const SizedBox(height: 20),
 
-              // Journal card
-              _JournalCard(enrollment: enrollment),
-              const SizedBox(height: 20),
-
-              // Program card
-              _ProgramCard(l10n: l10n),
-              const SizedBox(height: 24),
+              const SizedBox(height: 4),
             ],
           ),
         ),
@@ -422,93 +406,6 @@ class _DayDot extends StatelessWidget {
   }
 }
 
-enum TrainingMode { tutorial, routine }
-
-final _trainingModeProvider = StateProvider<TrainingMode>(
-  (ref) => TrainingMode.tutorial,
-);
-
-class _ModeSelector extends ConsumerWidget {
-  final AppLocalizations l10n;
-  const _ModeSelector({required this.l10n});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final mode = ref.watch(_trainingModeProvider);
-
-    return Container(
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      padding: const EdgeInsets.all(4),
-      child: Row(
-        children: [
-          _ModeTab(
-            label: l10n.tutorialMode,
-            selected: mode == TrainingMode.tutorial,
-            onTap: () => ref.read(_trainingModeProvider.notifier).state =
-                TrainingMode.tutorial,
-          ),
-          _ModeTab(
-            label: l10n.routineMode,
-            selected: mode == TrainingMode.routine,
-            onTap: () => ref.read(_trainingModeProvider.notifier).state =
-                TrainingMode.routine,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ModeTab extends StatelessWidget {
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-
-  const _ModeTab({
-    required this.label,
-    required this.selected,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Expanded(
-      child: GestureDetector(
-        onTap: onTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          padding: const EdgeInsets.symmetric(vertical: 10),
-          decoration: BoxDecoration(
-            color: selected ? Theme.of(context).colorScheme.surface : null,
-            borderRadius: BorderRadius.circular(8),
-            boxShadow: selected
-                ? [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.08),
-                      blurRadius: 4,
-                      offset: const Offset(0, 1),
-                    )
-                  ]
-                : null,
-          ),
-          child: Text(
-            label,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
-              color: selected ? AppColors.primary : AppColors.textSecondary,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 class _MoodChartCard extends StatelessWidget {
   final AppLocalizations l10n;
   const _MoodChartCard({required this.l10n});
@@ -582,158 +479,6 @@ class _CompletionBanner extends StatelessWidget {
   }
 }
 
-class _JournalCard extends ConsumerWidget {
-  final EnrollmentsTableData? enrollment;
-  const _JournalCard({required this.enrollment});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final latestEntry = ref.watch(journalProvider).entries.firstOrNull;
-
-    return Card(
-      child: InkWell(
-        borderRadius: BorderRadius.circular(12),
-        onTap: () => context.push(Routes.journal),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  const Text('📓', style: TextStyle(fontSize: 18)),
-                  const SizedBox(width: 8),
-                  Text(
-                    AppLocalizations.of(context).journal,
-                    style: Theme.of(context)
-                        .textTheme
-                        .titleMedium
-                        ?.copyWith(fontWeight: FontWeight.w600),
-                  ),
-                  const Spacer(),
-                  IconButton(
-                    icon: const Icon(Icons.add, size: 20),
-                    color: AppColors.primary,
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
-                    onPressed: () => showMoodCheckinSheet(
-                      context,
-                      enrollmentId: enrollment?.id,
-                      onSaved: () {
-                        ref.read(journalProvider.notifier).load();
-                        ref.invalidate(moodDailyAggregatesProvider);
-                        ref.invalidate(moodNotesProvider);
-                      },
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Align(
-                alignment: Alignment.centerLeft,
-                child: TextButton(
-                  onPressed: () => context.push(Routes.journal),
-                  style: TextButton.styleFrom(padding: EdgeInsets.zero),
-                  child: const Text('Tagebuch →'),
-                ),
-              ),
-              if (latestEntry != null) ...[
-                const SizedBox(height: 4),
-                Text(
-                  latestEntry.content,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: AppColors.textSecondary,
-                        height: 1.4,
-                      ),
-                ),
-              ] else ...[
-                const SizedBox(height: 8),
-                Text(
-                  AppLocalizations.of(context).journalEmptyHint,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: AppColors.textSecondary,
-                      ),
-                ),
-              ],
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-const _packageNames = {
-  'moro': 'Moro Reflex',
-  'spinal_galant': 'Spinaler Galant + Amphibien',
-  'tlr': 'Tonischer Labirint Reflex (TLR)',
-  'babkin': 'Babkin + Plantar + Greifen',
-  'such_saug': 'Such-Saug Reflex',
-  'atnr': 'ATNR',
-  'stnr': 'STNR',
-  'babinski': 'Babinski Reflex',
-  'landau': 'Landau Reflex',
-};
-
-const _packageSequence = [
-  'moro',
-  'spinal_galant',
-  'tlr',
-  'babkin',
-  'such_saug',
-  'atnr',
-  'stnr',
-  'babinski',
-  'landau',
-];
-
-class _ProgramCard extends ConsumerWidget {
-  final AppLocalizations l10n;
-  const _ProgramCard({required this.l10n});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final selectedId = ref.watch(selectedPackageIdProvider);
-    final enrollment = ref.watch(activeEnrollmentProvider).valueOrNull;
-    final progress = ref.watch(activeProgressProvider).valueOrNull;
-
-    final packageName = _packageNames[selectedId] ?? selectedId;
-    final seqNumber = (_packageSequence.indexOf(selectedId) + 1).toString();
-    final currentDay = progress?.currentDay ?? 1;
-    final totalDays = (enrollment?.assignedDurationWeeks ?? 8) * 7;
-
-    return Card(
-      child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        leading: Container(
-          width: 40,
-          height: 40,
-          decoration: BoxDecoration(
-            color: AppColors.primary.withValues(alpha: 0.1),
-            shape: BoxShape.circle,
-          ),
-          child: Center(
-            child: Text(seqNumber,
-                style: const TextStyle(fontWeight: FontWeight.w700)),
-          ),
-        ),
-        title: Text(packageName,
-            style: const TextStyle(fontWeight: FontWeight.w600)),
-        subtitle: Text(
-          enrollment != null
-              ? '${l10n.packageCurrent} · ${l10n.currentDay(currentDay, totalDays)}'
-              : l10n.packageLocked,
-          style: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
-        ),
-        trailing: const Icon(Icons.chevron_right),
-        onTap: () => context.push(Routes.packages),
-      ),
-    );
-  }
-}
-
 // ── Appointment Proposal Banner ───────────────────────────────────────────────
 
 class _ProposalBanner extends ConsumerWidget {
@@ -751,7 +496,7 @@ class _ProposalBanner extends ConsumerWidget {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: GestureDetector(
-        onTap: () => context.push(Routes.appointmentProposals),
+        onTap: () => context.push(Routes.dm),
         child: Container(
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
