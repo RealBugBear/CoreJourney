@@ -53,6 +53,10 @@ class Routes {
   static const trainerDashboard = '/trainer/dashboard';
   static const appointmentScheduler = '/trainer/appointment/:clientId';
   static const appointmentProposals = '/appointments/proposals';
+  static const community = '/community';
+  static const communityChannel = '/community/:channelId';
+  static const dm = '/dm';
+  static const dmChannel = '/dm/:channelId';
   static const chatInbox = '/chat';
   static const chatChannel = '/chat/:channelId';
   static const adminPanel = '/admin';
