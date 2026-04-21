@@ -61,7 +61,7 @@ class _TrainerDashboardScreenState extends ConsumerState<TrainerDashboardScreen>
               children: [
                 IconButton(
                   icon: const Icon(Icons.chat_bubble_outline),
-                  onPressed: () => context.push(Routes.chatInbox),
+                  onPressed: () => context.push(Routes.dm),
                 ),
                 if (unread > 0)
                   Positioned(

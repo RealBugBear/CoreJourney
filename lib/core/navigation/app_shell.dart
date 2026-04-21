@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../features/chat/presentation/providers/chat_providers.dart';
+import '../../features/trainer/presentation/providers/trainer_provider.dart';
 import 'app_router.dart';
 
 class AppShell extends ConsumerWidget {
@@ -10,32 +11,33 @@ class AppShell extends ConsumerWidget {
 
   final Widget child;
 
-  static const _tabs = [
-    Routes.dashboard,
-    Routes.packages,
-    Routes.chatInbox,
-    Routes.profile,
-  ];
+  List<String> _buildTabRoutes(bool trainerLinked) => [
+        Routes.dashboard,
+        Routes.community,
+        if (trainerLinked) Routes.dm,
+        Routes.profile,
+      ];
 
-  int _currentIndex(BuildContext context) {
+  int _currentIndex(BuildContext context, List<String> tabRoutes) {
     final location = GoRouterState.of(context).matchedLocation;
-    for (int i = 0; i < _tabs.length; i++) {
-      if (location.startsWith(_tabs[i])) return i;
+    for (int i = 0; i < tabRoutes.length; i++) {
+      if (location.startsWith(tabRoutes[i])) return i;
     }
     return 0;
   }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final currentIndex = _currentIndex(context);
-    // totalUnreadCountProvider is a plain int Provider, not AsyncValue
-    final unread = ref.watch(totalUnreadCountProvider);
+    final trainerLinked = ref.watch(trainerLinkedProvider);
+    final unreadDm = ref.watch(unreadDmCountProvider);
+    final tabRoutes = _buildTabRoutes(trainerLinked);
+    final currentIndex = _currentIndex(context, tabRoutes);
 
     return Scaffold(
       body: child,
       bottomNavigationBar: NavigationBar(
         selectedIndex: currentIndex,
-        onDestinationSelected: (index) => context.go(_tabs[index]),
+        onDestinationSelected: (index) => context.go(tabRoutes[index]),
         destinations: [
           const NavigationDestination(
             icon: Icon(Icons.home_outlined),
@@ -43,23 +45,24 @@ class AppShell extends ConsumerWidget {
             label: 'Home',
           ),
           const NavigationDestination(
-            icon: Icon(Icons.fitness_center_outlined),
-            selectedIcon: Icon(Icons.fitness_center),
-            label: 'Training',
+            icon: Icon(Icons.groups_outlined),
+            selectedIcon: Icon(Icons.groups),
+            label: 'Community',
           ),
-          NavigationDestination(
-            icon: Badge(
-              isLabelVisible: unread > 0,
-              label: unread > 99 ? const Text('99+') : Text('$unread'),
-              child: const Icon(Icons.chat_bubble_outline),
+          if (trainerLinked)
+            NavigationDestination(
+              icon: Badge(
+                isLabelVisible: unreadDm > 0,
+                label: unreadDm > 99 ? const Text('99+') : Text('$unreadDm'),
+                child: const Icon(Icons.chat_bubble_outline),
+              ),
+              selectedIcon: Badge(
+                isLabelVisible: unreadDm > 0,
+                label: unreadDm > 99 ? const Text('99+') : Text('$unreadDm'),
+                child: const Icon(Icons.chat_bubble),
+              ),
+              label: 'Nachrichten',
             ),
-            selectedIcon: Badge(
-              isLabelVisible: unread > 0,
-              label: unread > 99 ? const Text('99+') : Text('$unread'),
-              child: const Icon(Icons.chat_bubble),
-            ),
-            label: 'Nachrichten',
-          ),
           const NavigationDestination(
             icon: Icon(Icons.person_outline),
             selectedIcon: Icon(Icons.person),

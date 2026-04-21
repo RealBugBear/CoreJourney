@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/navigation/app_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../domain/models/appointment.dart';
@@ -104,6 +106,14 @@ class _ProposalCardState extends State<_ProposalCard> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Termin bestätigt!')),
         );
+      }
+      // Navigate away after confirming — pop if possible, else fall back to DMs
+      if (mounted) {
+        if (context.canPop()) {
+          context.pop();
+        } else {
+          context.go(Routes.dm);
+        }
       }
     } catch (e) {
       if (mounted) {

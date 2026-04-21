@@ -998,6 +998,54 @@ abstract class AppLocalizations {
   /// **'Passwort-Reset-E-Mail wurde gesendet.'**
   String get profileChangePasswordSent;
 
+  /// No description provided for @newPassword.
+  ///
+  /// In de, this message translates to:
+  /// **'Neues Passwort'**
+  String get newPassword;
+
+  /// No description provided for @passwordConfirm.
+  ///
+  /// In de, this message translates to:
+  /// **'Passwort bestätigen'**
+  String get passwordConfirm;
+
+  /// No description provided for @currentPassword.
+  ///
+  /// In de, this message translates to:
+  /// **'Aktuelles Passwort'**
+  String get currentPassword;
+
+  /// No description provided for @passwordChanged.
+  ///
+  /// In de, this message translates to:
+  /// **'Passwort erfolgreich geändert.'**
+  String get passwordChanged;
+
+  /// No description provided for @passwordSet.
+  ///
+  /// In de, this message translates to:
+  /// **'Neues Passwort gesetzt. Bitte einloggen.'**
+  String get passwordSet;
+
+  /// No description provided for @authErrorSamePassword.
+  ///
+  /// In de, this message translates to:
+  /// **'Das neue Passwort muss sich vom bisherigen unterscheiden.'**
+  String get authErrorSamePassword;
+
+  /// No description provided for @authErrorInvalidCurrentPassword.
+  ///
+  /// In de, this message translates to:
+  /// **'Das aktuelle Passwort ist falsch.'**
+  String get authErrorInvalidCurrentPassword;
+
+  /// No description provided for @validationPasswordMismatch.
+  ///
+  /// In de, this message translates to:
+  /// **'Passwörter stimmen nicht überein.'**
+  String get validationPasswordMismatch;
+
   /// No description provided for @profileDeleteAccount.
   ///
   /// In de, this message translates to:

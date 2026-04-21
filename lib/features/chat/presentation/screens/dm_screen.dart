@@ -8,8 +8,8 @@ import '../../domain/models/chat_channel.dart';
 import '../providers/chat_providers.dart';
 import '../../../trainer/presentation/providers/trainer_provider.dart';
 
-class ChatInboxScreen extends ConsumerWidget {
-  const ChatInboxScreen({super.key});
+class DmScreen extends ConsumerWidget {
+  const DmScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -23,66 +23,40 @@ class ChatInboxScreen extends ConsumerWidget {
             icon: const Icon(Icons.refresh),
             onPressed: () => ref.invalidate(chatChannelsProvider),
           ),
+          IconButton(
+            icon: const Icon(Icons.settings_outlined),
+            tooltip: 'Einstellungen',
+            onPressed: () => context.push(Routes.settings),
+          ),
         ],
       ),
       body: channelsAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) =>
-            _ErrorState(onRetry: () => ref.invalidate(chatChannelsProvider)),
+        error: (e, _) => _ErrorState(
+          onRetry: () => ref.invalidate(chatChannelsProvider),
+        ),
         data: (channels) {
-          if (channels.isEmpty) return const _EmptyState();
-
           final direct =
               channels.where((c) => c.type == ChannelType.direct).toList();
-          final community =
-              channels.where((c) => c.type == ChannelType.community).toList();
-
-          return ListView(
-            children: [
-              if (direct.isNotEmpty) ...[
-                const _SectionHeader(title: 'MEIN TRAINER'),
-                ...direct.map((c) => _ChannelListTile(
-                    channel: c, onTap: () => _open(context, c))),
-              ],
-              if (community.isNotEmpty) ...[
-                const _SectionHeader(title: 'MEINE PAKETE'),
-                ...community.map((c) => _ChannelListTile(
-                    channel: c, onTap: () => _open(context, c))),
-              ],
-            ],
+          if (direct.isEmpty) return const _EmptyState();
+          return ListView.builder(
+            itemCount: direct.length,
+            itemBuilder: (ctx, i) => _DmListTile(
+              channel: direct[i],
+              onTap: () => context.push(
+                '/dm/${direct[i].id}',
+                extra: direct[i],
+              ),
+            ),
           );
         },
       ),
     );
   }
-
-  void _open(BuildContext context, ChatChannel channel) {
-    context.push(
-      Routes.dmChannel.replaceFirst(':channelId', channel.id),
-      extra: channel,
-    );
-  }
 }
 
-class _SectionHeader extends StatelessWidget {
-  const _SectionHeader({required this.title});
-  final String title;
-
-  @override
-  Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
-        child: Text(
-          title,
-          style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                color: Theme.of(context).colorScheme.outline,
-                letterSpacing: 1.2,
-              ),
-        ),
-      );
-}
-
-class _ChannelListTile extends ConsumerWidget {
-  const _ChannelListTile({required this.channel, required this.onTap});
+class _DmListTile extends ConsumerWidget {
+  const _DmListTile({required this.channel, required this.onTap});
   final ChatChannel channel;
   final VoidCallback onTap;
 
@@ -90,24 +64,13 @@ class _ChannelListTile extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final hasUnread = channel.unreadCount > 0;
-
-    final title = channel.type == ChannelType.direct
-        ? ref.watch(chatPartnerNameProvider(channel.id)).valueOrNull ??
-            channel.channelDisplayName()
-        : channel.channelDisplayName();
+    final title = ref.watch(chatPartnerNameProvider(channel.id)).valueOrNull ??
+        channel.channelDisplayName();
 
     return ListTile(
       leading: CircleAvatar(
-        backgroundColor: channel.type == ChannelType.direct
-            ? theme.colorScheme.primary
-            : theme.colorScheme.secondary,
-        child: Icon(
-          channel.type == ChannelType.direct
-              ? Icons.person_outline
-              : Icons.group_outlined,
-          color: Colors.white,
-          size: 20,
-        ),
+        backgroundColor: theme.colorScheme.primary,
+        child: const Icon(Icons.person_outline, color: Colors.white, size: 20),
       ),
       title: Text(
         title,
@@ -128,40 +91,16 @@ class _ChannelListTile extends ConsumerWidget {
               ),
             )
           : null,
-      trailing: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.end,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (channel.lastMessageAt != null)
-            Text(
+      trailing: channel.lastMessageAt != null
+          ? Text(
               _formatTime(channel.lastMessageAt!),
               style: theme.textTheme.labelSmall?.copyWith(
                 color: hasUnread
                     ? theme.colorScheme.primary
                     : theme.colorScheme.onSurface.withValues(alpha: 0.45),
               ),
-            ),
-          if (hasUnread) ...[
-            const SizedBox(height: 4),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.primary,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Text(
-                channel.unreadCount > 99 ? '99+' : '${channel.unreadCount}',
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 10,
-                ),
-              ),
-            ),
-          ],
-        ],
-      ),
+            )
+          : null,
       onTap: onTap,
     );
   }
@@ -197,8 +136,7 @@ class _EmptyState extends StatelessWidget {
                   style: Theme.of(context).textTheme.titleMedium),
               const SizedBox(height: 8),
               Text(
-                'Hier erscheinen deine Chats.\n'
-                'Absolviere dein erstes Training, um dem Community-Chat beizutreten.',
+                'Hier erscheinen deine direkten Nachrichten mit deinem Trainer.',
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: Theme.of(context)

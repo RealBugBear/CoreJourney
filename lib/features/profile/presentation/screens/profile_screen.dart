@@ -410,7 +410,7 @@ class _ConnectTrainerTile extends ConsumerWidget {
       ) as String;
 
       if (context.mounted) {
-        context.push(Routes.chatChannel.replaceFirst(':channelId', channelId));
+        context.push(Routes.dmChannel.replaceFirst(':channelId', channelId));
       }
     } catch (e) {
       if (context.mounted) {
