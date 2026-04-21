@@ -128,26 +128,20 @@ class _ProposalCardState extends State<_ProposalCard> {
 
   Future<void> _addToCalendar() async {
     if (_chosen == null) return;
-    final calSvc = CalendarService.instance;
-    var calendarId = await calSvc.getSelectedCalendarId();
-
-    if (calendarId == null) {
-      final cals = await calSvc.getAvailableCalendars();
-      if (cals.isNotEmpty && mounted) {
-        calendarId = cals.first.id;
-        await calSvc.setSelectedCalendarId(calendarId!);
-      }
-    }
-
-    if (calendarId != null) {
-      await calSvc.createCalendarEvent(
-        calendarId: calendarId,
+    try {
+      await CalendarService.instance.createCalendarEvent(
         title: '${widget.proposal.title} (mit ${widget.proposal.traineeName})',
         start: _chosen!,
         duration: Duration(minutes: widget.proposal.durationMinutes),
         location: widget.proposal.location,
         description: widget.proposal.notes,
       );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Kalender konnte nicht geöffnet werden: $e')),
+        );
+      }
     }
   }
 
