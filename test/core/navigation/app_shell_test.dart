@@ -58,15 +58,28 @@ void main() {
     expect(nav.destinations.length, 4);
   });
 
-  testWidgets('DM tab shows badge when unread > 0', (tester) async {
+  testWidgets('DM tab shows badge label when unread > 0', (tester) async {
     await tester.pumpWidget(_buildApp(trainerLinked: true, unreadDm: 3));
     await tester.pumpAndSettle();
     expect(
       find.descendant(
         of: find.byType(NavigationBar),
-        matching: find.byType(Badge),
+        matching: find.text('3'),
       ),
-      findsWidgets,
+      findsWidgets, // badge appears on both icon and selectedIcon
+    );
+  });
+
+  testWidgets('DM tab badge is hidden when unread is 0', (tester) async {
+    await tester.pumpWidget(_buildApp(trainerLinked: true, unreadDm: 0));
+    await tester.pumpAndSettle();
+    // No numeric badge label should be visible
+    expect(
+      find.descendant(
+        of: find.byType(NavigationBar),
+        matching: find.text('0'),
+      ),
+      findsNothing,
     );
   });
 

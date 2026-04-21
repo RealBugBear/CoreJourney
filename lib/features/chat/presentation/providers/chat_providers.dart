@@ -28,7 +28,7 @@ final totalUnreadCountProvider = Provider.autoDispose<int>((ref) {
 });
 
 /// Ungelesene Nachrichten nur in Direct-Channels (für DM-Tab-Badge).
-final unreadDmCountProvider = Provider.autoDispose<int>((ref) {
+final unreadDmCountProvider = Provider<int>((ref) {
   return ref.watch(chatChannelsProvider).maybeWhen(
         data: (channels) => channels
             .where((c) => c.type == ChannelType.direct)
