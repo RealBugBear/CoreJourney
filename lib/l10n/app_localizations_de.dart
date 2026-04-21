@@ -510,6 +510,32 @@ class AppLocalizationsDe extends AppLocalizations {
       'Passwort-Reset-E-Mail wurde gesendet.';
 
   @override
+  String get newPassword => 'Neues Passwort';
+
+  @override
+  String get passwordConfirm => 'Passwort bestätigen';
+
+  @override
+  String get currentPassword => 'Aktuelles Passwort';
+
+  @override
+  String get passwordChanged => 'Passwort erfolgreich geändert.';
+
+  @override
+  String get passwordSet => 'Neues Passwort gesetzt. Bitte einloggen.';
+
+  @override
+  String get authErrorSamePassword =>
+      'Das neue Passwort muss sich vom bisherigen unterscheiden.';
+
+  @override
+  String get authErrorInvalidCurrentPassword =>
+      'Das aktuelle Passwort ist falsch.';
+
+  @override
+  String get validationPasswordMismatch => 'Passwörter stimmen nicht überein.';
+
+  @override
   String get profileDeleteAccount => 'Konto löschen';
 
   @override

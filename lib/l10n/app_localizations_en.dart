@@ -501,6 +501,32 @@ class AppLocalizationsEn extends AppLocalizations {
   String get profileChangePasswordSent => 'Password reset email sent.';
 
   @override
+  String get newPassword => 'New password';
+
+  @override
+  String get passwordConfirm => 'Confirm password';
+
+  @override
+  String get currentPassword => 'Current password';
+
+  @override
+  String get passwordChanged => 'Password changed successfully.';
+
+  @override
+  String get passwordSet => 'Password set. Please log in.';
+
+  @override
+  String get authErrorSamePassword =>
+      'New password must differ from the current one.';
+
+  @override
+  String get authErrorInvalidCurrentPassword =>
+      'Current password is incorrect.';
+
+  @override
+  String get validationPasswordMismatch => 'Passwords do not match.';
+
+  @override
   String get profileDeleteAccount => 'Delete Account';
 
   @override
