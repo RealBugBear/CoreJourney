@@ -29,5 +29,19 @@ void main() {
       await InAppMusicSettings.setSelectedTrack(prefs, null);
       expect(InAppMusicSettings.selectedTrack(prefs), isNull);
     });
+
+    test('persists volume', () async {
+      final prefs = await SharedPreferences.getInstance();
+      await InAppMusicSettings.setVolume(prefs, 0.5);
+      expect(InAppMusicSettings.volume(prefs), 0.5);
+    });
+
+    test('clamps volume to 0.0..1.0', () async {
+      final prefs = await SharedPreferences.getInstance();
+      await InAppMusicSettings.setVolume(prefs, 1.8);
+      expect(InAppMusicSettings.volume(prefs), 1.0);
+      await InAppMusicSettings.setVolume(prefs, -0.3);
+      expect(InAppMusicSettings.volume(prefs), 0.0);
+    });
   });
 }
