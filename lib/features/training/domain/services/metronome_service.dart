@@ -116,9 +116,11 @@ class MetronomeService {
         _playBeat();
         await _sleep(Duration(milliseconds: (tempoSeconds * 1000).round()));
       }
+      // Fire event for visual/haptic feedback but no extra sound —
+      // playing transition audio simultaneously with the next beat caused
+      // an audible overlap (the "different sound at beat 4" issue).
       if (pi < ex.phases.length - 1 && !_cancelled) {
         _safeAdd(_phaseTransitionCtrl, null);
-        _playTransition();
       }
     }
   }
