@@ -11,7 +11,6 @@ class TrainingIntroWidget extends StatelessWidget {
   final int totalExercises;
   final TrainingSessionMode mode;
   final VoidCallback onStart;
-  final ValueChanged<TrainingSessionMode> onChangeMode;
 
   const TrainingIntroWidget({
     super.key,
@@ -20,7 +19,6 @@ class TrainingIntroWidget extends StatelessWidget {
     required this.totalExercises,
     required this.mode,
     required this.onStart,
-    required this.onChangeMode,
   });
 
   @override
@@ -84,24 +82,46 @@ class TrainingIntroWidget extends StatelessWidget {
           ),
           const SizedBox(height: 24),
 
-          // Mode selector
           Container(
             decoration: BoxDecoration(
               color: Colors.white.withValues(alpha: 0.08),
               borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
             ),
-            padding: const EdgeInsets.all(4),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             child: Row(
               children: [
-                _ModeTab(
-                  label: l10n.tutorialMode,
-                  selected: mode == TrainingSessionMode.tutorial,
-                  onTap: () => onChangeMode(TrainingSessionMode.tutorial),
+                Icon(
+                  mode == TrainingSessionMode.tutorial
+                      ? Icons.school_outlined
+                      : Icons.flash_on_outlined,
+                  color: Colors.white,
+                  size: 18,
                 ),
-                _ModeTab(
-                  label: l10n.routineMode,
-                  selected: mode == TrainingSessionMode.routine,
-                  onTap: () => onChangeMode(TrainingSessionMode.routine),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        mode == TrainingSessionMode.tutorial
+                            ? l10n.tutorialMode
+                            : l10n.routineMode,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'Ändere den Modus in den Einstellungen.',
+                        style: TextStyle(
+                          color: AppColors.textSecondaryDark,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -120,44 +140,6 @@ class TrainingIntroWidget extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _ModeTab extends StatelessWidget {
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-
-  const _ModeTab({
-    required this.label,
-    required this.selected,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Expanded(
-      child: GestureDetector(
-        onTap: onTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          padding: const EdgeInsets.symmetric(vertical: 10),
-          decoration: BoxDecoration(
-            color: selected ? AppColors.primary : null,
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Text(
-            label,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
-              color: selected ? Colors.white : AppColors.textSecondaryDark,
-            ),
-          ),
-        ),
       ),
     );
   }

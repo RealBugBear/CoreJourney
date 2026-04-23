@@ -13,7 +13,7 @@ class MetronomeService {
   bool _paused = false;
   bool _isRunning = false;
 
-  final _beatCtrl = StreamController<int>.broadcast();
+  final _beatCtrl = StreamController<int>.broadcast(sync: true);
   final _repIdxCtrl = StreamController<int>.broadcast();
   final _repCompleteCtrl = StreamController<void>.broadcast();
   final _allRepsCompleteCtrl = StreamController<void>.broadcast();

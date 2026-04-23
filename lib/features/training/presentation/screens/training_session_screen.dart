@@ -6,8 +6,6 @@ import 'package:wakelock_plus/wakelock_plus.dart';
 
 import '../../../../core/navigation/app_router.dart';
 
-import '../../../chat/domain/models/chat_channel.dart';
-import '../../../chat/presentation/providers/chat_providers.dart';
 import '../../../../bootstrap/providers.dart';
 import '../../../../core/database/app_database.dart';
 import '../../../../core/notifications/notification_service.dart';
@@ -15,18 +13,17 @@ import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../../core/settings/settings_provider.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../l10n/app_localizations.dart';
-import '../../../mood/presentation/providers/mood_provider.dart';
-import '../../../mood/presentation/widgets/mood_checkin_sheet.dart';
+import '../../../mood/presentation/widgets/training_experience_sheet.dart';
+import '../../domain/services/experience_prompt_service.dart';
+import '../../domain/models/training_session.dart';
 import '../../../progress/presentation/providers/progress_provider.dart';
 import '../providers/training_flow_provider.dart';
 import '../widgets/disclaimer_dialog.dart';
-import '../widgets/exercise_movement_widget.dart';
-import '../widgets/exercise_position_widget.dart';
-import '../widgets/exercise_preparation_widget.dart';
-import '../widgets/exercise_rest_widget.dart';
-import '../widgets/exercise_video_widget.dart';
 import '../widgets/training_intro_widget.dart';
 import '../widgets/training_outro_widget.dart';
+import 'immersive_session_screen.dart';
+
+enum _TrainingPhase { intro, session, outro }
 
 class TrainingSessionScreen extends ConsumerStatefulWidget {
   final String packageId;
@@ -39,6 +36,9 @@ class TrainingSessionScreen extends ConsumerStatefulWidget {
 }
 
 class _TrainingSessionScreenState extends ConsumerState<TrainingSessionScreen> {
+  _TrainingPhase _phase = _TrainingPhase.intro;
+  List<String> _completedExerciseIds = [];
+
   @override
   void initState() {
     super.initState();
@@ -107,64 +107,20 @@ class _TrainingSessionScreenState extends ConsumerState<TrainingSessionScreen> {
 
     if (!mounted) return;
 
-    // One coupled mood + note check-in after training.
+    // One combined experience prompt per day (mood + text + optional share).
     if (enrollment != null) {
-      await showMoodCheckinSheet(
-        context,
-        enrollmentId: enrollment.id,
-        onSaved: () {
-          ref.invalidate(moodDailyAggregatesProvider);
-          ref.invalidate(moodNotesProvider);
-        },
-      );
+      final shouldShow = await ExperiencePromptService.shouldShow();
+      if (shouldShow && mounted) {
+        await showTrainingExperienceSheet(
+          context,
+          enrollmentId: enrollment.id,
+          packageId: widget.packageId,
+        );
+      }
     }
-
-    if (!mounted) return;
-
-    // Offer to share experience in the package community chat
-    await _showShareWithCommunityPrompt(widget.packageId);
 
     if (!mounted) return;
     context.pop();
-  }
-
-  Future<void> _showShareWithCommunityPrompt(String packageId) async {
-    // Use cached channels instead of extra DB round-trip
-    final channels = ref.read(chatChannelsProvider).valueOrNull ?? [];
-    final communityChannel = channels
-        .where(
-            (c) => c.type == ChannelType.community && c.packageId == packageId)
-        .firstOrNull;
-
-    if (communityChannel == null || !mounted) return;
-    final channelId = communityChannel.id;
-
-    final share = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Erfahrung teilen?'),
-        content: const Text(
-          'Teile dein heutiges Training mit der Community.\n'
-          'Andere Teilnehmer desselben Pakets freuen sich über deinen Bericht.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Nein danke'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Teilen'),
-          ),
-        ],
-      ),
-    );
-
-    if (share == true && mounted) {
-      context.push(
-        Routes.communityChannel.replaceFirst(':channelId', channelId),
-      );
-    }
   }
 
   Future<bool> _onWillPop() async {
@@ -224,7 +180,7 @@ class _TrainingSessionScreenState extends ConsumerState<TrainingSessionScreen> {
         body: SafeArea(
           child: Stack(
             children: [
-              _buildCurrentStep(flowState, pkg),
+              _buildCurrentStep(flowState),
               // Close button — always visible top-right
               Positioned(
                 top: 8,
@@ -232,8 +188,11 @@ class _TrainingSessionScreenState extends ConsumerState<TrainingSessionScreen> {
                 child: IconButton(
                   icon: const Icon(Icons.close, color: Colors.white60),
                   onPressed: () async {
+                    final router = GoRouter.of(context);
                     final shouldLeave = await _onWillPop();
-                    if (shouldLeave && mounted) context.go(Routes.dashboard);
+                    if (shouldLeave && mounted) {
+                      router.go(Routes.dashboard);
+                    }
                   },
                 ),
               ),
@@ -244,64 +203,38 @@ class _TrainingSessionScreenState extends ConsumerState<TrainingSessionScreen> {
     );
   }
 
-  Widget _buildCurrentStep(TrainingFlowState state, String pkg) {
-    switch (state.step) {
-      case TrainingFlowStep.disclaimer:
-        return const SizedBox.shrink();
-
-      case TrainingFlowStep.intro:
+  Widget _buildCurrentStep(TrainingFlowState state) {
+    switch (_phase) {
+      case _TrainingPhase.intro:
         return TrainingIntroWidget(
           exercise: state.currentExercise,
           exerciseIndex: state.currentExerciseIndex,
           totalExercises: state.totalExercises,
           mode: state.mode,
-          onStart: () =>
-              ref.read(trainingFlowProvider(pkg).notifier).startSession(),
-          onChangeMode: (m) =>
-              ref.read(trainingFlowProvider(pkg).notifier).setMode(m),
+          onStart: () => setState(() => _phase = _TrainingPhase.session),
         );
 
-      case TrainingFlowStep.video:
-        return ExerciseVideoWidget(
-          exercise: state.currentExercise,
-          onReady: () =>
-              ref.read(trainingFlowProvider(pkg).notifier).videoReady(),
+      case _TrainingPhase.session:
+        return ImmersiveSessionScreen(
+          exercises: state.exercises,
+          isRoutineMode: state.mode == TrainingSessionMode.routine,
+          onComplete: (ids) {
+            setState(() {
+              _completedExerciseIds = ids;
+              _phase = _TrainingPhase.outro;
+            });
+          },
         );
 
-      case TrainingFlowStep.position:
-        return ExercisePositionWidget(
-          exercise: state.currentExercise,
-          onReady: () =>
-              ref.read(trainingFlowProvider(pkg).notifier).positionReady(),
+      case _TrainingPhase.outro:
+        final completedState = state.copyWith(
+          completedExerciseIds: _completedExerciseIds,
+          isComplete: true,
+          step: TrainingFlowStep.outro,
         );
-
-      case TrainingFlowStep.preparation:
-        return ExercisePreparationWidget(
-          exercise: state.currentExercise,
-          onReady: () =>
-              ref.read(trainingFlowProvider(pkg).notifier).preparationReady(),
-        );
-
-      case TrainingFlowStep.movement:
-        return ExerciseMovementWidget(
-          exercise: state.currentExercise,
-          exerciseIndex: state.currentExerciseIndex,
-          totalExercises: state.totalExercises,
-          onComplete: () =>
-              ref.read(trainingFlowProvider(pkg).notifier).exerciseComplete(),
-        );
-
-      case TrainingFlowStep.rest:
-        return ExerciseRestWidget(
-          nextExercise: state.currentExercise,
-          onContinue: () =>
-              ref.read(trainingFlowProvider(pkg).notifier).restComplete(),
-        );
-
-      case TrainingFlowStep.outro:
         return TrainingOutroWidget(
-          completedCount: state.completedExerciseIds.length,
-          onContinue: () => _handleOutroContinue(state),
+          completedCount: _completedExerciseIds.length,
+          onContinue: () => _handleOutroContinue(completedState),
         );
     }
   }

@@ -265,6 +265,7 @@ class _ImmersiveExerciseScreenState extends State<ImmersiveExerciseScreen> {
                 children: [
                   PendulumAnimationWidget(
                     beatInterval: beatInterval,
+                    beat: _currentBeat,
                     isActive: !_isResting && !_isPaused,
                   ),
                   const SizedBox(height: 16),

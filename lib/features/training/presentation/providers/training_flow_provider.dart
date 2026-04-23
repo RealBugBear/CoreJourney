@@ -2,6 +2,7 @@ import 'package:drift/drift.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../bootstrap/providers.dart';
+import '../../../../core/settings/settings_provider.dart';
 import '../../domain/models/exercise.dart';
 import '../../domain/models/training_session.dart';
 
@@ -206,10 +207,11 @@ final trainingFlowProvider = StateNotifierProvider.autoDispose
   // Try DB cache first; use hardcoded fallback if not ready or empty.
   final dbAsync = ref.watch(_dbExercisesProvider(packageId));
   final exercises = dbAsync.valueOrNull ?? _hardcodedFallback(packageId);
+  final defaultMode = ref.watch(settingsProvider).trainingMode;
 
   return TrainingFlowNotifier(
     exercises: exercises,
-    mode: TrainingSessionMode.tutorial,
+    mode: defaultMode,
     requiresDisclaimer: false, // TODO: check progress entry
   );
 });
