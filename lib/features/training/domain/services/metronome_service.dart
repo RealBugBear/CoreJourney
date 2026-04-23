@@ -59,7 +59,10 @@ class MetronomeService {
     final reps = ex.repetitions;
 
     for (int repIdx = 0; repIdx < reps; repIdx++) {
-      if (_cancelled) return;
+      if (_cancelled) {
+        _isRunning = false;
+        return;
+      }
       _safeAdd(_repIdxCtrl, repIdx);
 
       if (ex.rhythmType == RhythmType.holdRest) {
@@ -67,7 +70,10 @@ class MetronomeService {
       } else {
         await _runPhasedRep(ex);
       }
-      if (_cancelled) return;
+      if (_cancelled) {
+        _isRunning = false;
+        return;
+      }
 
       _safeAdd(_repCompleteCtrl, null);
       _playTransition();
