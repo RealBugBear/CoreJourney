@@ -9,14 +9,14 @@ import '../../../../core/training/in_app_music_settings.dart';
 import '../../../../core/training/training_feedback_settings.dart';
 import '../../domain/models/exercise.dart';
 import '../../domain/services/metronome_service.dart';
-// TODO: wire MusicPickerSheet (Task 6)
-// import '../widgets/music_picker_sheet.dart';
+import '../services/in_app_music_service.dart';
+import '../widgets/music_picker_sheet.dart';
 import '../widgets/pendulum_animation_widget.dart';
 import '../widgets/rep_segments_widget.dart';
 
 class ImmersiveExerciseScreen extends StatefulWidget {
   final Exercise exercise;
-  final int exerciseIndex;   // 0-based
+  final int exerciseIndex; // 0-based
   final int totalExercises;
   final bool isRoutineMode;
   final VoidCallback onComplete;
@@ -69,6 +69,9 @@ class _ImmersiveExerciseScreenState extends State<ImmersiveExerciseScreen> {
       _tempoSeconds = persistedTempo ?? 1.0;
       _musicActive = musicTrack != null;
     });
+    if (musicTrack != null) {
+      unawaited(InAppMusicService.instance.loadFromPrefs());
+    }
     _startMetronome();
   }
 
@@ -100,7 +103,8 @@ class _ImmersiveExerciseScreenState extends State<ImmersiveExerciseScreen> {
 
     _subs.add(svc.repComplete.listen((_) {
       if (!mounted) return;
-      final justCompletedRep = _currentRepIndex; // 0-based rep that just finished
+      final justCompletedRep =
+          _currentRepIndex; // 0-based rep that just finished
       final isHalfway = widget.exercise.halfwaySwitch &&
           widget.exercise.repetitions == 6 &&
           justCompletedRep == 2; // rep 3 (0-based index 2)
@@ -170,18 +174,18 @@ class _ImmersiveExerciseScreenState extends State<ImmersiveExerciseScreen> {
   }
 
   void _openMusicPicker() {
-    // TODO: wire MusicPickerSheet (Task 6)
-    // showModalBottomSheet<void>(
-    //   context: context,
-    //   backgroundColor: const Color(0xFF12121e),
-    //   shape: const RoundedRectangleBorder(
-    //       borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-    //   builder: (_) => MusicPickerSheet(
-    //     onMusicActiveChanged: (active) {
-    //       if (mounted) setState(() => _musicActive = active);
-    //     },
-    //   ),
-    // );
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: const Color(0xFF12121e),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => MusicPickerSheet(
+        onMusicActiveChanged: (active) {
+          if (mounted) setState(() => _musicActive = active);
+        },
+      ),
+    );
   }
 
   @override
@@ -198,8 +202,7 @@ class _ImmersiveExerciseScreenState extends State<ImmersiveExerciseScreen> {
         : _isResting
             ? 'Pause...'
             : (ex.holdCueDe.isNotEmpty ? ex.holdCueDe.toUpperCase() : 'HALTEN');
-    final beatInterval =
-        Duration(milliseconds: (_tempoSeconds * 1000).round());
+    final beatInterval = Duration(milliseconds: (_tempoSeconds * 1000).round());
 
     return Scaffold(
       backgroundColor: const Color(0xFF080810),
@@ -215,7 +218,7 @@ class _ImmersiveExerciseScreenState extends State<ImmersiveExerciseScreen> {
                   Text(
                     'Übung ${widget.exerciseIndex + 1} · ${widget.totalExercises} gesamt',
                     style: TextStyle(
-                        color: Colors.white.withOpacity(0.3),
+                        color: Colors.white.withValues(alpha: 0.3),
                         fontSize: 10,
                         letterSpacing: 0.12),
                   ),
@@ -223,10 +226,11 @@ class _ImmersiveExerciseScreenState extends State<ImmersiveExerciseScreen> {
                     padding:
                         const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF6366f1).withOpacity(0.2),
+                      color: const Color(0xFF6366f1).withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(4),
                       border: Border.all(
-                          color: const Color(0xFF6366f1).withOpacity(0.3)),
+                          color:
+                              const Color(0xFF6366f1).withValues(alpha: 0.3)),
                     ),
                     child: Text(
                       widget.isRoutineMode ? 'Routine' : 'Tutorial',
@@ -248,7 +252,7 @@ class _ImmersiveExerciseScreenState extends State<ImmersiveExerciseScreen> {
                 child: LinearProgressIndicator(
                   value: sessionProgress,
                   minHeight: 2,
-                  backgroundColor: Colors.white.withOpacity(0.08),
+                  backgroundColor: Colors.white.withValues(alpha: 0.08),
                   valueColor: const AlwaysStoppedAnimation(Color(0xFF6366f1)),
                 ),
               ),
@@ -270,7 +274,7 @@ class _ImmersiveExerciseScreenState extends State<ImmersiveExerciseScreen> {
                     '$_currentBeat',
                     style: TextStyle(
                       color: _isResting
-                          ? const Color(0xFFa5b4fc).withOpacity(0.4)
+                          ? const Color(0xFFa5b4fc).withValues(alpha: 0.4)
                           : const Color(0xFFa5b4fc),
                       fontSize: 64,
                       fontWeight: FontWeight.w900,
@@ -288,7 +292,8 @@ class _ImmersiveExerciseScreenState extends State<ImmersiveExerciseScreen> {
                   Text(
                     _isResting ? 'Pause' : 'von ${ex.holdSeconds} Schlägen',
                     style: TextStyle(
-                        color: Colors.white.withOpacity(0.25), fontSize: 11),
+                        color: Colors.white.withValues(alpha: 0.25),
+                        fontSize: 11),
                   ),
                   const SizedBox(height: 12),
 
@@ -297,8 +302,8 @@ class _ImmersiveExerciseScreenState extends State<ImmersiveExerciseScreen> {
                     cueWord,
                     style: TextStyle(
                       color: (_isResting || _halfwayAnnounce)
-                          ? Colors.white.withOpacity(0.55)
-                          : Colors.white.withOpacity(0.85),
+                          ? Colors.white.withValues(alpha: 0.55)
+                          : Colors.white.withValues(alpha: 0.85),
                       fontSize: _isResting ? 14 : 18,
                       fontWeight: FontWeight.w700,
                       letterSpacing: 0.08,
@@ -318,7 +323,8 @@ class _ImmersiveExerciseScreenState extends State<ImmersiveExerciseScreen> {
                   Text(
                     ex.title(locale),
                     style: TextStyle(
-                        color: Colors.white.withOpacity(0.3), fontSize: 11),
+                        color: Colors.white.withValues(alpha: 0.3),
+                        fontSize: 11),
                   ),
                 ],
               ),
@@ -340,11 +346,12 @@ class _ImmersiveExerciseScreenState extends State<ImmersiveExerciseScreen> {
                         child: Container(
                           height: 36,
                           decoration: BoxDecoration(
-                            color: const Color(0xFF6366f1).withOpacity(0.1),
+                            color:
+                                const Color(0xFF6366f1).withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(10),
                             border: Border.all(
-                                color:
-                                    const Color(0xFF6366f1).withOpacity(0.2)),
+                                color: const Color(0xFF6366f1)
+                                    .withValues(alpha: 0.2)),
                           ),
                           alignment: Alignment.center,
                           child: Text(
@@ -407,14 +414,14 @@ class _ImmersiveExerciseScreenState extends State<ImmersiveExerciseScreen> {
         child: Container(
           height: 36,
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.06),
+            color: Colors.white.withValues(alpha: 0.06),
             borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: Colors.white.withOpacity(0.1)),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
           ),
           alignment: Alignment.center,
           child: Text(label,
               style: TextStyle(
-                  color: Colors.white.withOpacity(0.6),
+                  color: Colors.white.withValues(alpha: 0.6),
                   fontSize: 18,
                   fontWeight: FontWeight.w700)),
         ),
@@ -428,13 +435,13 @@ class _ImmersiveExerciseScreenState extends State<ImmersiveExerciseScreen> {
           height: 32,
           decoration: BoxDecoration(
             color: active
-                ? const Color(0xFF22c55e).withOpacity(0.1)
-                : Colors.white.withOpacity(0.04),
+                ? const Color(0xFF22c55e).withValues(alpha: 0.1)
+                : Colors.white.withValues(alpha: 0.04),
             borderRadius: BorderRadius.circular(9),
             border: Border.all(
                 color: active
-                    ? const Color(0xFF22c55e).withOpacity(0.3)
-                    : Colors.white.withOpacity(0.08)),
+                    ? const Color(0xFF22c55e).withValues(alpha: 0.3)
+                    : Colors.white.withValues(alpha: 0.08)),
           ),
           alignment: Alignment.center,
           child: Text(
@@ -442,7 +449,7 @@ class _ImmersiveExerciseScreenState extends State<ImmersiveExerciseScreen> {
             style: TextStyle(
                 color: active
                     ? const Color(0xFF86efac)
-                    : Colors.white.withOpacity(0.4),
+                    : Colors.white.withValues(alpha: 0.4),
                 fontSize: 9,
                 fontWeight: FontWeight.w600),
           ),

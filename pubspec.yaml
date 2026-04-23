@@ -120,6 +120,7 @@ flutter:
     - assets/sounds/stnr/
     - assets/sounds/babinski/
     - assets/sounds/landau/
+    - assets/sounds/music/
 
 flutter_launcher_icons:
   android: true
