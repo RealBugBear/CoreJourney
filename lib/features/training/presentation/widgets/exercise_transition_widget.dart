@@ -42,10 +42,12 @@ class _ExerciseTransitionWidgetState extends State<ExerciseTransitionWidget> {
       _countdown = widget.transitionDurationSeconds;
       _timer = Timer.periodic(const Duration(seconds: 1), (_) {
         if (!mounted) return;
-        setState(() => _countdown--);
-        if (_countdown <= 0) {
+        if (_countdown <= 1) {
           _timer?.cancel();
+          setState(() => _countdown = 0);
           widget.onStart();
+        } else {
+          setState(() => _countdown--);
         }
       });
     }
@@ -59,6 +61,7 @@ class _ExerciseTransitionWidgetState extends State<ExerciseTransitionWidget> {
 
   void _startNow() {
     _timer?.cancel();
+    setState(() => _countdown = 0);
     HapticFeedback.mediumImpact();
     widget.onStart();
   }
