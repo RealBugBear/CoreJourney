@@ -1,7 +1,9 @@
+import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../core/training/transition_duration_settings.dart';
+import '../../../../core/training/training_feedback_settings.dart';
 import '../../domain/models/exercise.dart';
 import '../widgets/exercise_transition_widget.dart';
 import 'immersive_exercise_screen.dart';
@@ -48,7 +50,7 @@ class _ImmersiveSessionScreenState extends State<ImmersiveSessionScreen> {
     setState(() => _phase = _Phase.exercise);
   }
 
-  void _onExerciseComplete() {
+  Future<void> _onExerciseComplete() async {
     final exercise = widget.exercises[_exerciseIndex];
     _completedIds.add(exercise.id);
 
@@ -57,6 +59,24 @@ class _ImmersiveSessionScreenState extends State<ImmersiveSessionScreen> {
       return;
     }
 
+    // Play exercise-switch tone unless hapticOnly mode
+    final prefs = await SharedPreferences.getInstance();
+    final mode = TrainingFeedbackSettings.feedbackMode(prefs);
+    if (mode != TrainingFeedbackMode.hapticOnly) {
+      final player = AudioPlayer();
+      try {
+        final ctx = AudioContextConfig(
+          focus: AudioContextConfigFocus.mixWithOthers,
+        ).build();
+        await player.setAudioContext(ctx);
+        await player.setPlayerMode(PlayerMode.lowLatency);
+        await player.play(AssetSource('sounds/rhythm_hold_end.wav'),
+            mode: PlayerMode.lowLatency);
+      } catch (_) {}
+      await player.dispose();
+    }
+
+    if (!mounted) return;
     setState(() {
       _exerciseIndex++;
       _phase = _Phase.transition;

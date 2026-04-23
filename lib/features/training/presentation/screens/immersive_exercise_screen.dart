@@ -76,13 +76,19 @@ class _ImmersiveExerciseScreenState extends State<ImmersiveExerciseScreen> {
   }
 
   void _startMetronome() {
-    final enableAudio = _feedbackMode != TrainingFeedbackMode.silent;
+    // hapticOnly = haptic per beat, no beat audio, structural tones off
+    // silent    = no haptic, no beat audio, but structural tones (start/end) on
+    // voiceAndCues = full audio
+    final enableAudio = _feedbackMode != TrainingFeedbackMode.hapticOnly;
+    final enableBeatAudio = _feedbackMode == TrainingFeedbackMode.voiceAndCues;
     final svc = MetronomeService(
       tempoSeconds: _tempoSeconds,
       restDuration: const Duration(seconds: 3),
       enableAudio: enableAudio,
+      enableBeatAudio: enableBeatAudio,
     );
     _metronome = svc;
+    svc.playStartTone(); // start marker for silent/minimal mode
 
     _subs.add(svc.beatStream.listen((beat) {
       if (mounted) {
@@ -340,7 +346,7 @@ class _ImmersiveExerciseScreenState extends State<ImmersiveExerciseScreen> {
                   Row(
                     children: [
                       Expanded(
-                          child: _tempoBtn('−', () => _changeTempo(_stepSize))),
+                          child: _tempoBtn('−', () => _changeTempo(-_stepSize))),
                       const SizedBox(width: 8),
                       Expanded(
                         flex: 2,
@@ -367,7 +373,7 @@ class _ImmersiveExerciseScreenState extends State<ImmersiveExerciseScreen> {
                       const SizedBox(width: 8),
                       Expanded(
                           child:
-                              _tempoBtn('+', () => _changeTempo(-_stepSize))),
+                              _tempoBtn('+', () => _changeTempo(_stepSize))),
                     ],
                   ),
                   const SizedBox(height: 8),

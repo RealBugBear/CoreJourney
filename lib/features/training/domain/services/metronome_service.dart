@@ -7,7 +7,10 @@ import '../models/exercise.dart';
 class MetronomeService {
   double tempoSeconds;
   final Duration restDuration;
+  // enableAudio: if false, NO sounds at all (hapticOnly mode).
+  // enableBeatAudio: if false, only structural sounds play (silent/marker mode).
   final bool enableAudio;
+  final bool enableBeatAudio;
 
   bool _cancelled = false;
   bool _paused = false;
@@ -19,13 +22,13 @@ class MetronomeService {
   final _allRepsCompleteCtrl = StreamController<void>.broadcast();
   final _phaseTransitionCtrl = StreamController<void>.broadcast();
 
-  AudioPlayer? _beatPlayer;
-  AudioPlayer? _transitionPlayer;
+  AudioPlayer? _player;
 
   MetronomeService({
     this.tempoSeconds = 1.0,
     this.restDuration = const Duration(seconds: 3),
     this.enableAudio = true,
+    this.enableBeatAudio = true,
   });
 
   Stream<int> get beatStream => _beatCtrl.stream;
@@ -36,18 +39,14 @@ class MetronomeService {
 
   Future<void> _initAudio() async {
     if (!enableAudio) return;
-    if (_beatPlayer != null) return;
+    if (_player != null) return;
     final ctx = AudioContextConfig(
       focus: AudioContextConfigFocus.mixWithOthers,
     ).build();
-    _beatPlayer = AudioPlayer();
-    _transitionPlayer = AudioPlayer();
-    await _beatPlayer!.setAudioContext(ctx);
-    await _transitionPlayer!.setAudioContext(ctx);
-    await _beatPlayer!.setReleaseMode(ReleaseMode.stop);
-    await _transitionPlayer!.setReleaseMode(ReleaseMode.stop);
-    await _beatPlayer!.setPlayerMode(PlayerMode.lowLatency);
-    await _transitionPlayer!.setPlayerMode(PlayerMode.lowLatency);
+    _player = AudioPlayer();
+    await _player!.setAudioContext(ctx);
+    await _player!.setReleaseMode(ReleaseMode.stop);
+    await _player!.setPlayerMode(PlayerMode.lowLatency);
   }
 
   Future<void> startExercise(Exercise ex) async {
@@ -76,7 +75,7 @@ class MetronomeService {
       }
 
       _safeAdd(_repCompleteCtrl, null);
-      _playTransition();
+      _playRepEnd();
 
       if (repIdx < reps - 1) {
         await _sleep(restDuration);
@@ -147,20 +146,24 @@ class MetronomeService {
   }
 
   void _playBeat() {
-    if (!enableAudio || _beatPlayer == null) return;
-    _beatPlayer!
+    if (!enableAudio || !enableBeatAudio || _player == null) return;
+    _player!
         .play(AssetSource('sounds/rhythm_arrive.wav'),
             mode: PlayerMode.lowLatency)
         .ignore();
   }
 
-  void _playTransition() {
-    if (!enableAudio || _transitionPlayer == null) return;
-    _transitionPlayer!
+  /// Structural marker — plays even when enableBeatAudio is false.
+  void _playRepEnd() {
+    if (!enableAudio || _player == null) return;
+    _player!
         .play(AssetSource('sounds/rhythm_hold_end.wav'),
             mode: PlayerMode.lowLatency)
         .ignore();
   }
+
+  /// Call once after init to play a start marker (for minimal-audio mode).
+  void playStartTone() => _playRepEnd();
 
   Future<void> pause() async => _paused = true;
   Future<void> resume() async => _paused = false;
@@ -168,10 +171,8 @@ class MetronomeService {
   Future<void> dispose() async {
     _cancelled = true;
     if (enableAudio) {
-      await _beatPlayer?.dispose();
-      _beatPlayer = null;
-      await _transitionPlayer?.dispose();
-      _transitionPlayer = null;
+      await _player?.dispose();
+      _player = null;
     }
     for (final c in [
       _beatCtrl,
