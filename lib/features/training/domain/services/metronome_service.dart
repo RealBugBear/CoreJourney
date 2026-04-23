@@ -11,6 +11,7 @@ class MetronomeService {
 
   bool _cancelled = false;
   bool _paused = false;
+  bool _isRunning = false;
 
   final _beatCtrl = StreamController<int>.broadcast();
   final _repIdxCtrl = StreamController<int>.broadcast();
@@ -35,6 +36,7 @@ class MetronomeService {
 
   Future<void> _initAudio() async {
     if (!enableAudio) return;
+    if (_beatPlayer != null) return;
     final ctx = AudioContextConfig(
       focus: AudioContextConfigFocus.mixWithOthers,
     ).build();
@@ -49,6 +51,8 @@ class MetronomeService {
   }
 
   Future<void> startExercise(Exercise ex) async {
+    if (_isRunning) return;
+    _isRunning = true;
     _cancelled = false;
     _paused = false;
     await _initAudio();
@@ -79,6 +83,7 @@ class MetronomeService {
       // Future completes (broadcast stream adds are asynchronous).
       await Future.delayed(Duration.zero);
     }
+    _isRunning = false;
   }
 
   Future<void> _runHoldRestRep(Exercise ex) async {
@@ -156,7 +161,9 @@ class MetronomeService {
     _cancelled = true;
     if (enableAudio) {
       await _beatPlayer?.dispose();
+      _beatPlayer = null;
       await _transitionPlayer?.dispose();
+      _transitionPlayer = null;
     }
     for (final c in [
       _beatCtrl,
