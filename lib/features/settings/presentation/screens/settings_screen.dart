@@ -490,10 +490,39 @@ class _TrainerConnectionSection extends ConsumerWidget {
                     );
                   }
                 } catch (e) {
-                  final msg = e.toString().contains('Invalid or already used')
-                      ? 'Code ungültig oder bereits verwendet.'
-                      : 'Fehler: ${e.toString().replaceAll('Exception: ', '')}';
-                  setDialogState(() => errorMsg = msg);
+                  final raw = e.toString();
+                  if (raw.contains('Invalid or already used')) {
+                    setDialogState(
+                      () => errorMsg = 'Code ungültig oder bereits verwendet.',
+                    );
+                  } else {
+                    // Show full error in a separate dialog so nothing is cut off
+                    if (ctx.mounted) Navigator.pop(ctx);
+                    if (context.mounted) {
+                      await showDialog<void>(
+                        context: context,
+                        builder: (c) => AlertDialog(
+                          title: const Text('Fehler beim Trainer-Wechsel'),
+                          content: SingleChildScrollView(
+                            child: SelectableText(raw),
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () {
+                                Clipboard.setData(ClipboardData(text: raw));
+                                Navigator.pop(c);
+                              },
+                              child: const Text('Kopieren & Schließen'),
+                            ),
+                            TextButton(
+                              onPressed: () => Navigator.pop(c),
+                              child: const Text('Schließen'),
+                            ),
+                          ],
+                        ),
+                      );
+                    }
+                  }
                 }
               },
               child: const Text('Bestätigen'),
