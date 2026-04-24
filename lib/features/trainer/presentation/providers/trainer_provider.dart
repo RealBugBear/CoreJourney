@@ -181,12 +181,36 @@ Future<void> acceptInvite(String code) async {
 Future<void> switchTrainer(String newInviteCode) async {
   final userId = Supabase.instance.client.auth.currentUser?.id;
   if (userId == null) return;
-  await Supabase.instance.client
+
+  // Fetch current active relationship IDs before deactivating (for rollback).
+  final active = await Supabase.instance.client
       .from('trainer_client_relationships')
-      .update({'status': 'inactive'})
+      .select('id')
       .eq('client_id', userId)
       .eq('status', 'active');
-  await acceptInvite(newInviteCode);
+
+  final ids = (active as List).map((r) => r['id'] as String).toList();
+
+  // Deactivate current trainer relationship.
+  if (ids.isNotEmpty) {
+    await Supabase.instance.client
+        .from('trainer_client_relationships')
+        .update({'status': 'inactive'})
+        .inFilter('id', ids);
+  }
+
+  try {
+    await acceptInvite(newInviteCode);
+  } catch (e) {
+    // Rollback: restore old relationships if new code was invalid.
+    if (ids.isNotEmpty) {
+      await Supabase.instance.client
+          .from('trainer_client_relationships')
+          .update({'status': 'active'})
+          .inFilter('id', ids);
+    }
+    rethrow;
+  }
 }
 
 // ── Client's linked trainer ───────────────────────────────────────────────────
