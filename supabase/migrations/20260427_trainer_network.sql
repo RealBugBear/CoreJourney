@@ -378,6 +378,17 @@ BEGIN
     RAISE EXCEPTION 'Bereits mit diesem Trainer verbunden';
   END IF;
 
+  -- Block if already has a pending discovery request for this trainer
+  IF EXISTS (
+    SELECT 1 FROM trainer_client_relationships
+    WHERE trainer_id = p_trainer_id
+      AND client_id  = v_client_id
+      AND status     = 'pending'
+      AND source_type = 'discovery'
+  ) THEN
+    RAISE EXCEPTION 'Anfrage bereits gesendet';
+  END IF;
+
   INSERT INTO trainer_client_relationships (
     trainer_id, client_id, status, source_type
   ) VALUES (
