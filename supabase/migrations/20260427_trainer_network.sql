@@ -50,10 +50,37 @@ ALTER TABLE trainer_client_relationships
   ADD COLUMN IF NOT EXISTS source_type text NOT NULL DEFAULT 'invite'
   CHECK (source_type IN ('invite', 'discovery'));
 
+-- Drop the old blanket-unique constraint (added by 20260424_atomic_trainer_switch.sql)
+-- to allow multiple rows per (trainer_id, client_id) across different source_types and statuses.
+DO $$
+DECLARE
+  v_con text;
+BEGIN
+  SELECT conname INTO v_con
+  FROM pg_constraint
+  WHERE conrelid = 'trainer_client_relationships'::regclass
+    AND contype = 'u'
+    AND array_to_string(
+          ARRAY(SELECT attname FROM pg_attribute
+                WHERE attrelid = conrelid
+                  AND attnum = ANY(conkey)
+                ORDER BY attnum),
+          ',') = 'trainer_id,client_id';
+  IF v_con IS NOT NULL THEN
+    EXECUTE format('ALTER TABLE trainer_client_relationships DROP CONSTRAINT %I', v_con);
+  END IF;
+END;
+$$;
+
 -- One pending discovery request per trainer-client pair
 CREATE UNIQUE INDEX IF NOT EXISTS uq_trainer_client_pending_discovery
   ON trainer_client_relationships(trainer_id, client_id)
   WHERE status = 'pending' AND source_type = 'discovery' AND client_id IS NOT NULL;
+
+-- One active relationship per trainer-client pair (invariant: a client has at most one active trainer)
+CREATE UNIQUE INDEX IF NOT EXISTS uq_trainer_client_active_pair
+  ON trainer_client_relationships(trainer_id, client_id)
+  WHERE status = 'active';
 
 -- ── 4. RLS ────────────────────────────────────────────────────────────────────
 
@@ -108,6 +135,8 @@ BEGIN
   RETURN ST_MakePoint(v_lng + v_offset_lng, v_lat + v_offset_lat)::geography;
 END;
 $$;
+
+REVOKE ALL ON FUNCTION _jitter_location(geography, int) FROM PUBLIC;
 
 -- ── 6. upsert_trainer_profile ─────────────────────────────────────────────────
 
@@ -261,8 +290,8 @@ RETURNS TABLE (
   contact_phone text,
   admin_notes   text,
   submitted_at  timestamptz,
-  public_latitude  float8,
-  public_longitude float8
+  admin_latitude  float8,
+  admin_longitude float8
 )
 LANGUAGE sql STABLE SECURITY DEFINER
 SET search_path = public
@@ -277,9 +306,9 @@ AS $$
     tpp.admin_notes,
     tp.submitted_at,
     CASE WHEN tp.location_private IS NOT NULL
-      THEN ST_Y(tp.location_private::geometry) ELSE NULL END AS public_latitude,
+      THEN ST_Y(tp.location_private::geometry) ELSE NULL END AS admin_latitude,
     CASE WHEN tp.location_private IS NOT NULL
-      THEN ST_X(tp.location_private::geometry) ELSE NULL END AS public_longitude
+      THEN ST_X(tp.location_private::geometry) ELSE NULL END AS admin_longitude
   FROM trainer_profiles tp
   LEFT JOIN trainer_profile_private tpp ON tpp.trainer_id = tp.id
   WHERE
@@ -336,6 +365,10 @@ BEGIN
     status     = 'suspended',
     updated_at = now()
   WHERE id = p_trainer_id;
+
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'Trainer nicht gefunden';
+  END IF;
 
   IF p_notes IS NOT NULL THEN
     INSERT INTO trainer_profile_private (trainer_id, contact_email, admin_notes)
