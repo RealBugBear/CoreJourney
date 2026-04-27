@@ -40,7 +40,7 @@ class Appointment {
   factory Appointment.fromJson(Map<String, dynamic> json) {
     final rawSlots = json['proposed_slots'];
     final proposedSlots = rawSlots is List
-        ? rawSlots.whereType<String>().map(DateTime.parse).toList()
+        ? rawSlots.whereType<String>().map(_parseLocalDateTime).toList()
         : <DateTime>[];
 
     final scheduledRaw = json['scheduled_for'] as String?;
@@ -51,7 +51,8 @@ class Appointment {
       traineeId: json['trainee_id'] as String,
       traineeName: json['trainee_name'] as String? ?? 'Trainee',
       title: json['title'] as String? ?? 'Isometrische Partnerübung',
-      scheduledFor: scheduledRaw != null ? DateTime.parse(scheduledRaw) : null,
+      scheduledFor:
+          scheduledRaw != null ? _parseLocalDateTime(scheduledRaw) : null,
       proposedSlots: proposedSlots,
       durationMinutes: (json['duration_minutes'] as num?)?.toInt() ?? 60,
       location: json['location'] as String?,
@@ -61,8 +62,12 @@ class Appointment {
       traineeDayNumber: (json['trainee_day_number'] as num?)?.toInt(),
       calendarEventId: json['calendar_event_id'] as String?,
       calendarId: json['calendar_id'] as String?,
-      createdAt: DateTime.parse(json['created_at'] as String),
+      createdAt: _parseLocalDateTime(json['created_at'] as String),
     );
+  }
+
+  static DateTime _parseLocalDateTime(String value) {
+    return DateTime.parse(value).toLocal();
   }
 
   Map<String, dynamic> toJson() => {
@@ -71,10 +76,10 @@ class Appointment {
         'trainee_id': traineeId,
         'title': title,
         if (scheduledFor != null)
-          'scheduled_for': scheduledFor!.toIso8601String(),
+          'scheduled_for': scheduledFor!.toUtc().toIso8601String(),
         if (proposedSlots.isNotEmpty)
           'proposed_slots':
-              proposedSlots.map((d) => d.toIso8601String()).toList(),
+              proposedSlots.map((d) => d.toUtc().toIso8601String()).toList(),
         'duration_minutes': durationMinutes,
         if (location != null) 'location': location,
         if (notes != null) 'notes': notes,

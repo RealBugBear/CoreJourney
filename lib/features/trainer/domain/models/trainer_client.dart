@@ -27,6 +27,15 @@ class TrainerClient {
     return daysSince >= 2;
   }
 
+  int get totalTrainingDays => 28;
+
+  int get remainingTrainingDays {
+    final remaining = totalTrainingDays - currentDay;
+    return remaining < 0 ? 0 : remaining;
+  }
+
+  bool get needsNextPackageAppointment => remainingTrainingDays <= 5;
+
   factory TrainerClient.fromJson(Map<String, dynamic> json) {
     return TrainerClient(
       relationshipId: json['relationship_id'] as String,
