@@ -40,6 +40,7 @@ class _TrainerDiscoveryScreenState
       }
       if (permission == LocationPermission.deniedForever ||
           permission == LocationPermission.denied) {
+        if (!mounted) return;
         setState(() {
           _loadingLocation = false;
           _locationError =
@@ -48,11 +49,13 @@ class _TrainerDiscoveryScreenState
         return;
       }
       final pos = await Geolocator.getCurrentPosition();
+      if (!mounted) return;
       setState(() {
         _userPosition = pos;
         _loadingLocation = false;
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _loadingLocation = false;
         _locationError = e.toString();
@@ -91,7 +94,7 @@ class _TrainerDiscoveryScreenState
                     });
                     _fetchLocation();
                   },
-                  child: const Text('Erneut versuchen'),
+                  child: Text(l10n.retry),
                 ),
               ],
             ),
