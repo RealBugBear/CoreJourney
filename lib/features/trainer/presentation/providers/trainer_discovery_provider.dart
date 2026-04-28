@@ -31,15 +31,29 @@ class NearbyParams {
   final double lat;
   final double lng;
   final double radiusKm;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is NearbyParams &&
+          lat == other.lat &&
+          lng == other.lng &&
+          radiusKm == other.radiusKm;
+
+  @override
+  int get hashCode => Object.hash(lat, lng, radiusKm);
 }
 
 final nearbyTrainersProvider =
     FutureProvider.family<List<TrainerProfile>, NearbyParams>(
-  (ref, params) => ref.read(trainerProfileRepositoryProvider).findNearby(
-        lat: params.lat,
-        lng: params.lng,
-        radiusKm: params.radiusKm,
-      ),
+  (ref, params) {
+    ref.watch(authStateProvider);
+    return ref.read(trainerProfileRepositoryProvider).findNearby(
+          lat: params.lat,
+          lng: params.lng,
+          radiusKm: params.radiusKm,
+        );
+  },
 );
 
 // ── Pending trainers (admin) ──────────────────────────────────────────────────
