@@ -54,6 +54,11 @@ class Routes {
   static const dm = '/dm';
   static const dmChannel = '/dm/:channelId';
   static const adminPanel = '/admin';
+  static const trainerDiscovery = '/trainers';
+  static const trainerProfileSetup = '/trainer/profile-setup';
+  static const trainerProfilePending = '/trainer/profile-pending';
+  static const trainerPublicProfile = '/trainers/:trainerId';
+  static const trainerRequests = '/trainer/requests';
 }
 
 /// Bridges a Stream into a [Listenable] so GoRouter can react to auth changes.
