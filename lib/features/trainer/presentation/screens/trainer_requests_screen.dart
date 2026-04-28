@@ -36,15 +36,33 @@ class TrainerRequestsScreen extends ConsumerWidget {
   }
 }
 
-class _RequestCard extends ConsumerWidget {
+class _RequestCard extends ConsumerStatefulWidget {
   const _RequestCard({required this.request});
 
   final TrainerDiscoveryRequest request;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_RequestCard> createState() => _RequestCardState();
+}
+
+class _RequestCardState extends ConsumerState<_RequestCard> {
+  bool _isResponding = false;
+
+  Future<void> _respond({required bool accept}) async {
+    if (_isResponding) return;
+    setState(() => _isResponding = true);
+    try {
+      await ref
+          .read(incomingRequestsProvider.notifier)
+          .respond(widget.request.relationshipId, accept: accept);
+    } finally {
+      if (mounted) setState(() => _isResponding = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final notifier = ref.read(incomingRequestsProvider.notifier);
 
     return Card(
       child: Padding(
@@ -58,7 +76,7 @@ class _RequestCard extends ConsumerWidget {
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
-                    request.displayName,
+                    widget.request.displayName,
                     style: Theme.of(context).textTheme.titleMedium,
                   ),
                 ),
@@ -66,7 +84,7 @@ class _RequestCard extends ConsumerWidget {
             ),
             const SizedBox(height: 4),
             Text(
-              request.createdAt.toLocal().toString().substring(0, 10),
+              widget.request.createdAt.toLocal().toString().substring(0, 10),
               style: Theme.of(context).textTheme.bodySmall,
             ),
             const SizedBox(height: 12),
@@ -74,20 +92,14 @@ class _RequestCard extends ConsumerWidget {
               children: [
                 Expanded(
                   child: FilledButton(
-                    onPressed: () => notifier.respond(
-                      request.relationshipId,
-                      accept: true,
-                    ),
+                    onPressed: _isResponding ? null : () => _respond(accept: true),
                     child: Text(l10n.trainerRequestAccept),
                   ),
                 ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: OutlinedButton(
-                    onPressed: () => notifier.respond(
-                      request.relationshipId,
-                      accept: false,
-                    ),
+                    onPressed: _isResponding ? null : () => _respond(accept: false),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: AppColors.error,
                       side: const BorderSide(color: AppColors.error),

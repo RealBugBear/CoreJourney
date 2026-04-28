@@ -38,7 +38,7 @@ class _TrainerPublicProfileScreenState
         final l10n = AppLocalizations.of(context);
         setState(() =>
             _errorMessage = l10n.trainerDiscoveryRequestAlreadySent);
-      } else if (msg.contains('bereits verbunden') || msg.contains('connected')) {
+      } else if (msg.toLowerCase().contains('bereits verbunden') || msg.contains('connected')) {
         final l10n = AppLocalizations.of(context);
         setState(() =>
             _errorMessage = l10n.trainerDiscoveryRequestAlreadyConnected);
