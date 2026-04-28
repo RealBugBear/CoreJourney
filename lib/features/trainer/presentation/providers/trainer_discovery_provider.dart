@@ -109,6 +109,6 @@ final incomingRequestsProvider =
 
 // ── Send connection request ───────────────────────────────────────────────────
 
-Future<void> sendDiscoveryRequest(Ref ref, String trainerId) {
+Future<void> sendDiscoveryRequest(WidgetRef ref, String trainerId) {
   return ref.read(trainerProfileRepositoryProvider).sendConnectionRequest(trainerId);
 }
