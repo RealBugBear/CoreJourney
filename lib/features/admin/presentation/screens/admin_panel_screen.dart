@@ -3,6 +3,9 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../l10n/app_localizations.dart';
+import '../../../trainer/domain/models/trainer_profile.dart';
+import '../../../trainer/presentation/providers/trainer_discovery_provider.dart';
 import '../providers/admin_provider.dart';
 
 class AdminPanelScreen extends ConsumerWidget {
@@ -10,8 +13,9 @@ class AdminPanelScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     return DefaultTabController(
-      length: 2,
+      length: 3,
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Admin Panel'),
@@ -24,10 +28,11 @@ class AdminPanelScreen extends ConsumerWidget {
               },
             ),
           ],
-          bottom: const TabBar(
+          bottom: TabBar(
             tabs: [
-              Tab(text: 'Trainer-Codes'),
-              Tab(text: 'Premium'),
+              const Tab(text: 'Trainer-Codes'),
+              const Tab(text: 'Premium'),
+              Tab(text: l10n.adminTrainerReviewTab),
             ],
           ),
         ),
@@ -35,6 +40,7 @@ class AdminPanelScreen extends ConsumerWidget {
           children: [
             _TrainerCodesTab(),
             _PremiumTab(),
+            _TrainerReviewTab(),
           ],
         ),
         floatingActionButton: FloatingActionButton.extended(
@@ -102,7 +108,7 @@ class _TrainerCodesTab extends ConsumerWidget {
     return codesAsync.when(
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (e, _) => Center(
-        child: Text('Fehler: $e', style: TextStyle(color: AppColors.error)),
+        child: Text('Fehler: $e', style: const TextStyle(color: AppColors.error)),
       ),
       data: (codes) {
         if (codes.isEmpty) {
@@ -251,7 +257,7 @@ class _CodeTile extends StatelessWidget {
         ),
         subtitle: Text(
           'Erstellt: ${_formatDate(code.createdAt)}',
-          style: TextStyle(color: AppColors.textSecondary),
+          style: const TextStyle(color: AppColors.textSecondary),
         ),
         trailing: Chip(
           label: Text(statusLabel),
@@ -272,5 +278,136 @@ class _CodeTile extends StatelessWidget {
 
   String _formatDate(DateTime dt) {
     return '${dt.day.toString().padLeft(2, '0')}.${dt.month.toString().padLeft(2, '0')}.${dt.year}';
+  }
+}
+
+// ── Trainer Review Tab ────────────────────────────────────────────────────────
+
+class _TrainerReviewTab extends ConsumerWidget {
+  const _TrainerReviewTab();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final asyncTrainers = ref.watch(pendingTrainersProvider);
+
+    return asyncTrainers.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (e, _) => Center(child: Text(e.toString())),
+      data: (trainers) {
+        if (trainers.isEmpty) {
+          return Center(child: Text(l10n.adminTrainerNoPending));
+        }
+        return ListView.separated(
+          padding: const EdgeInsets.all(16),
+          itemCount: trainers.length,
+          separatorBuilder: (_, __) => const SizedBox(height: 12),
+          itemBuilder: (context, i) =>
+              _TrainerReviewCard(trainer: trainers[i]),
+        );
+      },
+    );
+  }
+}
+
+class _TrainerReviewCard extends ConsumerWidget {
+  const _TrainerReviewCard({required this.trainer});
+
+  final TrainerProfile trainer;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final notifier = ref.read(pendingTrainersProvider.notifier);
+
+    Future<void> onApprove() async {
+      await notifier.approve(trainer.id);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.adminTrainerApproveSuccess)),
+        );
+      }
+    }
+
+    Future<void> onSuspend() async {
+      await notifier.suspend(trainer.id);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.adminTrainerSuspendSuccess)),
+        );
+      }
+    }
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                if (trainer.photoUrl != null)
+                  CircleAvatar(
+                    backgroundImage: NetworkImage(trainer.photoUrl!),
+                    radius: 24,
+                  )
+                else
+                  const CircleAvatar(
+                    radius: 24,
+                    child: Icon(Icons.person),
+                  ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(trainer.displayName,
+                          style: Theme.of(context).textTheme.titleMedium),
+                      if (trainer.contactEmail != null)
+                        Text(trainer.contactEmail!,
+                            style: Theme.of(context).textTheme.bodySmall),
+                      if (trainer.contactPhone != null)
+                        Text(trainer.contactPhone!,
+                            style: Theme.of(context).textTheme.bodySmall),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            if (trainer.bio != null) ...[
+              const SizedBox(height: 8),
+              Text(trainer.bio!),
+            ],
+            const SizedBox(height: 8),
+            Text(
+              'Eingereicht: ${trainer.submittedAt.toLocal().toString().substring(0, 10)}',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: FilledButton(
+                    onPressed: onApprove,
+                    child: Text(l10n.adminTrainerApprove),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: onSuspend,
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.error,
+                      side: const BorderSide(color: AppColors.error),
+                    ),
+                    child: Text(l10n.adminTrainerSuspend),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
