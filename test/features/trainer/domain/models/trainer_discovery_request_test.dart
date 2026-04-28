@@ -10,9 +10,7 @@ void main() {
         'display_name': 'Anna Müller',
         'created_at': '2026-04-27T09:00:00.000Z',
       };
-
       final req = TrainerDiscoveryRequest.fromJson(json);
-
       expect(req.relationshipId, 'rel-123');
       expect(req.clientId, 'client-456');
       expect(req.displayName, 'Anna Müller');

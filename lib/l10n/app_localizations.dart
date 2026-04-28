@@ -1255,6 +1255,49 @@ abstract class AppLocalizations {
   /// In de, this message translates to:
   /// **'Im Kalender öffnen'**
   String get appointmentOpenInCalendar;
+
+  // ── Trainer Discovery ─────────────────────────────────────────────────────
+  String get trainerDiscoveryTitle;
+  String get trainerDiscoveryEmpty;
+  String trainerDiscoveryRadiusLabel(int km);
+  String get trainerDiscoveryLocationRequired;
+  String get trainerDiscoveryLocationDenied;
+  String trainerDiscoveryDistanceLabel(double km);
+  String get trainerDiscoverySendRequest;
+  String get trainerDiscoveryRequestSent;
+  String get trainerDiscoveryRequestAlreadySent;
+  String get trainerDiscoveryRequestAlreadyConnected;
+
+  // ── Trainer Profile Setup ─────────────────────────────────────────────────
+  String get trainerSetupTitle;
+  String get trainerSetupDisplayNameLabel;
+  String get trainerSetupBioLabel;
+  String get trainerSetupEmailLabel;
+  String get trainerSetupPhoneLabel;
+  String get trainerSetupLocationTitle;
+  String get trainerSetupLocationHint;
+  String get trainerSetupLocationMissing;
+  String get trainerSetupSubmit;
+  String get trainerSetupPendingTitle;
+  String get trainerSetupPendingBody;
+
+  // ── Trainer Public Profile ────────────────────────────────────────────────
+  String get trainerPublicProfileTitle;
+  String get trainerPublicProfileVerified;
+
+  // ── Trainer Requests ──────────────────────────────────────────────────────
+  String get trainerRequestsTitle;
+  String get trainerRequestAccept;
+  String get trainerRequestDecline;
+  String get trainerRequestNoRequests;
+
+  // ── Admin Trainer Review ──────────────────────────────────────────────────
+  String get adminTrainerReviewTab;
+  String get adminTrainerApprove;
+  String get adminTrainerSuspend;
+  String get adminTrainerNoPending;
+  String get adminTrainerApproveSuccess;
+  String get adminTrainerSuspendSuccess;
 }
 
 class _AppLocalizationsDelegate

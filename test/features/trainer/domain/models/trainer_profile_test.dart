@@ -16,9 +16,7 @@ void main() {
         'status': 'active',
         'submitted_at': '2026-04-01T10:00:00.000Z',
       };
-
       final profile = TrainerProfile.fromJson(json);
-
       expect(profile.id, 'abc-123');
       expect(profile.displayName, 'Max Muster');
       expect(profile.bio, 'Certified trainer');
@@ -44,9 +42,7 @@ void main() {
         'status': 'pending',
         'submitted_at': '2026-04-01T10:00:00.000Z',
       };
-
       final profile = TrainerProfile.fromJson(json);
-
       expect(profile.bio, isNull);
       expect(profile.photoUrl, isNull);
       expect(profile.distanceKm, isNull);
@@ -67,7 +63,6 @@ void main() {
         'status': 'unknown_future_value',
         'submitted_at': '2026-04-01T10:00:00.000Z',
       };
-
       final profile = TrainerProfile.fromJson(json);
       expect(profile.status, TrainerProfileStatus.pending);
     });
@@ -85,7 +80,6 @@ void main() {
         'status': 'active',
         'submitted_at': '2026-04-01T10:00:00.000Z',
       };
-
       final profile = TrainerProfile.fromJson(json);
       expect(profile.distanceKm, 5.0);
     });

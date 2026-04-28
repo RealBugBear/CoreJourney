@@ -54,6 +54,11 @@ class _TrainerDashboardScreenState extends ConsumerState<TrainerDashboardScreen>
           ],
         ),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.inbox_outlined),
+            tooltip: l10n.trainerRequestsTitle,
+            onPressed: () => context.push(Routes.trainerRequests),
+          ),
           Consumer(builder: (context, ref, _) {
             final unread = ref.watch(totalUnreadCountProvider);
             return Stack(

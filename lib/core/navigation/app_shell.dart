@@ -14,6 +14,7 @@ class AppShell extends ConsumerWidget {
   List<String> _buildTabRoutes(bool trainerLinked) => [
         Routes.dashboard,
         Routes.community,
+        Routes.trainerDiscovery,
         if (trainerLinked) Routes.dm,
         Routes.profile,
       ];
@@ -48,6 +49,11 @@ class AppShell extends ConsumerWidget {
             icon: Icon(Icons.groups_outlined),
             selectedIcon: Icon(Icons.groups),
             label: 'Community',
+          ),
+          const NavigationDestination(
+            icon: Icon(Icons.search_outlined),
+            selectedIcon: Icon(Icons.search),
+            label: 'Trainer',
           ),
           if (trainerLinked)
             NavigationDestination(
