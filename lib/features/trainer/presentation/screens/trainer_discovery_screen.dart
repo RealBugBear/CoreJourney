@@ -5,7 +5,6 @@ import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
 import 'package:latlong2/latlong.dart';
 
-import '../../../../core/navigation/app_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../domain/models/trainer_profile.dart';
@@ -261,7 +260,7 @@ class _MapView extends StatelessWidget {
                   height: 36,
                   child: GestureDetector(
                     onTap: () => context.push(
-                      Routes.trainerPublicProfile,
+                      '/trainers/${t.id}',
                       extra: t,
                     ),
                     child: const Icon(Icons.person_pin_circle,
@@ -305,7 +304,7 @@ class _ListView extends StatelessWidget {
           subtitle: t.distanceKm != null
               ? Text(l10n.trainerDiscoveryDistanceLabel(t.distanceKm!))
               : null,
-          onTap: () => context.push(Routes.trainerPublicProfile, extra: t),
+          onTap: () => context.push('/trainers/${t.id}', extra: t),
         );
       },
     );

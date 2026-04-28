@@ -20,6 +20,12 @@ import '../../features/trainer/presentation/screens/trainer_client_detail_screen
 import '../../features/trainer/presentation/screens/trainer_dashboard_screen.dart';
 import '../../features/trainer/presentation/screens/appointment_scheduler_screen.dart';
 import '../../features/trainer/domain/models/trainer_client.dart';
+import '../../features/trainer/presentation/screens/trainer_discovery_screen.dart';
+import '../../features/trainer/presentation/screens/trainer_profile_setup_screen.dart';
+import '../../features/trainer/presentation/screens/trainer_profile_pending_screen.dart';
+import '../../features/trainer/presentation/screens/trainer_public_profile_screen.dart';
+import '../../features/trainer/presentation/screens/trainer_requests_screen.dart';
+import '../../features/trainer/domain/models/trainer_profile.dart';
 import '../../features/journal/presentation/screens/journal_screen.dart';
 import '../../features/dev_tools/presentation/screens/dev_tools_screen.dart';
 import '../../features/chat/domain/models/chat_channel.dart';
@@ -268,7 +274,38 @@ final routerProvider = Provider<GoRouter>((ref) {
               child: const ProfileScreen(),
             ),
           ),
+          GoRoute(
+            path: Routes.trainerDiscovery,
+            name: 'trainer-discovery',
+            pageBuilder: (context, state) => NoTransitionPage(
+              key: state.pageKey,
+              child: const TrainerDiscoveryScreen(),
+            ),
+          ),
         ],
+      ),
+      GoRoute(
+        path: Routes.trainerProfileSetup,
+        name: 'trainer-profile-setup',
+        builder: (context, state) => const TrainerProfileSetupScreen(),
+      ),
+      GoRoute(
+        path: Routes.trainerProfilePending,
+        name: 'trainer-profile-pending',
+        builder: (context, state) => const TrainerProfilePendingScreen(),
+      ),
+      GoRoute(
+        path: Routes.trainerPublicProfile,
+        name: 'trainer-public-profile',
+        builder: (context, state) {
+          final trainer = state.extra as TrainerProfile;
+          return TrainerPublicProfileScreen(trainer: trainer);
+        },
+      ),
+      GoRoute(
+        path: Routes.trainerRequests,
+        name: 'trainer-requests',
+        builder: (context, state) => const TrainerRequestsScreen(),
       ),
     ],
     errorBuilder: (context, state) => Scaffold(
