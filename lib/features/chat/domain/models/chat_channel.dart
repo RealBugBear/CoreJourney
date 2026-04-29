@@ -1,6 +1,6 @@
 import 'package:equatable/equatable.dart';
 
-enum ChannelType { direct, community }
+enum ChannelType { direct, community, applicationReview }
 
 enum MemberRole { member, moderator }
 
@@ -31,6 +31,7 @@ class ChatChannel extends Equatable {
     return switch (type) {
       ChannelType.direct => 'Trainer',
       ChannelType.community => packageName ?? packageId ?? 'Community',
+      ChannelType.applicationReview => 'Trainer-Bewerbung',
     };
   }
 
@@ -43,8 +44,11 @@ class ChatChannel extends Equatable {
   }) {
     return ChatChannel(
       id: json['id'] as String,
-      type:
-          json['type'] == 'direct' ? ChannelType.direct : ChannelType.community,
+      type: switch (json['type']) {
+        'direct' => ChannelType.direct,
+        'application_review' => ChannelType.applicationReview,
+        _ => ChannelType.community,
+      },
       packageId: json['package_id'] as String?,
       createdAt: DateTime.parse(json['created_at'] as String),
       currentUserRole: currentUserRole,

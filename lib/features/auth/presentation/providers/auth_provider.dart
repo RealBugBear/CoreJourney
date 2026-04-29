@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -48,7 +50,9 @@ class AuthNotifier extends StateNotifier<AsyncValue<void>> {
   }) async {
     state = const AsyncValue.loading();
     state = await AsyncValue.guard(
-      () => _repo.sendPasswordReset(email: email, redirectTo: redirectTo),
+      () => _repo
+          .sendPasswordReset(email: email, redirectTo: redirectTo)
+          .timeout(const Duration(seconds: 15)),
     );
   }
 

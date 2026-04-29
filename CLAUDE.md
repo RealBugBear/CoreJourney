@@ -1,16 +1,5 @@
 # CoreJourney — Claude Pflichtregeln
 
-## PFLICHT VOR JEDER ARBEITSSESSION
-
-**Bevor du mit einer Aufgabe beginnst, stelle immer diese Frage:**
-
-> „Wo bauen wir heute — DEV oder PROD?"
-
-Warte auf die Antwort. Starte keine Builds, keine Code-Änderungen an Configs,
-keine Supabase-bezogenen Anpassungen, bevor das geklärt ist.
-
----
-
 ## Richtiges Projektverzeichnis
 
 **IMMER arbeiten in:** `/Users/alexandermessinger/dev/claudvibes/corejourney/app`
@@ -54,9 +43,24 @@ make release
 
 | Zweck | Entry Point | Makefile-Befehl |
 |---|---|---|
-| Dev-Arbeit (Gerät) | `lib/main_development.dart` | `make run` |
-| Dev-Arbeit (Simulator) | `lib/main_development.dart` | `make run-sim` |
+| Dev-Arbeit (iPhone physisch) | `lib/main_development.dart` | `make run` |
+| Dev-Arbeit (iOS Simulator) | `lib/main_development.dart` | `make run-sim` |
+| Dev-Arbeit (Samsung Android) | `lib/main_development.dart` | `make run-android` |
 | TestFlight/Prod | `lib/main_production.dart` | `make release` |
+
+---
+
+## Android — Kritische Regel
+
+**NIEMALS** `flutter run` auf Android ohne `--flavor development`.
+
+Ohne diesen Flag installiert Flutter den gecachten `app-debug.apk` (altes Build vom falschen Projekt) statt dem aktuellen Development-Build. Das führt zu falschem Logo, falschen Farben, falschem Code — ohne Fehlermeldung.
+
+**Immer:** `make run-android` — nie manuell `flutter run -d <android-id>`.
+
+Das Projekt hat Android-Flavors: `development`, `staging`, `production`. Jeder flutter-Befehl für Android braucht `--flavor <flavor>`.
+
+---
 
 ## Wichtige Dateien
 

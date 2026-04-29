@@ -27,12 +27,14 @@ class MessageBubble extends StatelessWidget {
 
     if (message.isDeleted) return _DeletedBubble(isOwn: isOwn);
     if (message.isBotResponse) return _BotBubble(message: message);
-    if (message.isCallRequest)
+    if (message.isCallRequest) {
       return _CallRequestBubble(
         isOwn: isOwn,
+        isModerator: isModerator,
         onAccept: isModerator ? onAcceptCall : null,
         onProposeAppointment: isModerator ? onProposeAppointment : null,
       );
+    }
 
     final theme = Theme.of(context);
     final canDelete = isOwn || isModerator;
@@ -164,10 +166,12 @@ class _BotBubble extends StatelessWidget {
 class _CallRequestBubble extends StatelessWidget {
   const _CallRequestBubble({
     required this.isOwn,
+    required this.isModerator,
     this.onAccept,
     this.onProposeAppointment,
   });
   final bool isOwn;
+  final bool isModerator;
   final VoidCallback? onAccept;
   final VoidCallback? onProposeAppointment;
 
@@ -200,9 +204,7 @@ class _CallRequestBubble extends StatelessWidget {
                     color: Colors.teal.shade700, size: 20),
                 const SizedBox(width: 8),
                 Text(
-                  isOwn
-                      ? 'Call-Anfrage gesendet'
-                      : 'Klient möchte einen Video-Call',
+                  _title,
                   style: TextStyle(
                     color: Colors.teal.shade800,
                     fontWeight: FontWeight.w500,
@@ -253,5 +255,16 @@ class _CallRequestBubble extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  String get _title {
+    if (isOwn) {
+      return isModerator
+          ? 'Trainer-Anfrage gesendet'
+          : 'Video-Call-Anfrage gesendet';
+    }
+    return isModerator
+        ? 'Nutzer möchte einen Video-Call'
+        : 'Trainer möchte einen Video-Call';
   }
 }

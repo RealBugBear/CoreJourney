@@ -636,79 +636,107 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get appointmentOpenInCalendar => 'Open in Calendar';
 
-  // ── Trainer Discovery ─────────────────────────────────────────────────────
   @override
-  String get trainerDiscoveryTitle => 'Trainers Nearby';
-  @override
-  String get trainerDiscoveryEmpty => 'No trainers found in this area.';
-  @override
-  String trainerDiscoveryRadiusLabel(int km) => 'Radius: $km km';
-  @override
-  String get trainerDiscoveryLocationRequired => 'Location required';
-  @override
-  String get trainerDiscoveryLocationDenied => 'Location permission denied. Please enable it in settings.';
-  @override
-  String trainerDiscoveryDistanceLabel(double km) => '${km.toStringAsFixed(0)} km away';
-  @override
-  String get trainerDiscoverySendRequest => 'Send Request';
-  @override
-  String get trainerDiscoveryRequestSent => 'Request sent.';
-  @override
-  String get trainerDiscoveryRequestAlreadySent => 'Request already sent.';
-  @override
-  String get trainerDiscoveryRequestAlreadyConnected => 'Already connected to this trainer.';
+  String get trainerRequestsTitle => 'Requests';
 
-  // ── Trainer Profile Setup ─────────────────────────────────────────────────
-  @override
-  String get trainerSetupTitle => 'Set Up Trainer Profile';
-  @override
-  String get trainerSetupDisplayNameLabel => 'Display Name';
-  @override
-  String get trainerSetupBioLabel => 'About me (optional)';
-  @override
-  String get trainerSetupEmailLabel => 'Contact Email';
-  @override
-  String get trainerSetupPhoneLabel => 'Phone (optional)';
-  @override
-  String get trainerSetupLocationTitle => 'Your Location';
-  @override
-  String get trainerSetupLocationHint => 'Tap on the map to pin your location.';
-  @override
-  String get trainerSetupLocationMissing => 'Please set your location on the map.';
-  @override
-  String get trainerSetupSubmit => 'Submit Profile';
-  @override
-  String get trainerSetupPendingTitle => 'Profile under review';
-  @override
-  String get trainerSetupPendingBody => 'We will notify you once your profile has been approved.';
-
-  // ── Trainer Public Profile ────────────────────────────────────────────────
-  @override
-  String get trainerPublicProfileTitle => 'Trainer Profile';
-  @override
-  String get trainerPublicProfileVerified => 'Verified';
-
-  // ── Trainer Requests ──────────────────────────────────────────────────────
-  @override
-  String get trainerRequestsTitle => 'Connection Requests';
-  @override
-  String get trainerRequestAccept => 'Accept';
-  @override
-  String get trainerRequestDecline => 'Decline';
   @override
   String get trainerRequestNoRequests => 'No pending requests.';
 
-  // ── Admin Trainer Review ──────────────────────────────────────────────────
   @override
-  String get adminTrainerReviewTab => 'Trainer Applications';
+  String get trainerRequestAccept => 'Accept';
+
   @override
-  String get adminTrainerApprove => 'Approve';
+  String get trainerRequestDecline => 'Decline';
+
   @override
-  String get adminTrainerSuspend => 'Reject';
+  String get trainerDiscoveryTitle => 'Find Trainer';
+
   @override
-  String get adminTrainerNoPending => 'No pending trainer applications.';
+  String get trainerDiscoveryLocationDenied =>
+      'Location permission is required to find trainers nearby.';
+
+  @override
+  String trainerDiscoveryRadiusLabel(int radius) {
+    return '$radius km';
+  }
+
+  @override
+  String get trainerDiscoveryEmpty => 'No trainers found nearby.';
+
+  @override
+  String trainerDiscoveryDistanceLabel(double distance) {
+    return '$distance km away';
+  }
+
+  @override
+  String get trainerDiscoveryRequestAlreadySent => 'Request already sent.';
+
+  @override
+  String get trainerDiscoveryRequestAlreadyConnected =>
+      'You are already connected with this trainer.';
+
+  @override
+  String get trainerDiscoveryRequestSent => 'Request sent.';
+
+  @override
+  String get trainerDiscoverySendRequest => 'Send request';
+
+  @override
+  String get trainerPublicProfileTitle => 'Trainer Profile';
+
+  @override
+  String get trainerPublicProfileVerified => 'Verified trainer';
+
+  @override
+  String get trainerSetupTitle => 'Trainer Profile';
+
+  @override
+  String get trainerSetupDisplayNameLabel => 'Display name';
+
+  @override
+  String get trainerSetupBioLabel => 'Bio';
+
+  @override
+  String get trainerSetupEmailLabel => 'Email';
+
+  @override
+  String get trainerSetupPhoneLabel => 'Phone';
+
+  @override
+  String get trainerSetupLocationTitle => 'Location';
+
+  @override
+  String get trainerSetupLocationHint =>
+      'Choose your trainer location so clients can find you nearby.';
+
+  @override
+  String get trainerSetupLocationMissing => 'Please choose a location.';
+
+  @override
+  String get trainerSetupSubmit => 'Submit for review';
+
+  @override
+  String get trainerSetupPendingTitle => 'Profile under review';
+
+  @override
+  String get trainerSetupPendingBody =>
+      'We will notify you once your trainer profile is approved.';
+
+  @override
+  String get adminTrainerReviewTab => 'Trainer Review';
+
+  @override
+  String get adminTrainerNoPending => 'No trainer profiles pending review.';
+
   @override
   String get adminTrainerApproveSuccess => 'Trainer approved.';
+
   @override
-  String get adminTrainerSuspendSuccess => 'Trainer rejected.';
+  String get adminTrainerSuspendSuccess => 'Trainer suspended.';
+
+  @override
+  String get adminTrainerApprove => 'Approve';
+
+  @override
+  String get adminTrainerSuspend => 'Suspend';
 }

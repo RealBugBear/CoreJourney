@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
-import '../../../../core/navigation/app_router.dart';
 import '../../domain/models/chat_channel.dart';
+import '../navigation/chat_navigation.dart';
 import '../providers/chat_providers.dart';
 import '../../../trainer/presentation/providers/trainer_provider.dart';
 
@@ -17,7 +16,7 @@ class ChatInboxScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Nachrichten'),
+        title: const Text('Trainer-Kommunikation'),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
@@ -30,25 +29,19 @@ class ChatInboxScreen extends ConsumerWidget {
         error: (e, _) =>
             _ErrorState(onRetry: () => ref.invalidate(chatChannelsProvider)),
         data: (channels) {
-          if (channels.isEmpty) return const _EmptyState();
-
           final direct =
               channels.where((c) => c.type == ChannelType.direct).toList();
-          final community =
-              channels.where((c) => c.type == ChannelType.community).toList();
+          if (direct.isEmpty) return const _EmptyState();
 
           return ListView(
             children: [
-              if (direct.isNotEmpty) ...[
-                const _SectionHeader(title: 'MEIN TRAINER'),
-                ...direct.map((c) => _ChannelListTile(
-                    channel: c, onTap: () => _open(context, c))),
-              ],
-              if (community.isNotEmpty) ...[
-                const _SectionHeader(title: 'MEINE PAKETE'),
-                ...community.map((c) => _ChannelListTile(
-                    channel: c, onTap: () => _open(context, c))),
-              ],
+              const _SectionHeader(title: 'MEIN TRAINER'),
+              ...direct.map(
+                (c) => _ChannelListTile(
+                  channel: c,
+                  onTap: () => _open(context, c),
+                ),
+              ),
             ],
           );
         },
@@ -57,10 +50,7 @@ class ChatInboxScreen extends ConsumerWidget {
   }
 
   void _open(BuildContext context, ChatChannel channel) {
-    context.push(
-      Routes.dmChannel.replaceFirst(':channelId', channel.id),
-      extra: channel,
-    );
+    openDirectChannel(context, channel);
   }
 }
 
@@ -198,7 +188,7 @@ class _EmptyState extends StatelessWidget {
               const SizedBox(height: 8),
               Text(
                 'Hier erscheinen deine Chats.\n'
-                'Absolviere dein erstes Training, um dem Community-Chat beizutreten.',
+                'Verbinde dich mit deinem Trainer, um Nachrichten und Video-Calls zu nutzen.',
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: Theme.of(context)

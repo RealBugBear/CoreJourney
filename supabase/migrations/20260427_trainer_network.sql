@@ -231,6 +231,8 @@ $$;
 
 -- ── 8. find_trainers_nearby ───────────────────────────────────────────────────
 
+DROP FUNCTION IF EXISTS public.find_trainers_nearby(float8, float8, float8);
+
 CREATE OR REPLACE FUNCTION find_trainers_nearby(
   lat       float8,
   lng       float8,
@@ -244,7 +246,10 @@ RETURNS TABLE (
   distance_km      float8,
   public_latitude  float8,
   public_longitude float8,
-  verified         boolean
+  verified         boolean,
+  status           text,
+  submitted_at     timestamptz,
+  has_location     boolean
 )
 LANGUAGE sql STABLE SECURITY DEFINER
 SET search_path = public
@@ -260,7 +265,10 @@ AS $$
     ) / 1000.0)::numeric, 0)::float8 AS distance_km,
     ST_Y(tp.location_public::geometry) AS public_latitude,
     ST_X(tp.location_public::geometry) AS public_longitude,
-    (tp.status = 'active') AS verified
+    (tp.status = 'active') AS verified,
+    tp.status,
+    tp.submitted_at,
+    (tp.location_private IS NOT NULL) AS has_location
   FROM trainer_profiles tp
   WHERE
     auth.uid() IS NOT NULL

@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../features/auth/presentation/providers/auth_provider.dart';
+import '../../features/training/domain/models/training_session.dart';
 
 // ── Keys ─────────────────────────────────────────────────────────────────────
 
@@ -18,6 +19,7 @@ const _kRemindersEnabled = 'settings.remindersEnabled';
 const _kReminderStart = 'settings.reminderStartMinutes';
 const _kReminderEnd = 'settings.reminderEndMinutes';
 const _kChildAssist = 'settings.childAssistMode';
+const _kTrainingMode = 'settings.trainingMode';
 
 String _themeModeKey(String? userId) =>
     userId != null ? 'settings.themeMode_$userId' : _kThemeModeGlobal;
@@ -35,6 +37,7 @@ class AppSettings {
   final int reminderStartMinutes; // hour*60 + minute
   final int reminderEndMinutes;
   final bool childAssistMode;
+  final TrainingSessionMode trainingMode;
 
   const AppSettings({
     this.feedbackMode = TrainingFeedbackMode.haptic,
@@ -45,6 +48,7 @@ class AppSettings {
     this.reminderStartMinutes = 8 * 60, // 08:00
     this.reminderEndMinutes = 20 * 60, // 20:00
     this.childAssistMode = false,
+    this.trainingMode = TrainingSessionMode.tutorial,
   });
 
   TimeOfDay get reminderStart => TimeOfDay(
@@ -61,6 +65,7 @@ class AppSettings {
     int? reminderStartMinutes,
     int? reminderEndMinutes,
     bool? childAssistMode,
+    TrainingSessionMode? trainingMode,
   }) {
     return AppSettings(
       feedbackMode: feedbackMode ?? this.feedbackMode,
@@ -71,6 +76,7 @@ class AppSettings {
       reminderStartMinutes: reminderStartMinutes ?? this.reminderStartMinutes,
       reminderEndMinutes: reminderEndMinutes ?? this.reminderEndMinutes,
       childAssistMode: childAssistMode ?? this.childAssistMode,
+      trainingMode: trainingMode ?? this.trainingMode,
     );
   }
 }
@@ -114,6 +120,8 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
       reminderStartMinutes: prefs.getInt(_kReminderStart) ?? 8 * 60,
       reminderEndMinutes: prefs.getInt(_kReminderEnd) ?? 20 * 60,
       childAssistMode: prefs.getBool(_kChildAssist) ?? false,
+      trainingMode: TrainingSessionMode.values[
+          (prefs.getInt(_kTrainingMode) ?? 0).clamp(0, 1)],
     );
   }
 
@@ -158,6 +166,11 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
   void setChildAssistMode(bool enabled) {
     state = state.copyWith(childAssistMode: enabled);
     _prefs.setBool(_kChildAssist, enabled);
+  }
+
+  void setTrainingMode(TrainingSessionMode mode) {
+    state = state.copyWith(trainingMode: mode);
+    _prefs.setInt(_kTrainingMode, mode.index);
   }
 }
 

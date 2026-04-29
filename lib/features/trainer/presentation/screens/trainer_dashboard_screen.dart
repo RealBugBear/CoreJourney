@@ -1,10 +1,10 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/navigation/app_router.dart';
@@ -12,7 +12,11 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../domain/models/appointment.dart';
 import '../../domain/models/trainer_client.dart';
+import '../../domain/services/calendar_service.dart';
 import '../providers/trainer_provider.dart';
+import '../providers/trainer_discovery_provider.dart';
+import '../widgets/trainer_location_picker_widget.dart';
+import '../../../chat/presentation/navigation/chat_navigation.dart';
 import '../../../chat/presentation/providers/chat_providers.dart';
 
 class TrainerDashboardScreen extends ConsumerStatefulWidget {
@@ -129,6 +133,8 @@ class _TraineesTab extends ConsumerWidget {
         children: [
           // ── Invite link section ─────────────────────────────────────────
           _InviteBanner(l10n: l10n, ref: ref),
+          const _DiscoveryVisibilityCard(),
+          if (kDebugMode) const _TrainerClientsDebugPanel(),
 
           // ── Clients ─────────────────────────────────────────────────────
           Padding(
@@ -157,8 +163,15 @@ class _TraineesTab extends ConsumerWidget {
               if (clients.isEmpty) {
                 return Padding(
                   padding: const EdgeInsets.all(32),
-                  child: Text(l10n.trainerNoClients,
-                      style: TextStyle(color: AppColors.textSecondary)),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Text(
+                        l10n.trainerNoClients,
+                        style: const TextStyle(color: AppColors.textSecondary),
+                      ),
+                    ],
+                  ),
                 );
               }
               final appointments = appointmentsAsync.valueOrNull ?? [];
@@ -174,6 +187,74 @@ class _TraineesTab extends ConsumerWidget {
             },
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _TrainerClientsDebugPanel extends ConsumerWidget {
+  const _TrainerClientsDebugPanel();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final debugAsync = ref.watch(trainerClientsDebugProvider);
+    final textStyle = Theme.of(context).textTheme.bodySmall?.copyWith(
+          fontFamily: 'monospace',
+          color: AppColors.textSecondary,
+          height: 1.35,
+        );
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surfaceContainerHighest,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppColors.divider),
+        ),
+        child: Theme(
+          data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+          child: ExpansionTile(
+            tilePadding: const EdgeInsets.symmetric(horizontal: 12),
+            childrenPadding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+            leading: const Icon(Icons.bug_report_outlined, size: 18),
+            title: Text(
+              'Diagnose Trainer-Verknüpfung',
+              style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+            ),
+            subtitle: debugAsync.when(
+              loading: () => const Text('Prüfe Datenbank...'),
+              error: (e, _) => const Text('Fehler in der Diagnose'),
+              data: (debug) {
+                String? rowsLine;
+                for (final line in debug.split('\n')) {
+                  if (line.startsWith('get_trainer_clients rows:')) {
+                    rowsLine = line;
+                    break;
+                  }
+                }
+                return Text(rowsLine ?? 'Zum Öffnen antippen');
+              },
+            ),
+            trailing: IconButton(
+              tooltip: 'Diagnose aktualisieren',
+              icon: const Icon(Icons.refresh, size: 18),
+              onPressed: () {
+                ref.invalidate(trainerClientsDebugProvider);
+                ref.invalidate(trainerClientsProvider);
+              },
+            ),
+            children: [
+              debugAsync.when(
+                loading: () => const LinearProgressIndicator(),
+                error: (e, _) => Text('Diagnose Fehler: $e', style: textStyle),
+                data: (debug) => Text(debug, style: textStyle),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -224,18 +305,18 @@ class _InviteBannerState extends State<_InviteBanner> {
               children: [
                 Text(
                   _formattedCode,
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontSize: 32,
                     fontWeight: FontWeight.w700,
                     letterSpacing: 4,
                     color: AppColors.primary,
-                    fontFeatures: const [FontFeature.tabularFigures()],
+                    fontFeatures: [FontFeature.tabularFigures()],
                   ),
                 ),
               ],
             ),
             const SizedBox(height: 4),
-            Center(
+            const Center(
               child: Text(
                 'Einmaliger Code — teile ihn mit deinem Klienten',
                 style: TextStyle(color: AppColors.textSecondary, fontSize: 11),
@@ -333,7 +414,159 @@ class _InviteBannerState extends State<_InviteBanner> {
   }
 }
 
-class _ClientCard extends StatelessWidget {
+class _DiscoveryVisibilityCard extends ConsumerStatefulWidget {
+  const _DiscoveryVisibilityCard();
+
+  @override
+  ConsumerState<_DiscoveryVisibilityCard> createState() =>
+      _DiscoveryVisibilityCardState();
+}
+
+class _DiscoveryVisibilityCardState
+    extends ConsumerState<_DiscoveryVisibilityCard> {
+  bool _expanded = false;
+  bool _saving = false;
+  LatLng? _pickedLocation;
+
+  @override
+  Widget build(BuildContext context) {
+    final profileAsync = ref.watch(ownTrainerProfileProvider);
+
+    return profileAsync.when(
+      loading: () => const SizedBox.shrink(),
+      error: (_, __) => const SizedBox.shrink(),
+      data: (profile) {
+        if (profile == null || profile.hasLocation) {
+          return const SizedBox.shrink();
+        }
+
+        return Container(
+          margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: AppColors.warning.withValues(alpha: 0.10),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: AppColors.warning.withValues(alpha: 0.28),
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Icon(
+                    Icons.location_off_outlined,
+                    color: AppColors.warning,
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Standort fehlt',
+                          style:
+                              Theme.of(context).textTheme.titleSmall?.copyWith(
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                        ),
+                        const SizedBox(height: 4),
+                        const Text(
+                          'Dein Trainerprofil ist aktiv, erscheint aber erst in der Trainersuche, wenn ein Standort gesetzt ist. Öffentlich wird nur ein ungefährer Pin angezeigt.',
+                          style: TextStyle(
+                            color: AppColors.textSecondary,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              if (_expanded) ...[
+                const SizedBox(height: 12),
+                SizedBox(
+                  height: 220,
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(10),
+                    child: TrainerLocationPickerWidget(
+                      onLocationPicked: (latLng) =>
+                          setState(() => _pickedLocation = latLng),
+                    ),
+                  ),
+                ),
+              ],
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  OutlinedButton.icon(
+                    onPressed: _saving
+                        ? null
+                        : () => setState(() => _expanded = !_expanded),
+                    icon: Icon(
+                      _expanded
+                          ? Icons.keyboard_arrow_up
+                          : Icons.location_on_outlined,
+                    ),
+                    label: Text(_expanded ? 'Schließen' : 'Standort setzen'),
+                  ),
+                  if (_expanded) ...[
+                    const SizedBox(width: 8),
+                    FilledButton.icon(
+                      onPressed: _saving || _pickedLocation == null
+                          ? null
+                          : _saveLocation,
+                      icon: _saving
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.check),
+                      label: const Text('Speichern'),
+                    ),
+                  ],
+                ],
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _saveLocation() async {
+    final location = _pickedLocation;
+    if (location == null) return;
+
+    setState(() => _saving = true);
+    try {
+      await ref.read(trainerProfileRepositoryProvider).updateLocation(
+            location.latitude,
+            location.longitude,
+          );
+      ref.invalidate(ownTrainerProfileProvider);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Standort gespeichert')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content: Text('Standort konnte nicht gespeichert werden: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+}
+
+class _ClientCard extends ConsumerWidget {
   final TrainerClient client;
   final List<Appointment> appointments;
   final AppLocalizations l10n;
@@ -345,18 +578,20 @@ class _ClientCard extends StatelessWidget {
   });
 
   bool get _needsAppointment {
-    final hasUpcoming = appointments.any((a) =>
+    final hasOpenAppointment = appointments.any((a) =>
         a.traineeId == client.clientId &&
-        (a.scheduledFor?.isAfter(DateTime.now()) ?? false) &&
-        a.status != 'cancelled');
-    return !hasUpcoming && (client.currentDay >= 25 || client.currentDay >= 28);
+        a.status != 'cancelled' &&
+        a.status != 'done' &&
+        (a.isProposed || (a.scheduledFor?.isAfter(DateTime.now()) ?? false)));
+    return !hasOpenAppointment && client.needsNextPackageAppointment;
   }
 
-  bool get _isNearCompletion => client.currentDay == 25;
+  bool get _isNearCompletion =>
+      client.needsNextPackageAppointment && !_isComplete;
   bool get _isComplete => client.currentDay >= 28;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final progress = client.currentDay / 28.0;
 
     Color badgeColor;
@@ -371,8 +606,10 @@ class _ClientCard extends StatelessWidget {
           : l10n.trainerScheduleAppointment;
     } else if (_isNearCompletion) {
       badgeColor = AppColors.warning;
-      badgeLabel = 'Tag 25';
-      buttonLabel = l10n.trainerBookNow;
+      badgeLabel = '${client.remainingTrainingDays} Tage übrig';
+      buttonLabel = _needsAppointment
+          ? 'Termin vorschlagen'
+          : l10n.trainerScheduleAppointment;
     } else {
       badgeColor = AppColors.primary;
       badgeLabel = null;
@@ -432,7 +669,7 @@ class _ClientCard extends StatelessWidget {
                       ),
                       Text(
                         l10n.currentDay(client.currentDay, 28),
-                        style: TextStyle(
+                        style: const TextStyle(
                             color: AppColors.textSecondary, fontSize: 13),
                       ),
                     ],
@@ -451,35 +688,82 @@ class _ClientCard extends StatelessWidget {
                 valueColor: AlwaysStoppedAnimation(badgeColor),
               ),
             ),
-            const SizedBox(height: 12),
-            Align(
-              alignment: Alignment.centerRight,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: _needsAppointment
-                      ? badgeColor
-                      : AppColors.backgroundLight,
-                  foregroundColor: _needsAppointment
-                      ? AppColors.white
-                      : AppColors.textPrimary,
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8)),
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            if (_needsAppointment) ...[
+              const SizedBox(height: 12),
+              Container(
+                width: double.infinity,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                decoration: BoxDecoration(
+                  color: AppColors.warning.withValues(alpha: 0.10),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: AppColors.warning.withValues(alpha: 0.25),
+                  ),
                 ),
-                onPressed: () => context.push(
-                  Routes.appointmentScheduler
-                      .replaceFirst(':clientId', client.clientId),
-                  extra: client,
+                child: Text(
+                  'Noch ${client.remainingTrainingDays} Tage: Termin für das isometrische Training des nächsten Pakets vorschlagen.',
+                  style: const TextStyle(
+                    color: AppColors.textPrimary,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
-                child: Text(buttonLabel, style: const TextStyle(fontSize: 13)),
               ),
+            ],
+            const SizedBox(height: 12),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.chat_bubble_outline, size: 20),
+                  tooltip: 'Chat öffnen',
+                  onPressed: () =>
+                      _openClientChat(context, ref, client.clientId),
+                ),
+                const SizedBox(width: 4),
+                Flexible(
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: _needsAppointment
+                          ? badgeColor
+                          : AppColors.backgroundLight,
+                      foregroundColor: _needsAppointment
+                          ? AppColors.white
+                          : AppColors.textPrimary,
+                      elevation: 0,
+                      minimumSize: const Size(0, 40),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8)),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 8),
+                    ),
+                    onPressed: () => context.push(
+                      Routes.appointmentScheduler
+                          .replaceFirst(':clientId', client.clientId),
+                      extra: client,
+                    ),
+                    child: Text(
+                      buttonLabel,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontSize: 13),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ],
         ),
       ),
     );
+  }
+
+  Future<void> _openClientChat(
+    BuildContext context,
+    WidgetRef ref,
+    String clientId,
+  ) async {
+    await openDirectChatWithUser(context, ref, clientId);
   }
 }
 
@@ -504,12 +788,12 @@ class _AppointmentsTab extends ConsumerWidget {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.calendar_today_outlined,
+                  const Icon(Icons.calendar_today_outlined,
                       size: 56, color: AppColors.textDisabled),
                   const SizedBox(height: 16),
                   Text(
                     l10n.trainerNoAppointments,
-                    style: TextStyle(color: AppColors.textSecondary),
+                    style: const TextStyle(color: AppColors.textSecondary),
                     textAlign: TextAlign.center,
                   ),
                 ],
@@ -586,7 +870,8 @@ class _AppointmentTile extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(date,
-              style: TextStyle(color: AppColors.textSecondary, fontSize: 13)),
+              style: const TextStyle(
+                  color: AppColors.textSecondary, fontSize: 13)),
           const SizedBox(height: 2),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
@@ -604,17 +889,20 @@ class _AppointmentTile extends StatelessWidget {
           ),
         ],
       ),
-      trailing: appointment.calendarEventId != null
+      trailing: appointment.scheduledFor != null
           ? IconButton(
-              icon: const Icon(Icons.open_in_new, size: 20),
+              icon: const Icon(Icons.event_available_outlined, size: 20),
               tooltip: l10n.appointmentOpenInCalendar,
-              onPressed: () => _openInCalendar(appointment),
+              onPressed: () => _openInCalendar(context, appointment),
             )
           : null,
     );
   }
 
-  Future<void> _openInCalendar(Appointment appt) async {
+  Future<void> _openInCalendar(BuildContext context, Appointment appt) async {
+    final shareOrigin = _shareOriginFor(context);
+    final messenger = ScaffoldMessenger.of(context);
+
     // iOS deep link directly to the event in Calendar.app
     if (appt.calendarEventId != null) {
       final ts = appt.scheduledFor!.millisecondsSinceEpoch / 1000;
@@ -624,8 +912,30 @@ class _AppointmentTile extends StatelessWidget {
         return;
       }
     }
-    // Fallback: open Calendar.app
-    final uri = Uri.parse('calshow:');
-    if (await canLaunchUrl(uri)) await launchUrl(uri);
+
+    try {
+      await CalendarService.instance.createCalendarEvent(
+        title: '${appt.title} (mit ${appt.traineeName})',
+        start: appt.scheduledFor!,
+        duration: Duration(minutes: appt.durationMinutes),
+        location: appt.location,
+        description: appt.notes,
+        sharePositionOrigin: shareOrigin,
+      );
+    } catch (e) {
+      messenger.showSnackBar(
+        SnackBar(content: Text('Kalender konnte nicht geöffnet werden: $e')),
+      );
+    }
+  }
+
+  Rect _shareOriginFor(BuildContext context) {
+    final box = context.findRenderObject() as RenderBox?;
+    if (box == null || !box.hasSize) {
+      final size = MediaQuery.sizeOf(context);
+      return Rect.fromLTWH(size.width / 2, size.height / 2, 1, 1);
+    }
+    final topLeft = box.localToGlobal(Offset.zero);
+    return topLeft & box.size;
   }
 }

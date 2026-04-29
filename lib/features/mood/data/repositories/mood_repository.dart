@@ -85,7 +85,7 @@ class MoodRepository {
     }).toList();
   }
 
-  Future<void> createCheckin({
+  Future<String> createCheckin({
     required String enrollmentId,
     int? mood,
     int? energy,
@@ -94,7 +94,7 @@ class MoodRepository {
     required String source,
   }) async {
     final userId = _userId;
-    if (userId == null) return;
+    if (userId == null) return '';
 
     final now = _clock.now();
     final checkinId = _uuid.v4();
@@ -173,6 +173,7 @@ class MoodRepository {
         },
       );
     }
+    return checkinId;
   }
 
   Future<void> updateCheckin({

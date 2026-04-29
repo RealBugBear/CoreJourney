@@ -5,7 +5,6 @@ import 'package:intl/intl.dart';
 
 import '../../../../core/navigation/app_router.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../../l10n/app_localizations.dart';
 import '../../domain/models/appointment.dart';
 import '../../domain/services/calendar_service.dart';
 import '../providers/trainer_provider.dart';
@@ -24,13 +23,13 @@ class AppointmentProposalScreen extends ConsumerWidget {
         error: (e, _) => Center(child: Text(e.toString())),
         data: (proposals) {
           if (proposals.isEmpty) {
-            return Center(
+            return const Center(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(Icons.calendar_today_outlined,
                       size: 56, color: AppColors.textDisabled),
-                  const SizedBox(height: 16),
+                  SizedBox(height: 16),
                   Text(
                     'Keine offenen Terminvorschläge.',
                     style: TextStyle(color: AppColors.textSecondary),
@@ -166,7 +165,7 @@ class _ProposalCardState extends State<_ProposalCard> {
                 CircleAvatar(
                   backgroundColor: AppColors.primary.withValues(alpha: 0.12),
                   radius: 18,
-                  child: Icon(Icons.person_outline,
+                  child: const Icon(Icons.person_outline,
                       color: AppColors.primary, size: 20),
                 ),
                 const SizedBox(width: 10),
@@ -181,7 +180,7 @@ class _ProposalCardState extends State<_ProposalCard> {
                     ),
                     Text(
                       proposal.title,
-                      style: TextStyle(
+                      style: const TextStyle(
                           color: AppColors.textSecondary, fontSize: 12),
                     ),
                   ],
@@ -190,7 +189,7 @@ class _ProposalCardState extends State<_ProposalCard> {
             ),
 
             const SizedBox(height: 14),
-            Text(
+            const Text(
               'Wähle einen passenden Termin:',
               style: TextStyle(
                   fontWeight: FontWeight.w600,

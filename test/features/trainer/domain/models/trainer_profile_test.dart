@@ -83,5 +83,24 @@ void main() {
       final profile = TrainerProfile.fromJson(json);
       expect(profile.distanceKm, 5.0);
     });
+
+    test('legacy nearby rpc rows can omit submitted_at and status', () {
+      final json = {
+        'id': 'abc-123',
+        'display_name': 'Max',
+        'bio': null,
+        'photo_url': null,
+        'distance_km': 5,
+        'public_latitude': 52.0,
+        'public_longitude': 13.0,
+        'verified': true,
+      };
+
+      final profile = TrainerProfile.fromJson(json);
+
+      expect(profile.displayName, 'Max');
+      expect(profile.status, TrainerProfileStatus.pending);
+      expect(profile.submittedAt, DateTime.fromMillisecondsSinceEpoch(0));
+    });
   });
 }

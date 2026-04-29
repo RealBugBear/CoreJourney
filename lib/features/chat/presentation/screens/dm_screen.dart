@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 
 import '../../../../core/navigation/app_router.dart';
 import '../../domain/models/chat_channel.dart';
+import '../navigation/chat_navigation.dart';
 import '../providers/chat_providers.dart';
 import '../../../trainer/presentation/providers/trainer_provider.dart';
 
@@ -15,8 +16,20 @@ class DmScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final channelsAsync = ref.watch(chatChannelsProvider);
 
+    final trainerIdAsync = ref.watch(clientTrainerIdProvider);
+
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go(Routes.profile);
+            }
+          },
+        ),
         title: const Text('Nachrichten'),
         actions: [
           IconButton(
@@ -30,29 +43,47 @@ class DmScreen extends ConsumerWidget {
           ),
         ],
       ),
+      floatingActionButton: trainerIdAsync.valueOrNull != null
+          ? FloatingActionButton.extended(
+              icon: const Icon(Icons.chat_bubble_outline),
+              label: const Text('Chat mit Trainer'),
+              onPressed: () {
+                final id = trainerIdAsync.valueOrNull;
+                if (id != null) _openTrainerChat(context, ref, id);
+              },
+            )
+          : null,
       body: channelsAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => _ErrorState(
           onRetry: () => ref.invalidate(chatChannelsProvider),
         ),
         data: (channels) {
-          final direct =
-              channels.where((c) => c.type == ChannelType.direct).toList();
-          if (direct.isEmpty) return const _EmptyState();
+          final visible = channels
+              .where((c) =>
+                  c.type == ChannelType.direct ||
+                  c.type == ChannelType.applicationReview)
+              .toList();
+          if (visible.isEmpty) return const _EmptyState();
           return ListView.builder(
-            itemCount: direct.length,
+            itemCount: visible.length,
             itemBuilder: (ctx, i) => _DmListTile(
-              channel: direct[i],
-              onTap: () => context.push(
-                '/dm/${direct[i].id}',
-                extra: direct[i],
-              ),
+              channel: visible[i],
+              onTap: () => openDirectChannel(context, visible[i]),
             ),
           );
         },
       ),
     );
   }
+}
+
+Future<void> _openTrainerChat(
+  BuildContext context,
+  WidgetRef ref,
+  String trainerId,
+) async {
+  await openDirectChatWithUser(context, ref, trainerId);
 }
 
 class _DmListTile extends ConsumerWidget {
@@ -64,13 +95,21 @@ class _DmListTile extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final hasUnread = channel.unreadCount > 0;
-    final title = ref.watch(chatPartnerNameProvider(channel.id)).valueOrNull ??
-        channel.channelDisplayName();
+    final title = channel.type == ChannelType.applicationReview
+        ? channel.channelDisplayName()
+        : ref.watch(chatPartnerNameProvider(channel.id)).valueOrNull ??
+            channel.channelDisplayName();
 
     return ListTile(
       leading: CircleAvatar(
         backgroundColor: theme.colorScheme.primary,
-        child: const Icon(Icons.person_outline, color: Colors.white, size: 20),
+        child: Icon(
+          channel.type == ChannelType.applicationReview
+              ? Icons.assignment_outlined
+              : Icons.person_outline,
+          color: Colors.white,
+          size: 20,
+        ),
       ),
       title: Text(
         title,

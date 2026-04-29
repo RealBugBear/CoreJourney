@@ -25,6 +25,11 @@ class IntakeAssessmentScreen extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              const Center(
+                child: _BrandMark(size: 84),
+              ),
+              const SizedBox(height: 20),
+
               // ── Welcome ───────────────────────────────────────────────────
               _InfoCard(
                 icon: Icons.self_improvement_outlined,
@@ -96,6 +101,22 @@ class IntakeAssessmentScreen extends ConsumerWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _BrandMark extends StatelessWidget {
+  final double size;
+
+  const _BrandMark({required this.size});
+
+  @override
+  Widget build(BuildContext context) {
+    return Image.asset(
+      'assets/images/brand/free.png',
+      width: size,
+      height: size,
+      fit: BoxFit.contain,
     );
   }
 }

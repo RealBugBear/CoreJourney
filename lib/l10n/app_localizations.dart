@@ -1256,48 +1256,197 @@ abstract class AppLocalizations {
   /// **'Im Kalender öffnen'**
   String get appointmentOpenInCalendar;
 
-  // ── Trainer Discovery ─────────────────────────────────────────────────────
-  String get trainerDiscoveryTitle;
-  String get trainerDiscoveryEmpty;
-  String trainerDiscoveryRadiusLabel(int km);
-  String get trainerDiscoveryLocationRequired;
-  String get trainerDiscoveryLocationDenied;
-  String trainerDiscoveryDistanceLabel(double km);
-  String get trainerDiscoverySendRequest;
-  String get trainerDiscoveryRequestSent;
-  String get trainerDiscoveryRequestAlreadySent;
-  String get trainerDiscoveryRequestAlreadyConnected;
-
-  // ── Trainer Profile Setup ─────────────────────────────────────────────────
-  String get trainerSetupTitle;
-  String get trainerSetupDisplayNameLabel;
-  String get trainerSetupBioLabel;
-  String get trainerSetupEmailLabel;
-  String get trainerSetupPhoneLabel;
-  String get trainerSetupLocationTitle;
-  String get trainerSetupLocationHint;
-  String get trainerSetupLocationMissing;
-  String get trainerSetupSubmit;
-  String get trainerSetupPendingTitle;
-  String get trainerSetupPendingBody;
-
-  // ── Trainer Public Profile ────────────────────────────────────────────────
-  String get trainerPublicProfileTitle;
-  String get trainerPublicProfileVerified;
-
-  // ── Trainer Requests ──────────────────────────────────────────────────────
+  /// No description provided for @trainerRequestsTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Anfragen'**
   String get trainerRequestsTitle;
-  String get trainerRequestAccept;
-  String get trainerRequestDecline;
+
+  /// No description provided for @trainerRequestNoRequests.
+  ///
+  /// In de, this message translates to:
+  /// **'Keine offenen Anfragen.'**
   String get trainerRequestNoRequests;
 
-  // ── Admin Trainer Review ──────────────────────────────────────────────────
+  /// No description provided for @trainerRequestAccept.
+  ///
+  /// In de, this message translates to:
+  /// **'Annehmen'**
+  String get trainerRequestAccept;
+
+  /// No description provided for @trainerRequestDecline.
+  ///
+  /// In de, this message translates to:
+  /// **'Ablehnen'**
+  String get trainerRequestDecline;
+
+  /// No description provided for @trainerDiscoveryTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Trainer finden'**
+  String get trainerDiscoveryTitle;
+
+  /// No description provided for @trainerDiscoveryLocationDenied.
+  ///
+  /// In de, this message translates to:
+  /// **'Standortzugriff ist erforderlich, um Trainer in deiner Nähe zu finden.'**
+  String get trainerDiscoveryLocationDenied;
+
+  /// No description provided for @trainerDiscoveryRadiusLabel.
+  ///
+  /// In de, this message translates to:
+  /// **'{radius} km'**
+  String trainerDiscoveryRadiusLabel(int radius);
+
+  /// No description provided for @trainerDiscoveryEmpty.
+  ///
+  /// In de, this message translates to:
+  /// **'Keine Trainer in der Nähe gefunden.'**
+  String get trainerDiscoveryEmpty;
+
+  /// No description provided for @trainerDiscoveryDistanceLabel.
+  ///
+  /// In de, this message translates to:
+  /// **'{distance} km entfernt'**
+  String trainerDiscoveryDistanceLabel(double distance);
+
+  /// No description provided for @trainerDiscoveryRequestAlreadySent.
+  ///
+  /// In de, this message translates to:
+  /// **'Anfrage wurde bereits gesendet.'**
+  String get trainerDiscoveryRequestAlreadySent;
+
+  /// No description provided for @trainerDiscoveryRequestAlreadyConnected.
+  ///
+  /// In de, this message translates to:
+  /// **'Du bist bereits mit diesem Trainer verbunden.'**
+  String get trainerDiscoveryRequestAlreadyConnected;
+
+  /// No description provided for @trainerDiscoveryRequestSent.
+  ///
+  /// In de, this message translates to:
+  /// **'Anfrage gesendet.'**
+  String get trainerDiscoveryRequestSent;
+
+  /// No description provided for @trainerDiscoverySendRequest.
+  ///
+  /// In de, this message translates to:
+  /// **'Anfrage senden'**
+  String get trainerDiscoverySendRequest;
+
+  /// No description provided for @trainerPublicProfileTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Trainer-Profil'**
+  String get trainerPublicProfileTitle;
+
+  /// No description provided for @trainerPublicProfileVerified.
+  ///
+  /// In de, this message translates to:
+  /// **'Verifizierter Trainer'**
+  String get trainerPublicProfileVerified;
+
+  /// No description provided for @trainerSetupTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Trainer-Profil'**
+  String get trainerSetupTitle;
+
+  /// No description provided for @trainerSetupDisplayNameLabel.
+  ///
+  /// In de, this message translates to:
+  /// **'Anzeigename'**
+  String get trainerSetupDisplayNameLabel;
+
+  /// No description provided for @trainerSetupBioLabel.
+  ///
+  /// In de, this message translates to:
+  /// **'Bio'**
+  String get trainerSetupBioLabel;
+
+  /// No description provided for @trainerSetupEmailLabel.
+  ///
+  /// In de, this message translates to:
+  /// **'E-Mail'**
+  String get trainerSetupEmailLabel;
+
+  /// No description provided for @trainerSetupPhoneLabel.
+  ///
+  /// In de, this message translates to:
+  /// **'Telefon'**
+  String get trainerSetupPhoneLabel;
+
+  /// No description provided for @trainerSetupLocationTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Standort'**
+  String get trainerSetupLocationTitle;
+
+  /// No description provided for @trainerSetupLocationHint.
+  ///
+  /// In de, this message translates to:
+  /// **'Wähle deinen Trainer-Standort, damit Klienten dich in der Nähe finden.'**
+  String get trainerSetupLocationHint;
+
+  /// No description provided for @trainerSetupLocationMissing.
+  ///
+  /// In de, this message translates to:
+  /// **'Bitte wähle einen Standort.'**
+  String get trainerSetupLocationMissing;
+
+  /// No description provided for @trainerSetupSubmit.
+  ///
+  /// In de, this message translates to:
+  /// **'Zur Prüfung einreichen'**
+  String get trainerSetupSubmit;
+
+  /// No description provided for @trainerSetupPendingTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Profil wird geprüft'**
+  String get trainerSetupPendingTitle;
+
+  /// No description provided for @trainerSetupPendingBody.
+  ///
+  /// In de, this message translates to:
+  /// **'Wir benachrichtigen dich, sobald dein Trainer-Profil freigegeben ist.'**
+  String get trainerSetupPendingBody;
+
+  /// No description provided for @adminTrainerReviewTab.
+  ///
+  /// In de, this message translates to:
+  /// **'Trainer-Prüfung'**
   String get adminTrainerReviewTab;
-  String get adminTrainerApprove;
-  String get adminTrainerSuspend;
+
+  /// No description provided for @adminTrainerNoPending.
+  ///
+  /// In de, this message translates to:
+  /// **'Keine Trainer-Profile zur Prüfung.'**
   String get adminTrainerNoPending;
+
+  /// No description provided for @adminTrainerApproveSuccess.
+  ///
+  /// In de, this message translates to:
+  /// **'Trainer freigegeben.'**
   String get adminTrainerApproveSuccess;
+
+  /// No description provided for @adminTrainerSuspendSuccess.
+  ///
+  /// In de, this message translates to:
+  /// **'Trainer gesperrt.'**
   String get adminTrainerSuspendSuccess;
+
+  /// No description provided for @adminTrainerApprove.
+  ///
+  /// In de, this message translates to:
+  /// **'Freigeben'**
+  String get adminTrainerApprove;
+
+  /// No description provided for @adminTrainerSuspend.
+  ///
+  /// In de, this message translates to:
+  /// **'Sperren'**
+  String get adminTrainerSuspend;
 }
 
 class _AppLocalizationsDelegate

@@ -1,9 +1,11 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:app_links/app_links.dart';
+import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'bootstrap/providers.dart';
@@ -11,6 +13,10 @@ import 'core/navigation/app_router.dart';
 import 'core/settings/settings_provider.dart';
 import 'core/theme/app_theme.dart';
 import 'features/auth/presentation/providers/auth_provider.dart';
+import 'features/trainer/domain/services/calendar_service.dart';
+import 'features/trainer/presentation/providers/trainer_provider.dart';
+import 'features/video/presentation/providers/video_providers.dart';
+import 'features/video/presentation/widgets/incoming_call_listener.dart';
 import 'l10n/app_localizations.dart';
 
 /// Root widget. Handles app lifecycle events (sync drain on background) and
@@ -54,7 +60,15 @@ class _CoreJourneyAppState extends ConsumerState<CoreJourneyApp>
   }
 
   Future<void> _handleDeepLink(Uri uri) async {
-    if (uri.path == '/auth/reset-password') {
+    // Match both URL shapes:
+    //   https://corejourney.care/auth/reset-password  → path == '/auth/reset-password'
+    //   corejourney://auth/reset-password             → host == 'auth', path == '/reset-password'
+    final isResetPassword = uri.path == '/auth/reset-password' ||
+        (uri.scheme == 'corejourney' &&
+            uri.host == 'auth' &&
+            uri.path == '/reset-password');
+
+    if (isResetPassword) {
       try {
         ref.read(passwordRecoveryActiveProvider.notifier).state = true;
         await Supabase.instance.client.auth.getSessionFromUrl(uri);
@@ -90,10 +104,23 @@ class _CoreJourneyAppView extends ConsumerWidget {
     final router = ref.watch(routerProvider);
     final locale = ref.watch(localeProvider);
     final themeMode = ref.watch(themeModeProvider);
+    final currentUser = ref.watch(currentUserProvider);
 
     // Sync static exercise content from Supabase into the local cache.
     // Runs once per cold start; no-ops if the cache is already populated.
     ref.read(exercisesSyncServiceProvider).syncIfNeeded();
+
+    // Existing sessions do not always emit a fresh signedIn event after the
+    // first build. Register remote push once a persisted user is available.
+    if (currentUser != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        unawaited(
+          ref.read(pushNotificationServiceProvider).registerDeviceToken(
+                environment: ref.read(appConfigProvider).environment,
+              ),
+        );
+      });
+    }
 
     // Trigger server → local rehydration whenever the user signs in or the
     // token is refreshed. Ensures returning users on a fresh device or after
@@ -105,6 +132,11 @@ class _CoreJourneyAppView extends ConsumerWidget {
         final userId = next.valueOrNull?.session?.user.id;
         if (userId != null) {
           ref.read(syncServiceProvider).rehydrate(userId);
+          unawaited(
+            ref.read(pushNotificationServiceProvider).registerDeviceToken(
+                  environment: ref.read(appConfigProvider).environment,
+                ),
+          );
         }
       }
       // On sign-out: settingsProvider re-creates with userId=null,
@@ -118,6 +150,37 @@ class _CoreJourneyAppView extends ConsumerWidget {
       _syncNotifications(ref, prev, next);
     });
 
+    ref.listen<AsyncValue<Map<String, String>>>(
+      pushNotificationOpenProvider,
+      (_, next) {
+        final payload = next.valueOrNull;
+        if (payload != null) {
+          unawaited(_handleNotificationPayload(ref, payload));
+        }
+      },
+    );
+
+    ref.listen<AsyncValue<String>>(
+      localNotificationTapProvider,
+      (_, next) {
+        final payload = next.valueOrNull;
+        if (payload == null || payload.isEmpty) return;
+        try {
+          final decoded = jsonDecode(payload);
+          if (decoded is Map<String, dynamic>) {
+            unawaited(
+              _handleNotificationPayload(
+                ref,
+                decoded.map(
+                  (key, value) => MapEntry(key, value?.toString() ?? ''),
+                ),
+              ),
+            );
+          }
+        } catch (_) {}
+      },
+    );
+
     return MaterialApp.router(
       title: 'CoreJourney',
       theme: AppTheme.light,
@@ -125,6 +188,9 @@ class _CoreJourneyAppView extends ConsumerWidget {
       themeMode: themeMode,
       locale: locale,
       routerConfig: router,
+      builder: (context, child) => IncomingCallListener(
+        child: child ?? const SizedBox.shrink(),
+      ),
       localizationsDelegates: const [
         AppLocalizations.delegate,
         GlobalMaterialLocalizations.delegate,
@@ -140,6 +206,98 @@ class _CoreJourneyAppView extends ConsumerWidget {
 }
 
 // ── Notification sync helper ──────────────────────────────────────────────────
+
+Future<void> _handleNotificationPayload(
+  WidgetRef ref,
+  Map<String, String> payload,
+) async {
+  final type = payload['type'];
+  if (type == 'video_call') {
+    await _openCallFromPayload(ref, payload);
+    return;
+  }
+
+  if (type == 'call_request') {
+    final channelId = payload['channel_id'];
+    final context = rootNavigatorKey.currentContext;
+    if (channelId != null && channelId.isNotEmpty && context != null) {
+      context.push('/dm/$channelId');
+    }
+    return;
+  }
+
+  if (type == 'appointment_proposal') {
+    ref.invalidate(traineeProposalsProvider);
+    final context = rootNavigatorKey.currentContext;
+    if (context != null) {
+      context.push(Routes.appointmentProposals);
+    }
+    return;
+  }
+
+  if (type == 'appointment_confirmed') {
+    await _addConfirmedAppointmentToCalendar(payload);
+  }
+}
+
+Future<void> _openCallFromPayload(
+  WidgetRef ref,
+  Map<String, String> payload,
+) async {
+  final callId = payload['call_id'];
+  if (callId == null || callId.isEmpty) return;
+
+  final call = await ref.read(videoRepositoryProvider).getCallById(callId);
+  if (call == null || call.endedAt != null) return;
+
+  final context = rootNavigatorKey.currentContext;
+  if (context == null || !context.mounted) return;
+  await openVideoCall(context, ref, call);
+}
+
+Future<void> _addConfirmedAppointmentToCalendar(
+  Map<String, String> payload,
+) async {
+  final scheduledRaw = payload['scheduled_for'];
+  if (scheduledRaw == null || scheduledRaw.isEmpty) return;
+
+  final start = DateTime.tryParse(scheduledRaw)?.toLocal();
+  if (start == null) return;
+
+  final durationMinutes =
+      (int.tryParse(payload['duration_minutes'] ?? '') ?? 60).clamp(15, 240);
+  final title = payload['title']?.isNotEmpty == true
+      ? payload['title']!
+      : 'Isometrische Partnerübung';
+  final traineeName = payload['trainee_name']?.isNotEmpty == true
+      ? payload['trainee_name']!
+      : 'Klient';
+  final messenger = rootNavigatorKey.currentContext != null
+      ? ScaffoldMessenger.maybeOf(rootNavigatorKey.currentContext!)
+      : null;
+
+  try {
+    await CalendarService.instance.createCalendarEvent(
+      title: '$title (mit $traineeName)',
+      start: start,
+      duration: Duration(minutes: durationMinutes),
+      location:
+          payload['location']?.isNotEmpty == true ? payload['location'] : null,
+      description:
+          payload['notes']?.isNotEmpty == true ? payload['notes'] : null,
+    );
+    messenger?.showSnackBar(
+      SnackBar(
+        content:
+            Text('Termin mit $traineeName wurde dem Kalender hinzugefügt.'),
+      ),
+    );
+  } catch (e) {
+    messenger?.showSnackBar(
+      SnackBar(content: Text('Kalender konnte nicht geöffnet werden: $e')),
+    );
+  }
+}
 
 Future<void> _syncNotifications(
   WidgetRef ref,

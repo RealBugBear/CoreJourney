@@ -13,8 +13,14 @@ abstract class ChatRepository {
   // ── Messages ──────────────────────────────────────────────────────────────
 
   /// Real-time stream of the most recent [pageSize] messages.
+  /// Implementations should include a polling fallback because Supabase
+  /// Realtime can be disabled per table in some environments.
   Stream<List<ChatMessage>> watchMessages(String channelId,
       {int pageSize = 30});
+
+  /// Streams recent video-call request messages visible to the current user.
+  /// Used for app-wide trainer prompts when a client asks for a call.
+  Stream<List<ChatMessage>> watchCallRequests();
 
   /// Load messages older than [before] for infinite scroll.
   Future<List<ChatMessage>> fetchOlderMessages(

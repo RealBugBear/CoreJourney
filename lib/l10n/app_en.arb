@@ -275,5 +275,44 @@
   "appointmentStatusConfirmed": "Confirmed",
   "appointmentStatusCancelled": "Cancelled",
   "appointmentStatusDone": "Completed",
-  "appointmentOpenInCalendar": "Open in Calendar"
+  "appointmentOpenInCalendar": "Open in Calendar",
+
+  "trainerRequestsTitle": "Requests",
+  "trainerRequestNoRequests": "No pending requests.",
+  "trainerRequestAccept": "Accept",
+  "trainerRequestDecline": "Decline",
+  "trainerDiscoveryTitle": "Find Trainer",
+  "trainerDiscoveryLocationDenied": "Location permission is required to find trainers nearby.",
+  "trainerDiscoveryRadiusLabel": "{radius} km",
+  "@trainerDiscoveryRadiusLabel": {
+    "placeholders": { "radius": { "type": "int" } }
+  },
+  "trainerDiscoveryEmpty": "No trainers found nearby.",
+  "trainerDiscoveryDistanceLabel": "{distance} km away",
+  "@trainerDiscoveryDistanceLabel": {
+    "placeholders": { "distance": { "type": "double" } }
+  },
+  "trainerDiscoveryRequestAlreadySent": "Request already sent.",
+  "trainerDiscoveryRequestAlreadyConnected": "You are already connected with this trainer.",
+  "trainerDiscoveryRequestSent": "Request sent.",
+  "trainerDiscoverySendRequest": "Send request",
+  "trainerPublicProfileTitle": "Trainer Profile",
+  "trainerPublicProfileVerified": "Verified trainer",
+  "trainerSetupTitle": "Trainer Profile",
+  "trainerSetupDisplayNameLabel": "Display name",
+  "trainerSetupBioLabel": "Bio",
+  "trainerSetupEmailLabel": "Email",
+  "trainerSetupPhoneLabel": "Phone",
+  "trainerSetupLocationTitle": "Location",
+  "trainerSetupLocationHint": "Choose your trainer location so clients can find you nearby.",
+  "trainerSetupLocationMissing": "Please choose a location.",
+  "trainerSetupSubmit": "Submit for review",
+  "trainerSetupPendingTitle": "Profile under review",
+  "trainerSetupPendingBody": "We will notify you once your trainer profile is approved.",
+  "adminTrainerReviewTab": "Trainer Review",
+  "adminTrainerNoPending": "No trainer profiles pending review.",
+  "adminTrainerApproveSuccess": "Trainer approved.",
+  "adminTrainerSuspendSuccess": "Trainer suspended.",
+  "adminTrainerApprove": "Approve",
+  "adminTrainerSuspend": "Suspend"
 }

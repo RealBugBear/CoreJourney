@@ -42,7 +42,7 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
     final l10n = AppLocalizations.of(context);
     final v = (value ?? '').trim();
     if (v.isEmpty) return l10n.validationRequired;
-    if (v != _passwordController.text) {
+    if (v != _passwordController.text.trim()) {
       return l10n.validationPasswordMismatch;
     }
     return null;
@@ -154,7 +154,8 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
                   const SizedBox(height: 12),
                   Text(
                     _localizeAuthError(authState.error.toString(), l10n),
-                    style: const TextStyle(color: AppColors.error, fontSize: 14),
+                    style:
+                        const TextStyle(color: AppColors.error, fontSize: 14),
                   ),
                 ],
 

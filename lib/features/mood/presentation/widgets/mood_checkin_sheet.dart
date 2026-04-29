@@ -1,19 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../../../bootstrap/providers.dart';
+import '../../../../core/navigation/app_router.dart';
 import '../../../../core/database/app_database.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/error_retry_widget.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../../chat/domain/models/chat_channel.dart';
+import '../../../chat/presentation/providers/chat_providers.dart';
 import '../providers/mood_provider.dart';
 
-Future<void> showMoodCheckinSheet(
+Future<bool?> showMoodCheckinSheet(
   BuildContext context, {
   String? enrollmentId,
   MoodCheckinsTableData? initialEntry,
   VoidCallback? onSaved,
 }) {
-  return showModalBottomSheet<void>(
+  return showModalBottomSheet<bool>(
     context: context,
     isScrollControlled: true,
     showDragHandle: true,
@@ -78,6 +83,11 @@ class _MoodCheckinSheetState extends ConsumerState<MoodCheckinSheet> {
 
     setState(() => _saving = true);
     try {
+      final noteText = _noteController.text.trim();
+      final navigator = Navigator.of(context);
+      final rootNavigator = Navigator.of(context, rootNavigator: true);
+      final router = GoRouter.of(rootNavigator.context);
+
       final repo = ref.read(moodRepositoryProvider);
       if (_isEdit) {
         await repo.updateCheckin(
@@ -100,7 +110,14 @@ class _MoodCheckinSheetState extends ConsumerState<MoodCheckinSheet> {
 
       if (!mounted) return;
       widget.onSaved?.call();
-      Navigator.of(context).pop();
+      navigator.pop(true);
+      if (noteText.isNotEmpty) {
+        await _promptCommunityShare(
+          rootNavigator: rootNavigator,
+          router: router,
+          enrollmentId: enrollmentId,
+        );
+      }
     } catch (_) {
       if (mounted) {
         showErrorSnackBar(
@@ -108,6 +125,56 @@ class _MoodCheckinSheetState extends ConsumerState<MoodCheckinSheet> {
       }
     } finally {
       if (mounted) setState(() => _saving = false);
+    }
+  }
+
+  Future<void> _promptCommunityShare({
+    required NavigatorState rootNavigator,
+    required GoRouter router,
+    required String enrollmentId,
+  }) async {
+    final db = ref.read(databaseProvider);
+    final enrollment = await (db.select(db.enrollmentsTable)
+          ..where((t) => t.id.equals(enrollmentId))
+          ..limit(1))
+        .getSingleOrNull();
+    final packageId = enrollment?.packageId;
+    if (packageId == null) return;
+
+    final channels = await ref.read(chatRepositoryProvider).getChannels();
+    final communityChannel = channels
+        .where(
+          (c) => c.type == ChannelType.community && c.packageId == packageId,
+        )
+        .firstOrNull;
+    if (communityChannel == null) return;
+    if (!rootNavigator.mounted) return;
+
+    final share = await showDialog<bool>(
+      context: rootNavigator.context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Erfahrung teilen?'),
+        content: const Text(
+          'Moechtest du diesen Journaleintrag auch mit der Community teilen?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Nein danke'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Teilen'),
+          ),
+        ],
+      ),
+    );
+
+    if (share == true) {
+      router.push(
+        Routes.experienceFeed.replaceFirst(':channelId', communityChannel.id),
+        extra: communityChannel,
+      );
     }
   }
 

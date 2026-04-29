@@ -12,6 +12,9 @@ class MetronomeService {
   final bool enableAudio;
   final bool enableBeatAudio;
 
+  /// Override for holdRest beat count. When set, replaces ex.holdSeconds.
+  int? holdSecondsOverride;
+
   bool _cancelled = false;
   bool _paused = false;
   bool _isRunning = false;
@@ -92,7 +95,7 @@ class MetronomeService {
   }
 
   Future<void> _runHoldRestRep(Exercise ex) async {
-    final beats = ex.holdSeconds;
+    final beats = holdSecondsOverride ?? ex.holdSeconds;
     for (int beat = 1; beat <= beats; beat++) {
       if (_cancelled) return;
       _safeAdd(_beatCtrl, beat);

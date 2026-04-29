@@ -11,6 +11,7 @@
 .svn/
 .swiftpm/
 migrate_working_dir/
+.superpowers/
 
 # IntelliJ related
 *.iml
@@ -52,6 +53,11 @@ app.*.map.json
 
 # Supabase functions local secrets
 supabase/.env
+supabase/.temp/*
+!supabase/.temp/cli-latest
+
+# Firebase service account keys
+*-firebase-adminsdk-*.json
 
 # Local source video files are too large for normal Git history.
 assets/VIdeos/1 Moro/*.MOV

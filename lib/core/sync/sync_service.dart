@@ -155,6 +155,21 @@ class SyncService {
             .go();
 
         appLogger.d('Synced ${job.tableName_}:${job.recordId}');
+      } on PostgrestException catch (e, st) {
+        final recovered =
+            await _recoverFromServerConflict(job: job, error: e, client: client);
+        if (recovered) {
+          appLogger.w(
+            'Recovered sync conflict for ${job.tableName_}:${job.recordId}',
+          );
+          continue;
+        }
+        appLogger.e('Sync error for job ${job.id}', error: e, stackTrace: st);
+        await (_db.update(_db.syncJobsTable)..where((t) => t.id.equals(job.id)))
+            .write(SyncJobsTableCompanion(
+          retryCount: Value(job.retryCount + 1),
+          lastAttemptAt: Value(DateTime.now()),
+        ));
       } on AuthException {
         appLogger.w('Auth error during sync — pausing');
         _isSyncing = false;
@@ -170,6 +185,109 @@ class SyncService {
     }
   }
 
+  Future<bool> _recoverFromServerConflict({
+    required SyncJobsTableData job,
+    required PostgrestException error,
+    required SupabaseClient client,
+  }) async {
+    final payload = jsonDecode(job.payload) as Map<String, dynamic>;
+    final message = error.message.toString();
+    final details = error.details?.toString() ?? '';
+
+    final isEnrollmentConflict = job.tableName_ == 'enrollments' &&
+        job.action == 'upsert' &&
+        error.code == '23505' &&
+        (message.contains('enrollments_user_package_active_unique') ||
+            details.contains('enrollments_user_package_active_unique'));
+
+    final isOrphanProgressConflict = job.tableName_ == 'progress_entries' &&
+        job.action == 'upsert' &&
+        error.code == '23503' &&
+        (message.contains('progress_entries_enrollment_id_fkey') ||
+            details.contains('progress_entries_enrollment_id_fkey'));
+
+    if (!isEnrollmentConflict && !isOrphanProgressConflict) {
+      return false;
+    }
+
+    final userId = payload['user_id'] as String?;
+    final enrollmentId = isEnrollmentConflict
+        ? job.recordId
+        : payload['enrollment_id'] as String?;
+    if (userId == null || enrollmentId == null) return false;
+
+    await _discardLocalEnrollmentGraph(enrollmentId);
+    await (_db.delete(_db.syncJobsTable)..where((t) => t.id.equals(job.id))).go();
+
+    if (client.auth.currentUser?.id == userId) {
+      await rehydrate(userId);
+    }
+    return true;
+  }
+
+  Future<void> _discardLocalEnrollmentGraph(String enrollmentId) async {
+    final progressIds = (await (_db.select(_db.progressEntriesTable)
+          ..where((t) => t.enrollmentId.equals(enrollmentId)))
+        .get())
+        .map((row) => row.id)
+        .toList();
+    final sessionIds = (await (_db.select(_db.trainingSessionsTable)
+          ..where((t) => t.enrollmentId.equals(enrollmentId)))
+        .get())
+        .map((row) => row.id)
+        .toList();
+    final moodIds = (await (_db.select(_db.moodCheckinsTable)
+          ..where((t) => t.enrollmentId.equals(enrollmentId)))
+        .get())
+        .map((row) => row.id)
+        .toList();
+    final journalIds = (await (_db.select(_db.journalEntriesTable)
+          ..where((t) => t.enrollmentId.equals(enrollmentId)))
+        .get())
+        .map((row) => row.id)
+        .toList();
+    final questionnaireIds = (await (_db.select(_db.completionQuestionnairesTable)
+          ..where((t) => t.enrollmentId.equals(enrollmentId)))
+        .get())
+        .map((row) => row.id)
+        .toList();
+
+    await _db.transaction(() async {
+      await (_db.delete(_db.progressEntriesTable)
+            ..where((t) => t.enrollmentId.equals(enrollmentId)))
+          .go();
+      await (_db.delete(_db.trainingSessionsTable)
+            ..where((t) => t.enrollmentId.equals(enrollmentId)))
+          .go();
+      await (_db.delete(_db.moodCheckinsTable)
+            ..where((t) => t.enrollmentId.equals(enrollmentId)))
+          .go();
+      await (_db.delete(_db.journalEntriesTable)
+            ..where((t) => t.enrollmentId.equals(enrollmentId)))
+          .go();
+      await (_db.delete(_db.completionQuestionnairesTable)
+            ..where((t) => t.enrollmentId.equals(enrollmentId)))
+          .go();
+      await (_db.delete(_db.enrollmentsTable)
+            ..where((t) => t.id.equals(enrollmentId)))
+          .go();
+
+      final orphanRecordIds = <String>[
+        enrollmentId,
+        ...progressIds,
+        ...sessionIds,
+        ...moodIds,
+        ...journalIds,
+        ...questionnaireIds,
+      ];
+      if (orphanRecordIds.isNotEmpty) {
+        await (_db.delete(_db.syncJobsTable)
+              ..where((t) => t.recordId.isIn(orphanRecordIds)))
+            .go();
+      }
+    });
+  }
+
   // ── Server → Local rehydration ──────────────────────────────────────────────
   //
   // Pulls the authoritative server state for [userId] into the local Drift DB.
@@ -180,6 +298,13 @@ class SyncService {
   // (meaning there are local writes not yet uploaded). Local-pending records
   // are skipped so we do not overwrite unsynced progress with stale server data.
   Future<void> rehydrate(String userId) async {
+    // Signal rehydration-in-progress BEFORE the first await so the dashboard
+    // guard sees isRehydrating=true even if GoRouter builds the screen before
+    // the authStateProvider listener fires.  The broadcast stream controller
+    // delivers this event synchronously to Riverpod's StreamProvider, making
+    // rehydrationProvider = AsyncData(true) immediately.
+    _setRehydrating(true);
+
     if (!await ConnectivityService.isConnected()) {
       // No network — emit completed immediately so UI doesn't wait forever
       _setRehydrating(false);
@@ -192,7 +317,6 @@ class SyncService {
       return;
     }
 
-    _setRehydrating(true);
     appLogger.i('SyncService.rehydrate: pulling server data for user $userId');
 
     try {

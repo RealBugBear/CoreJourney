@@ -1,7 +1,7 @@
 name: corejourney
 description: CoreJourney — Nervous System Training
 publish_to: none
-version: 1.0.1+2026042201
+version: 1.0.2+2026042901
 
 environment:
   sdk: '>=3.3.0 <4.0.0'
@@ -28,11 +28,12 @@ dependencies:
   path_provider: ^2.1.5
   path: ^1.9.0
 
-  # Firebase — Analytics + Crashlytics + FCM (re-enable after core flow is stable)
-  # firebase_core: ^3.15.2
+  # Firebase — FCM remote push notifications
+  firebase_core: ^3.15.2
+  firebase_messaging: ^15.0.0
+  # Firebase — Analytics + Crashlytics (re-enable after core flow is stable)
   # firebase_analytics: ^11.0.1
   # firebase_crashlytics: ^4.0.3
-  # firebase_messaging: ^15.0.0
 
   # Payments — RevenueCat (added back in Phase 18)
   # purchases_flutter: ^7.0.0
@@ -128,4 +129,4 @@ flutter:
 flutter_launcher_icons:
   android: true
   ios: true
-  image_path: "assets/icon.png"
+  image_path: "assets/images/brand/origami_bird_mark.png"

@@ -44,7 +44,8 @@ class _PendulumAnimationWidgetState extends State<PendulumAnimationWidget>
       _ctrl.duration = widget.beatInterval;
     }
     if (!widget.isActive) {
-      _ctrl.stop();
+      // Let the current animation complete naturally rather than freezing
+      // mid-swing — prevents a snap-to-extreme when the next rep resumes.
       return;
     }
     if (old.beat != widget.beat && widget.beat > 0) {
@@ -53,10 +54,14 @@ class _PendulumAnimationWidgetState extends State<PendulumAnimationWidget>
   }
 
   void _syncToBeat(int beat) {
-    // The sound fires at the endpoint. The bob then swings smoothly through the
-    // center to the opposite endpoint for the next beat.
-    _fromAngle = beat.isOdd ? -_maxAngle : _maxAngle;
-    _toAngle = -_fromAngle;
+    // Compute where the bob is right now (accounts for stopped/mid-swing state).
+    final eased =
+        Curves.easeInOutSine.transform(_ctrl.value.clamp(0.0, 1.0));
+    final currentAngle = _fromAngle + (_toAngle - _fromAngle) * eased;
+
+    // Always swing to the opposite extreme from current position.
+    _fromAngle = currentAngle;
+    _toAngle = currentAngle >= 0 ? -_maxAngle : _maxAngle;
     _ctrl.forward(from: 0);
   }
 

@@ -1,22 +1,27 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:uuid/uuid.dart';
 
 import '../../../../core/logging/app_logger.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../l10n/app_localizations.dart';
-import '../../domain/models/appointment.dart';
+import '../../../chat/presentation/providers/chat_providers.dart';
 import '../../domain/models/trainer_client.dart';
-import '../../domain/services/calendar_service.dart';
+import '../../domain/services/calendar_service.dart' show TimeSlot;
 import '../providers/trainer_provider.dart';
-
-const _uuid = Uuid();
 
 class AppointmentSchedulerScreen extends ConsumerStatefulWidget {
   final TrainerClient client;
-  const AppointmentSchedulerScreen({super.key, required this.client});
+  final String? reviewChannelId;
+
+  const AppointmentSchedulerScreen({
+    super.key,
+    required this.client,
+    this.reviewChannelId,
+  });
 
   @override
   ConsumerState<AppointmentSchedulerScreen> createState() =>
@@ -27,17 +32,14 @@ class _AppointmentSchedulerScreenState
     extends ConsumerState<AppointmentSchedulerScreen> {
   final _locationCtrl = TextEditingController();
   final _notesCtrl = TextEditingController();
-  final _calSvc = CalendarService.instance;
 
   List<TimeSlot>? _freeSlots;
   final Set<TimeSlot> _selectedSlots = {};
-  DateTime? _customTime;
   bool _loadingSlots = true;
   bool _sending = false;
   bool _sent = false;
 
-  String? _selectedCalendarId;
-  bool _calendarDialogShown = false;
+  bool get _isReviewFlow => widget.reviewChannelId != null;
 
   @override
   void initState() {
@@ -53,51 +55,45 @@ class _AppointmentSchedulerScreenState
   }
 
   Future<void> _init() async {
-    _selectedCalendarId = await _calSvc.getSelectedCalendarId();
-    if (_selectedCalendarId == null && !_calendarDialogShown) {
-      _calendarDialogShown = true;
-      await _showCalendarPicker();
-    }
     await _loadSlots();
-  }
-
-  Future<void> _showCalendarPicker() async {
-    final cals = await _calSvc.getAvailableCalendars();
-    if (!mounted) return;
-    if (cals.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-            content: Text(AppLocalizations.of(context).appointmentNoCalendars)),
-      );
-      return;
-    }
-    await showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (ctx) => _CalendarPickerDialog(
-        calendars: cals,
-        onSelected: (id) async {
-          await _calSvc.setSelectedCalendarId(id);
-          setState(() => _selectedCalendarId = id);
-        },
-      ),
-    );
   }
 
   Future<void> _loadSlots() async {
     setState(() => _loadingSlots = true);
     try {
-      final now = DateTime.now();
-      final slots = await _calSvc.findFreeSlots(
-        from: now,
-        until: now.add(const Duration(days: 14)),
-      );
+      final slots = _buildSuggestedSlots(DateTime.now());
       if (mounted) setState(() => _freeSlots = slots);
     } catch (e) {
       appLogger.e('Error loading free slots', error: e);
     } finally {
       if (mounted) setState(() => _loadingSlots = false);
     }
+  }
+
+  List<TimeSlot> _buildSuggestedSlots(DateTime from) {
+    final start = DateTime(from.year, from.month, from.day).add(
+      const Duration(days: 1),
+    );
+    final suggestions = <TimeSlot>[];
+    final slotHours = [9, 11, 14, 16];
+
+    for (int dayOffset = 0; dayOffset < 10; dayOffset++) {
+      final day = start.add(Duration(days: dayOffset));
+      if (day.weekday == DateTime.saturday || day.weekday == DateTime.sunday) {
+        continue;
+      }
+      for (final hour in slotHours) {
+        final slotStart = DateTime(day.year, day.month, day.day, hour);
+        suggestions.add(
+          TimeSlot(
+            start: slotStart,
+            end: slotStart.add(const Duration(hours: 1)),
+          ),
+        );
+      }
+    }
+
+    return suggestions;
   }
 
   Future<void> _pickCustomTime() async {
@@ -118,8 +114,6 @@ class _AppointmentSchedulerScreenState
     final custom =
         DateTime(date.year, date.month, date.day, time.hour, time.minute);
     setState(() {
-      _customTime = custom;
-      // Add as a virtual slot
       _selectedSlots.add(
           TimeSlot(start: custom, end: custom.add(const Duration(hours: 1))));
     });
@@ -133,40 +127,47 @@ class _AppointmentSchedulerScreenState
   Future<void> _propose() async {
     final slots = _allSelectedDateTimes;
     if (slots.isEmpty) return;
-    if (_selectedCalendarId == null) {
-      await _showCalendarPicker();
-      if (_selectedCalendarId == null) return;
-    }
 
     setState(() => _sending = true);
     try {
-      final trainerId = Supabase.instance.client.auth.currentUser!.id;
-      const title = 'Isometrische Partnerübung';
-
-      final appointment = Appointment(
-        id: _uuid.v4(),
-        trainerId: trainerId,
-        traineeId: widget.client.clientId,
-        traineeName: widget.client.displayName,
-        title: title,
-        scheduledFor: null,
-        proposedSlots: slots,
-        durationMinutes: 60,
-        location: _locationCtrl.text.trim().isEmpty
-            ? null
-            : _locationCtrl.text.trim(),
-        notes: _notesCtrl.text.trim().isEmpty ? null : _notesCtrl.text.trim(),
-        status: 'proposed',
-        trigger: 'manual',
-        traineeDayNumber: widget.client.currentDay,
-        createdAt: DateTime.now(),
+      final data = await Supabase.instance.client.rpc(
+        _isReviewFlow
+            ? 'propose_application_review_appointment'
+            : 'propose_appointment',
+        params: _isReviewFlow
+            ? {
+                'p_channel_id': widget.reviewChannelId,
+                'p_applicant_id': widget.client.clientId,
+                'p_proposed_slots':
+                    slots.map((d) => d.toUtc().toIso8601String()).toList(),
+                'p_location': _locationCtrl.text.trim().isEmpty
+                    ? null
+                    : _locationCtrl.text.trim(),
+                'p_notes': _notesCtrl.text.trim().isEmpty
+                    ? null
+                    : _notesCtrl.text.trim(),
+              }
+            : {
+                'p_client_id': widget.client.clientId,
+                'p_proposed_slots':
+                    slots.map((d) => d.toUtc().toIso8601String()).toList(),
+                'p_location': _locationCtrl.text.trim().isEmpty
+                    ? null
+                    : _locationCtrl.text.trim(),
+                'p_notes': _notesCtrl.text.trim().isEmpty
+                    ? null
+                    : _notesCtrl.text.trim(),
+                'p_trainee_day_number': widget.client.currentDay,
+              },
       );
-
-      await Supabase.instance.client
-          .from('appointments')
-          .insert(appointment.toJson());
+      final appointmentId = (data as Map<String, dynamic>)['id'] as String?;
+      if (appointmentId != null) {
+        unawaited(_notifyAppointmentProposal(appointmentId));
+      }
 
       ref.invalidate(appointmentsProvider);
+      ref.invalidate(trainerClientsProvider);
+      ref.invalidate(chatChannelsProvider);
 
       if (mounted) setState(() => _sent = true);
     } catch (e) {
@@ -178,6 +179,17 @@ class _AppointmentSchedulerScreenState
       }
     } finally {
       if (mounted) setState(() => _sending = false);
+    }
+  }
+
+  Future<void> _notifyAppointmentProposal(String appointmentId) async {
+    try {
+      await Supabase.instance.client.functions.invoke(
+        'notify-appointment-proposal',
+        body: {'appointment_id': appointmentId},
+      );
+    } catch (e) {
+      appLogger.w('Appointment proposal notification failed: $e');
     }
   }
 
@@ -206,8 +218,8 @@ class _AppointmentSchedulerScreenState
                       ),
                 ),
                 const SizedBox(height: 8),
-                Text(
-                  'Dein Klient wählt einen passenden Slot aus.',
+                const Text(
+                  'Die andere Person wählt einen passenden Slot aus.',
                   textAlign: TextAlign.center,
                   style: TextStyle(color: AppColors.textSecondary),
                 ),
@@ -230,14 +242,18 @@ class _AppointmentSchedulerScreenState
         children: [
           // ── Header ───────────────────────────────────────────────────────
           Text(
-            l10n.appointmentWith(widget.client.displayName),
+            _isReviewFlow
+                ? 'Video-Termin mit ${widget.client.displayName}'
+                : l10n.appointmentWith(widget.client.displayName),
             style: Theme.of(context)
                 .textTheme
                 .titleLarge
                 ?.copyWith(fontWeight: FontWeight.w700),
           ),
           Text(
-            'Wähle 2–4 freie Slots aus — dein Klient sucht sich einen aus.',
+            _isReviewFlow
+                ? 'Wähle 2–4 freie Slots für das Bewerbungsgespräch aus.'
+                : 'Wähle 2–4 freie Slots aus — dein Klient sucht sich einen aus.',
             style: Theme.of(context)
                 .textTheme
                 .bodyMedium
@@ -257,12 +273,12 @@ class _AppointmentSchedulerScreenState
               ),
               child: Row(
                 children: [
-                  Icon(Icons.check_circle_outline,
+                  const Icon(Icons.check_circle_outline,
                       color: AppColors.primary, size: 18),
                   const SizedBox(width: 8),
                   Text(
                     '${_selectedSlots.length} Slot${_selectedSlots.length > 1 ? "s" : ""} ausgewählt',
-                    style: TextStyle(
+                    style: const TextStyle(
                       color: AppColors.primary,
                       fontWeight: FontWeight.w600,
                     ),
@@ -270,7 +286,7 @@ class _AppointmentSchedulerScreenState
                   const Spacer(),
                   GestureDetector(
                     onTap: () => setState(() => _selectedSlots.clear()),
-                    child: Text(
+                    child: const Text(
                       'Zurücksetzen',
                       style: TextStyle(
                           color: AppColors.textSecondary, fontSize: 12),
@@ -302,7 +318,7 @@ class _AppointmentSchedulerScreenState
                       child: CircularProgressIndicator(strokeWidth: 2)),
                   const SizedBox(width: 12),
                   Text(l10n.appointmentLoadingSlots,
-                      style: TextStyle(color: AppColors.textSecondary)),
+                      style: const TextStyle(color: AppColors.textSecondary)),
                 ],
               ),
             )
@@ -310,7 +326,7 @@ class _AppointmentSchedulerScreenState
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 8),
               child: Text(l10n.appointmentNoFreeSlots,
-                  style: TextStyle(color: AppColors.textSecondary)),
+                  style: const TextStyle(color: AppColors.textSecondary)),
             )
           else
             _SlotGrid(
@@ -342,7 +358,9 @@ class _AppointmentSchedulerScreenState
           TextField(
             controller: _locationCtrl,
             decoration: InputDecoration(
-              labelText: l10n.appointmentLocationLabel,
+              labelText: _isReviewFlow
+                  ? 'Ort oder Video-Call'
+                  : l10n.appointmentLocationLabel,
               border:
                   OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
               prefixIcon: const Icon(Icons.location_on_outlined),
@@ -430,7 +448,7 @@ class _SlotGrid extends StatelessWidget {
             children: [
               Text(
                 dayLabel,
-                style: TextStyle(
+                style: const TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
                   color: AppColors.textSecondary,
@@ -476,68 +494,6 @@ class _SlotGrid extends StatelessWidget {
           ),
         );
       }).toList(),
-    );
-  }
-}
-
-// ── Calendar picker dialog ────────────────────────────────────────────────────
-
-class _CalendarPickerDialog extends StatefulWidget {
-  final List<AppCalendar> calendars;
-  final Future<void> Function(String id) onSelected;
-
-  const _CalendarPickerDialog({
-    required this.calendars,
-    required this.onSelected,
-  });
-
-  @override
-  State<_CalendarPickerDialog> createState() => _CalendarPickerDialogState();
-}
-
-class _CalendarPickerDialogState extends State<_CalendarPickerDialog> {
-  String? _selected;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    return AlertDialog(
-      title: Text(l10n.appointmentSelectCalendarTitle),
-      content: SizedBox(
-        width: double.maxFinite,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(l10n.appointmentSelectCalendarSubtitle,
-                style: TextStyle(color: AppColors.textSecondary)),
-            const SizedBox(height: 12),
-            ...widget.calendars.map((cal) => RadioListTile<String>(
-                  value: cal.id,
-                  groupValue: _selected,
-                  title: Text(cal.name),
-                  onChanged: (v) => setState(() => _selected = v),
-                  contentPadding: EdgeInsets.zero,
-                  dense: true,
-                )),
-          ],
-        ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: Text(l10n.cancel),
-        ),
-        TextButton(
-          onPressed: _selected == null
-              ? null
-              : () async {
-                  await widget.onSelected(_selected!);
-                  if (context.mounted) Navigator.pop(context);
-                },
-          child: Text(l10n.confirm),
-        ),
-      ],
     );
   }
 }

@@ -7,6 +7,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/error_retry_widget.dart';
 import '../../../mood/presentation/providers/mood_provider.dart';
 import '../../../mood/presentation/widgets/mood_checkin_sheet.dart';
+import '../../../mood/presentation/widgets/note_entry_sheet.dart';
 import '../../../progress/presentation/providers/progress_provider.dart';
 import '../providers/journal_provider.dart';
 import '../widgets/journal_entry_tile.dart';
@@ -25,20 +26,44 @@ class JournalScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Tagebuch')),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => showMoodCheckinSheet(
-          context,
-          enrollmentId: enrollmentId,
-          onSaved: () {
-            ref.read(journalProvider.notifier).load();
-            ref.invalidate(moodDailyAggregatesProvider);
-            ref.invalidate(moodNotesProvider);
-          },
-        ),
-        backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
-        icon: const Icon(Icons.edit_note),
-        label: const Text('Eintrag'),
+      floatingActionButton: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          // Option 1: Full mood + note entry
+          FloatingActionButton.extended(
+            heroTag: 'fab_mood',
+            onPressed: () => showMoodCheckinSheet(
+              context,
+              enrollmentId: enrollmentId,
+              onSaved: () {
+                ref.read(journalProvider.notifier).load();
+                ref.invalidate(moodDailyAggregatesProvider);
+                ref.invalidate(moodNotesProvider);
+              },
+            ),
+            backgroundColor: AppColors.primary,
+            foregroundColor: Colors.white,
+            icon: const Icon(Icons.mood),
+            label: const Text('Stimmung + Eintrag'),
+          ),
+          const SizedBox(height: 10),
+          // Option 2: Plain text note, no mood required
+          FloatingActionButton.extended(
+            heroTag: 'fab_note',
+            onPressed: enrollmentId == null
+                ? null
+                : () => showNoteEntrySheet(
+                      context,
+                      enrollmentId: enrollmentId,
+                      onSaved: () => ref.read(journalProvider.notifier).load(),
+                    ),
+            backgroundColor: AppColors.primary.withValues(alpha: 0.75),
+            foregroundColor: Colors.white,
+            icon: const Icon(Icons.edit_note),
+            label: const Text('Nur Eintrag'),
+          ),
+        ],
       ),
       body: state.isLoading
           ? const Center(child: CircularProgressIndicator())

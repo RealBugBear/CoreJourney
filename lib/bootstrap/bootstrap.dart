@@ -12,6 +12,7 @@ import '../config/app_config.dart';
 import '../core/database/app_database.dart';
 import '../core/logging/app_logger.dart';
 import '../core/notifications/notification_service.dart';
+import '../core/push/push_notification_service.dart';
 import '../core/storage/file_local_storage.dart';
 import '../core/sync/sync_service.dart';
 
@@ -148,6 +149,19 @@ class Bootstrap {
         _dbg('NotificationService.initialize FAILED: $e');
         appLogger.w('NotificationService init skipped: $e');
       }
+    }
+
+    // Initialize remote push notifications. Token registration is retried after
+    // sign-in from app.dart, because auth may not be ready during cold start.
+    _dbg('PushNotificationService.initialize start');
+    try {
+      await PushNotificationService.instance.initialize(
+        environment: environment,
+      );
+      _dbg('PushNotificationService.initialize done');
+    } catch (e) {
+      _dbg('PushNotificationService.initialize FAILED: $e');
+      appLogger.w('Push notification init skipped: $e');
     }
 
     appLogger.i('Bootstrap complete [${config.envLabel}]');

@@ -41,7 +41,13 @@ class _ConsentScreenState extends ConsumerState<ConsentScreen>
 
     try {
       final userId = Supabase.instance.client.auth.currentUser?.id;
-      if (userId == null) return;
+      if (userId == null) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(AppLocalizations.of(context).errorGeneric)),
+        );
+        return;
+      }
 
       // Write to Supabase for permanent audit trail.
       // Best-effort — if Supabase is unavailable, local cache is used.

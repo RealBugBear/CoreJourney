@@ -45,9 +45,11 @@ class TrainerProfile {
   }
 
   factory TrainerProfile.fromJson(Map<String, dynamic> json) {
+    final submittedAtRaw = json['submitted_at'] as String?;
+
     return TrainerProfile(
       id: json['id'] as String,
-      displayName: json['display_name'] as String,
+      displayName: json['display_name'] as String? ?? 'Trainer',
       bio: json['bio'] as String?,
       photoUrl: json['photo_url'] as String?,
       distanceKm: (json['distance_km'] as num?)?.toDouble(),
@@ -55,7 +57,9 @@ class TrainerProfile {
       publicLongitude: (json['public_longitude'] as num?)?.toDouble(),
       verified: json['verified'] as bool? ?? false,
       status: _parseStatus(json['status'] as String?),
-      submittedAt: DateTime.parse(json['submitted_at'] as String),
+      submittedAt: submittedAtRaw != null
+          ? DateTime.parse(submittedAtRaw)
+          : DateTime.fromMillisecondsSinceEpoch(0),
       contactEmail: json['contact_email'] as String?,
       contactPhone: json['contact_phone'] as String?,
       adminNotes: json['admin_notes'] as String?,

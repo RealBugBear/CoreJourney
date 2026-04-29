@@ -44,6 +44,10 @@ final chatMessagesProvider = StreamProvider.autoDispose
   return ref.read(chatRepositoryProvider).watchMessages(channelId);
 });
 
+final callRequestsProvider = StreamProvider.autoDispose<List<ChatMessage>>(
+  (ref) => ref.read(chatRepositoryProvider).watchCallRequests(),
+);
+
 // ── Typing users stream ───────────────────────────────────────────────────────
 
 final typingUsersProvider =
@@ -62,6 +66,7 @@ class SendMessageNotifier extends AutoDisposeAsyncNotifier<void> {
     state = await AsyncValue.guard(
       () => ref.read(chatRepositoryProvider).sendMessage(channelId, content),
     );
+    ref.invalidate(chatChannelsProvider);
   }
 
   Future<void> sendCallRequest(String channelId) async {
@@ -69,6 +74,7 @@ class SendMessageNotifier extends AutoDisposeAsyncNotifier<void> {
     state = await AsyncValue.guard(
       () => ref.read(chatRepositoryProvider).sendCallRequest(channelId),
     );
+    ref.invalidate(chatChannelsProvider);
   }
 }
 

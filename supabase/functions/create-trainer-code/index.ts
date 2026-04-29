@@ -5,15 +5,6 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-// Unambiguous characters — no 0/O, 1/I/L to avoid transcription errors.
-const CHARS = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'
-
-function generateCode(): string {
-  const bytes = new Uint8Array(8)
-  crypto.getRandomValues(bytes)
-  return Array.from(bytes).map(b => CHARS[b % CHARS.length]).join('')
-}
-
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
@@ -63,24 +54,38 @@ Deno.serve(async (req) => {
       })
     }
 
-    const code = generateCode()
-    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
+    const body = await req.json().catch(() => ({}))
+    const applicationId = body?.application_id
 
-    const { data, error: insertError } = await serviceClient
-      .from('trainer_invite_codes')
-      .insert({ code, created_by: user.id, expires_at: expiresAt })
-      .select()
-      .single()
+    if (!applicationId) {
+      return new Response(
+        JSON.stringify({
+          error:
+            'Trainer-Codes werden nur noch nach genehmigter Trainer-Bewerbung erzeugt.',
+        }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+      )
+    }
 
-    if (insertError) {
-      return new Response(JSON.stringify({ error: insertError.message }), {
+    const { data: approvalRows, error: approvalError } = await userClient.rpc(
+      'approve_trainer_application',
+      { p_application_id: applicationId },
+    )
+
+    if (approvalError) {
+      return new Response(JSON.stringify({ error: approvalError.message }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
 
+    const approval = Array.isArray(approvalRows) ? approvalRows[0] : approvalRows
+
     return new Response(
-      JSON.stringify({ code: data.code, expires_at: data.expires_at }),
+      JSON.stringify({
+        code: approval?.code,
+        expires_at: approval?.expires_at,
+      }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
     )
   } catch (e) {

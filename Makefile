@@ -1,9 +1,10 @@
 DEVICE_ID   := 00008140-000671E10AEB001C
 SIM_ID      := 4D038F07-94D0-4E0C-8794-74CE91566CAB
+ANDROID_ID  := R3CT50V8JVM
 ENTRY       := lib/main_development.dart
 ENTRY_PROD  := lib/main_production.dart
 
-.PHONY: run run-sim release clean
+.PHONY: run run-sim run-android release clean
 
 # NOTE: Profile mode is the ONLY stable mode on physical iPhone with iOS 26.2.1 beta.
 # Debug mode fails to establish the Xcode debug proxy.
@@ -21,6 +22,10 @@ run:
 ## Run on iOS 26 simulator in debug mode
 run-sim:
 	flutter run -d $(SIM_ID) -t $(ENTRY)
+
+## Run on Samsung Android in debug mode (flavor=development required — ohne das wird der alte app-debug.apk installiert!)
+run-android:
+	flutter run -d $(ANDROID_ID) --flavor development -t $(ENTRY)
 
 ## Build release IPA for TestFlight / App Store
 ## After this completes, open Xcode → Window → Organizer → distribute the archive.

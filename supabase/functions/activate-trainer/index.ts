@@ -49,11 +49,12 @@ Deno.serve(async (req) => {
       })
     }
 
-    // Look up the invite code.
+    // Look up the approval-bound trainer activation code.
     const { data: invite, error: lookupError } = await serviceClient
       .from('trainer_invite_codes')
-      .select('id, used_by, expires_at')
+      .select('id, used_by, expires_at, trainer_application_id, purpose')
       .eq('code', normalizedCode)
+      .eq('purpose', 'trainer_application_approval')
       .maybeSingle()
 
     if (lookupError) {
@@ -64,10 +65,17 @@ Deno.serve(async (req) => {
     }
 
     if (!invite) {
-      return new Response(JSON.stringify({ error: 'Ungültiger Code.' }), {
+      return new Response(JSON.stringify({ error: 'Ungültiger Aktivierungscode.' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
+    }
+
+    if (!invite.trainer_application_id) {
+      return new Response(
+        JSON.stringify({ error: 'Dieser Code ist nicht mit einer geprüften Bewerbung verbunden.' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+      )
     }
 
     if (invite.used_by !== null) {
@@ -84,21 +92,14 @@ Deno.serve(async (req) => {
       )
     }
 
-    // Mark code used and promote role in parallel.
-    const [{ error: markError }, { error: roleError }] = await Promise.all([
-      serviceClient
-        .from('trainer_invite_codes')
-        .update({ used_by: user.id, used_at: new Date().toISOString() })
-        .eq('id', invite.id),
-      serviceClient
-        .from('profiles')
-        .update({ role: 'trainer' })
-        .eq('id', user.id),
-    ])
+    const { error: activationError } = await serviceClient.rpc(
+      'finalize_trainer_application_activation',
+      { p_code: normalizedCode, p_user_id: user.id },
+    )
 
-    if (markError || roleError) {
+    if (activationError) {
       return new Response(
-        JSON.stringify({ error: (markError ?? roleError)!.message }),
+        JSON.stringify({ error: activationError.message }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
       )
     }

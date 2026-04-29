@@ -85,11 +85,12 @@ class _TrainerClientDetailScreenState
                 sessionsAsync.when(
                   loading: () => const LinearProgressIndicator(),
                   error: (e, _) => Text(e.toString(),
-                      style: TextStyle(color: AppColors.error)),
+                      style: const TextStyle(color: AppColors.error)),
                   data: (sessions) => sessions.isEmpty
                       ? Text(
                           l10n.trainerNoSessions,
-                          style: TextStyle(color: AppColors.textSecondary),
+                          style:
+                              const TextStyle(color: AppColors.textSecondary),
                         )
                       : _SessionList(sessions: sessions),
                 ),
@@ -245,7 +246,8 @@ class _SessionList extends StatelessWidget {
               Text('Day ${s.dayNumber}', style: const TextStyle(fontSize: 14)),
           trailing: Text(
             dayStr,
-            style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+            style:
+                const TextStyle(fontSize: 12, color: AppColors.textSecondary),
           ),
         );
       }).toList(),

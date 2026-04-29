@@ -62,9 +62,19 @@ class SupabaseChatRepository implements ChatRepository {
         .eq('id', channelId)
         .single();
 
+    final memberJson = await _client
+        .from('chat_channel_members')
+        .select('role')
+        .eq('channel_id', channelId)
+        .eq('user_id', userId)
+        .maybeSingle();
+    final roleStr = memberJson?['role'] as String? ?? 'member';
+    final role =
+        roleStr == 'moderator' ? MemberRole.moderator : MemberRole.member;
+
     return ChatChannel.fromJson(
       channelJson,
-      currentUserRole: MemberRole.member,
+      currentUserRole: role,
       unreadCount: 0,
     );
   }
@@ -87,14 +97,55 @@ class SupabaseChatRepository implements ChatRepository {
 
   @override
   Stream<List<ChatMessage>> watchMessages(String channelId,
-      {int pageSize = 30}) {
-    return _client
-        .from('chat_messages')
-        .stream(primaryKey: ['id'])
-        .eq('channel_id', channelId)
-        .order('created_at', ascending: true)
-        .limit(pageSize)
-        .map((rows) => rows.map(ChatMessage.fromJson).toList());
+      {int pageSize = 30}) async* {
+    var lastSignature = '';
+    var hasEmittedInitialValue = false;
+
+    while (true) {
+      try {
+        final messages = await _fetchRecentMessages(channelId, pageSize);
+        final signature =
+            messages.map((m) => '${m.id}:${m.deletedAt}').join('|');
+        if (signature != lastSignature || !hasEmittedInitialValue) {
+          lastSignature = signature;
+          hasEmittedInitialValue = true;
+          yield messages;
+        }
+      } catch (e) {
+        debugPrint('watchMessages polling failed: $e');
+        if (!hasEmittedInitialValue) {
+          hasEmittedInitialValue = true;
+          yield const [];
+        }
+      }
+      await Future<void>.delayed(const Duration(seconds: 2));
+    }
+  }
+
+  @override
+  Stream<List<ChatMessage>> watchCallRequests() async* {
+    var lastSignature = '';
+    var hasEmittedInitialValue = false;
+
+    while (true) {
+      try {
+        final messages = await _fetchRecentCallRequests();
+        final signature =
+            messages.map((m) => '${m.id}:${m.deletedAt}').join('|');
+        if (signature != lastSignature || !hasEmittedInitialValue) {
+          lastSignature = signature;
+          hasEmittedInitialValue = true;
+          yield messages;
+        }
+      } catch (e) {
+        debugPrint('watchCallRequests polling failed: $e');
+        if (!hasEmittedInitialValue) {
+          hasEmittedInitialValue = true;
+          yield const [];
+        }
+      }
+      await Future<void>.delayed(const Duration(seconds: 2));
+    }
   }
 
   @override
@@ -114,6 +165,52 @@ class SupabaseChatRepository implements ChatRepository {
         .map((r) => ChatMessage.fromJson(r as Map<String, dynamic>))
         .toList()
         .reversed
+        .toList();
+  }
+
+  Future<List<ChatMessage>> _fetchRecentMessages(
+    String channelId,
+    int pageSize,
+  ) async {
+    final rows = await _client
+        .from('chat_messages')
+        .select()
+        .eq('channel_id', channelId)
+        .order('created_at', ascending: false)
+        .limit(pageSize);
+    return (rows as List)
+        .map((r) => ChatMessage.fromJson(r as Map<String, dynamic>))
+        .toList()
+        .reversed
+        .toList();
+  }
+
+  Future<List<ChatMessage>> _fetchRecentCallRequests() async {
+    final userId = _userId;
+    if (userId == null) return const [];
+
+    final directTrainerChannelIds = (await getChannels())
+        .where(
+          (channel) =>
+              channel.type == ChannelType.direct && channel.isModerator,
+        )
+        .map((channel) => channel.id)
+        .toList();
+
+    if (directTrainerChannelIds.isEmpty) return const [];
+
+    final rows = await _client
+        .from('chat_messages')
+        .select()
+        .inFilter('channel_id', directTrainerChannelIds)
+        .eq('is_call_request', true)
+        .neq('sender_id', userId)
+        .isFilter('deleted_at', null)
+        .order('created_at', ascending: false)
+        .limit(10);
+
+    return (rows as List)
+        .map((r) => ChatMessage.fromJson(r as Map<String, dynamic>))
         .toList();
   }
 
@@ -145,6 +242,8 @@ class SupabaseChatRepository implements ChatRepository {
       'is_bot_response': false,
       'is_call_request': true,
     });
+
+    unawaited(_notifyCallRequest(channelId: channelId));
   }
 
   @override
@@ -217,6 +316,17 @@ class SupabaseChatRepository implements ChatRepository {
       );
     } catch (e) {
       debugPrint('Triage bot invocation failed: $e');
+    }
+  }
+
+  Future<void> _notifyCallRequest({required String channelId}) async {
+    try {
+      await _client.functions.invoke(
+        'notify-call-request',
+        body: {'channel_id': channelId},
+      );
+    } catch (e) {
+      debugPrint('Call request notification failed: $e');
     }
   }
 }

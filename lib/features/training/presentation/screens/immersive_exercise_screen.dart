@@ -47,6 +47,7 @@ class _ImmersiveExerciseScreenState extends State<ImmersiveExerciseScreen> {
   bool _musicActive = false;
 
   double _tempoSeconds = 1.0;
+  int _holdSecondsOverride = 7;
   TrainingFeedbackMode _feedbackMode = TrainingFeedbackMode.voiceAndCues;
   static const double _stepSize = 0.5;
 
@@ -68,6 +69,7 @@ class _ImmersiveExerciseScreenState extends State<ImmersiveExerciseScreen> {
       _feedbackMode = feedback;
       _tempoSeconds = persistedTempo ?? 1.0;
       _musicActive = musicTrack != null;
+      _holdSecondsOverride = widget.exercise.holdSeconds;
     });
     if (musicTrack != null) {
       unawaited(InAppMusicService.instance.loadFromPrefs());
@@ -167,6 +169,15 @@ class _ImmersiveExerciseScreenState extends State<ImmersiveExerciseScreen> {
     HapticFeedback.selectionClick();
   }
 
+  void _changeHoldSeconds(int delta) {
+    final min = widget.exercise.holdSeconds;
+    final newVal = (_holdSecondsOverride + delta).clamp(min, 60);
+    if (newVal == _holdSecondsOverride) return;
+    if (mounted) setState(() => _holdSecondsOverride = newVal);
+    _metronome?.holdSecondsOverride = newVal;
+    HapticFeedback.selectionClick();
+  }
+
   Future<void> _cycleFeedbackMode() async {
     final next = switch (_feedbackMode) {
       TrainingFeedbackMode.voiceAndCues => TrainingFeedbackMode.hapticOnly,
@@ -197,7 +208,8 @@ class _ImmersiveExerciseScreenState extends State<ImmersiveExerciseScreen> {
   @override
   Widget build(BuildContext context) {
     final ex = widget.exercise;
-    final beatsPerRep = ex.holdSeconds;
+    final isHoldRest = ex.rhythmType == RhythmType.holdRest;
+    final beatsPerRep = isHoldRest ? _holdSecondsOverride : ex.holdSeconds;
     final beatProgress =
         beatsPerRep > 0 ? (_currentBeat / beatsPerRep).clamp(0.0, 1.0) : 0.0;
     final sessionProgress =
@@ -297,7 +309,11 @@ class _ImmersiveExerciseScreenState extends State<ImmersiveExerciseScreen> {
                     ),
                   ),
                   Text(
-                    _isResting ? 'Pause' : 'von ${ex.holdSeconds} Schlägen',
+                    _isResting
+                        ? 'Pause'
+                        : isHoldRest
+                            ? 'von $_holdSecondsOverride Sek.'
+                            : 'von ${ex.holdSeconds} Schlägen',
                     style: TextStyle(
                         color: Colors.white.withValues(alpha: 0.25),
                         fontSize: 11),
@@ -342,11 +358,19 @@ class _ImmersiveExerciseScreenState extends State<ImmersiveExerciseScreen> {
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
               child: Column(
                 children: [
-                  // Tempo row
+                  // Duration / tempo row
                   Row(
                     children: [
                       Expanded(
-                          child: _tempoBtn('−', () => _changeTempo(-_stepSize))),
+                        child: _tempoBtn(
+                          '−',
+                          isHoldRest
+                              ? (_holdSecondsOverride > ex.holdSeconds
+                                  ? () => _changeHoldSeconds(-1)
+                                  : null)
+                              : () => _changeTempo(-_stepSize),
+                        ),
+                      ),
                       const SizedBox(width: 8),
                       Expanded(
                         flex: 2,
@@ -362,7 +386,9 @@ class _ImmersiveExerciseScreenState extends State<ImmersiveExerciseScreen> {
                           ),
                           alignment: Alignment.center,
                           child: Text(
-                            '${_tempoSeconds.toStringAsFixed(_tempoSeconds.truncateToDouble() == _tempoSeconds ? 0 : 1)}s / Schlag',
+                            isHoldRest
+                                ? '${_holdSecondsOverride}s Haltezeit'
+                                : '${_tempoSeconds.toStringAsFixed(_tempoSeconds.truncateToDouble() == _tempoSeconds ? 0 : 1)}s / Schlag',
                             style: const TextStyle(
                                 color: Color(0xFFa5b4fc),
                                 fontSize: 12,
@@ -372,8 +398,13 @@ class _ImmersiveExerciseScreenState extends State<ImmersiveExerciseScreen> {
                       ),
                       const SizedBox(width: 8),
                       Expanded(
-                          child:
-                              _tempoBtn('+', () => _changeTempo(_stepSize))),
+                        child: _tempoBtn(
+                          '+',
+                          isHoldRest
+                              ? () => _changeHoldSeconds(1)
+                              : () => _changeTempo(_stepSize),
+                        ),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 8),
@@ -416,23 +447,27 @@ class _ImmersiveExerciseScreenState extends State<ImmersiveExerciseScreen> {
     );
   }
 
-  Widget _tempoBtn(String label, VoidCallback onTap) => GestureDetector(
-        onTap: onTap,
-        child: Container(
-          height: 36,
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.06),
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
-          ),
-          alignment: Alignment.center,
-          child: Text(label,
-              style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.6),
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700)),
+  Widget _tempoBtn(String label, VoidCallback? onTap) {
+    final enabled = onTap != null;
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        height: 36,
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: enabled ? 0.06 : 0.02),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+              color: Colors.white.withValues(alpha: enabled ? 0.1 : 0.04)),
         ),
-      );
+        alignment: Alignment.center,
+        child: Text(label,
+            style: TextStyle(
+                color: Colors.white.withValues(alpha: enabled ? 0.6 : 0.2),
+                fontSize: 18,
+                fontWeight: FontWeight.w700)),
+      ),
+    );
+  }
 
   Widget _iconBtn(String icon, String label, VoidCallback onTap,
           {bool active = false}) =>

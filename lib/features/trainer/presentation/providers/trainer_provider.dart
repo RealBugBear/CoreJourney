@@ -27,9 +27,15 @@ final userRoleProvider = FutureProvider<String>((ref) async {
 
 class TrainerClientsNotifier extends AsyncNotifier<List<TrainerClient>> {
   @override
-  Future<List<TrainerClient>> build() => _fetch();
+  Future<List<TrainerClient>> build() {
+    ref.watch(authStateProvider);
+    return _fetch();
+  }
 
   Future<List<TrainerClient>> _fetch() async {
+    if (Supabase.instance.client.auth.currentUser == null) return [];
+
+    await Supabase.instance.client.rpc('reconcile_trainer_clients');
     final res = await Supabase.instance.client.rpc('get_trainer_clients');
     final list = (res as List).cast<Map<String, dynamic>>();
     return list.map(TrainerClient.fromJson).toList();
@@ -60,6 +66,93 @@ final trainerClientsProvider =
   TrainerClientsNotifier.new,
 );
 
+final trainerClientsDebugProvider = FutureProvider<String>((ref) async {
+  ref.watch(authStateProvider);
+
+  final sb = Supabase.instance.client;
+  final user = sb.auth.currentUser;
+  if (user == null) return 'auth.uid: nicht eingeloggt';
+
+  final lines = <String>[
+    'auth.uid: ${user.id}',
+    'email: ${user.email ?? '-'}',
+  ];
+
+  try {
+    final profile = await sb
+        .from('profiles')
+        .select('role, display_name')
+        .eq('id', user.id)
+        .maybeSingle();
+    lines.add('profiles.role: ${profile?['role'] ?? '-'}');
+    lines.add('profiles.display_name: ${profile?['display_name'] ?? '-'}');
+  } catch (e) {
+    lines.add('profiles: Fehler $e');
+  }
+
+  try {
+    final relationships = await sb
+        .from('trainer_client_relationships')
+        .select('id, client_id, status, linked_at')
+        .eq('trainer_id', user.id);
+    final list = (relationships as List).cast<Map<String, dynamic>>();
+    lines.add('relationships gesamt: ${list.length}');
+    lines.add(
+      'relationships active: ${list.where((r) => r['status'] == 'active').length}',
+    );
+    if (list.isNotEmpty) {
+      lines.add(
+        'relationship statuses: ${list.map((r) => r['status']).join(', ')}',
+      );
+      lines.add('relationship client_ids:');
+      for (final row in list.take(5)) {
+        lines.add('- ${row['client_id']} (${row['status']})');
+      }
+    }
+  } catch (e) {
+    lines.add('relationships: Fehler $e');
+  }
+
+  try {
+    final appointments = await sb
+        .from('appointments')
+        .select('id, trainee_id, status, scheduled_for')
+        .eq('trainer_id', user.id);
+    final list = (appointments as List).cast<Map<String, dynamic>>();
+    lines.add('appointments als trainer: ${list.length}');
+    if (list.isNotEmpty) {
+      lines.add('appointment trainee_ids:');
+      for (final row in list.take(5)) {
+        lines.add('- ${row['trainee_id']} (${row['status']})');
+      }
+    }
+  } catch (e) {
+    lines.add('appointments: Fehler $e');
+  }
+
+  try {
+    await sb.rpc('reconcile_trainer_clients');
+    lines.add('reconcile_trainer_clients: ok');
+  } catch (e) {
+    lines.add('reconcile_trainer_clients: Fehler $e');
+  }
+
+  try {
+    final clients = await sb.rpc('get_trainer_clients');
+    final list = clients as List;
+    lines.add('get_trainer_clients rows: ${list.length}');
+    if (list.isNotEmpty) {
+      for (final row in list.take(5)) {
+        lines.add('- ${row['client_id']} ${row['display_name']}');
+      }
+    }
+  } catch (e) {
+    lines.add('get_trainer_clients: Fehler $e');
+  }
+
+  return lines.join('\n');
+});
+
 // ── Client sessions (for detail screen) ──────────────────────────────────────
 
 final clientSessionsProvider =
@@ -72,7 +165,14 @@ final clientSessionsProvider =
 
 // ── Appointments (trainer view — confirmed/planned) ───────────────────────────
 
+final _appointmentsRefreshTickProvider = StreamProvider.autoDispose<int>((ref) {
+  return Stream.periodic(const Duration(seconds: 10), (tick) => tick);
+});
+
 final appointmentsProvider = FutureProvider<List<Appointment>>((ref) async {
+  ref.watch(authStateProvider);
+  ref.watch(_appointmentsRefreshTickProvider);
+
   final userId = Supabase.instance.client.auth.currentUser?.id;
   if (userId == null) return [];
 
@@ -80,8 +180,8 @@ final appointmentsProvider = FutureProvider<List<Appointment>>((ref) async {
       .from('appointments')
       .select('*, profiles!trainee_id(display_name)')
       .eq('trainer_id', userId)
-      .neq('status', 'proposed')
-      .order('scheduled_for', ascending: true);
+      .inFilter('status', ['planned', 'confirmed']).order('scheduled_for',
+          ascending: true);
 
   final list = (res as List).cast<Map<String, dynamic>>();
   return list.map((row) {
@@ -94,6 +194,8 @@ final appointmentsProvider = FutureProvider<List<Appointment>>((ref) async {
 // ── Pending proposals (trainee view) ─────────────────────────────────────────
 
 final traineeProposalsProvider = FutureProvider<List<Appointment>>((ref) async {
+  ref.watch(authStateProvider);
+
   final userId = Supabase.instance.client.auth.currentUser?.id;
   if (userId == null) return [];
 
@@ -115,31 +217,23 @@ final traineeProposalsProvider = FutureProvider<List<Appointment>>((ref) async {
 // ── Confirm a proposed slot (trainee action) ──────────────────────────────────
 
 Future<void> confirmProposedSlot(String appointmentId, DateTime chosen) async {
-  final sb = Supabase.instance.client;
+  await Supabase.instance.client.rpc(
+    'confirm_proposed_appointment',
+    params: {
+      'p_appointment_id': appointmentId,
+      'p_chosen_slot': chosen.toUtc().toIso8601String(),
+    },
+  );
 
-  // Fetch trainer/trainee IDs so we can cancel stale appointments
-  final apptData = await sb
-      .from('appointments')
-      .select('trainer_id, trainee_id')
-      .eq('id', appointmentId)
-      .single();
-  final trainerId = apptData['trainer_id'] as String;
-  final traineeId = apptData['trainee_id'] as String;
-
-  // Confirm the chosen slot
-  await sb.from('appointments').update({
-    'status': 'confirmed',
-    'scheduled_for': chosen.toIso8601String(),
-  }).eq('id', appointmentId);
-
-  // Cancel any other planned/proposed appointments between the same pair
-  await sb
-      .from('appointments')
-      .update({'status': 'cancelled'})
-      .eq('trainer_id', trainerId)
-      .eq('trainee_id', traineeId)
-      .neq('id', appointmentId)
-      .inFilter('status', ['planned', 'proposed']);
+  try {
+    await Supabase.instance.client.functions.invoke(
+      'notify-appointment-confirmed',
+      body: {'appointment_id': appointmentId},
+    );
+  } catch (_) {
+    // The appointment confirmation itself succeeded; notification delivery is
+    // best-effort and must not block the trainee flow.
+  }
 }
 
 // ── Become trainer ───────────────────────────────────────────────────────────
@@ -149,8 +243,9 @@ Future<void> confirmProposedSlot(String appointmentId, DateTime chosen) async {
 /// only in Supabase project secrets.
 /// Returns null on success, or a localised error message on failure.
 Future<String?> activateTrainerRole(String enteredCode) async {
-  if (Supabase.instance.client.auth.currentUser == null)
+  if (Supabase.instance.client.auth.currentUser == null) {
     return 'Nicht eingeloggt.';
+  }
 
   try {
     final session = Supabase.instance.client.auth.currentSession;
@@ -164,8 +259,14 @@ Future<String?> activateTrainerRole(String enteredCode) async {
     final data = response.data as Map<String, dynamic>?;
     if (data?['error'] != null) return data!['error'] as String;
     return null;
+  } on FunctionException catch (e) {
+    final details = e.details;
+    if (details is Map && details['error'] is String) {
+      return details['error'] as String;
+    }
+    return e.reasonPhrase ?? e.toString();
   } catch (e) {
-    return 'Fehler beim Aktivieren. Bitte versuche es erneut.';
+    return 'Fehler beim Aktivieren: $e';
   }
 }
 
@@ -178,39 +279,12 @@ Future<void> acceptInvite(String code) async {
 
 // ── Switch trainer (client side) ─────────────────────────────────────────────
 
+/// Wechselt den Trainer atomar im Backend.
+/// accept_invite() übernimmt alles: Deaktivierung alter Beziehungen,
+/// Re-Linking bei bestehendem disconnected-Record, Erstellung neuer Beziehung.
+/// Kein Client-Side State-Management nötig.
 Future<void> switchTrainer(String newInviteCode) async {
-  final userId = Supabase.instance.client.auth.currentUser?.id;
-  if (userId == null) return;
-
-  // Fetch current active relationship IDs before deactivating (for rollback).
-  final active = await Supabase.instance.client
-      .from('trainer_client_relationships')
-      .select('id')
-      .eq('client_id', userId)
-      .eq('status', 'active');
-
-  final ids = (active as List).map((r) => r['id'] as String).toList();
-
-  // Deactivate current trainer relationship.
-  if (ids.isNotEmpty) {
-    await Supabase.instance.client
-        .from('trainer_client_relationships')
-        .update({'status': 'inactive'})
-        .inFilter('id', ids);
-  }
-
-  try {
-    await acceptInvite(newInviteCode);
-  } catch (e) {
-    // Rollback: restore old relationships if new code was invalid.
-    if (ids.isNotEmpty) {
-      await Supabase.instance.client
-          .from('trainer_client_relationships')
-          .update({'status': 'active'})
-          .inFilter('id', ids);
-    }
-    rethrow;
-  }
+  await acceptInvite(newInviteCode);
 }
 
 // ── Client's linked trainer ───────────────────────────────────────────────────
@@ -237,6 +311,21 @@ final clientTrainerProvider = FutureProvider<String?>((ref) async {
       .eq('id', trainerId)
       .maybeSingle();
   return (profile?['display_name'] as String?) ?? 'Trainer';
+});
+
+/// Returns the user_id of the currently linked trainer (null if none).
+final clientTrainerIdProvider = FutureProvider<String?>((ref) async {
+  ref.watch(authStateProvider);
+  final userId = Supabase.instance.client.auth.currentUser?.id;
+  if (userId == null) return null;
+
+  final rel = await Supabase.instance.client
+      .from('trainer_client_relationships')
+      .select('trainer_id')
+      .eq('client_id', userId)
+      .eq('status', 'active')
+      .maybeSingle();
+  return rel?['trainer_id'] as String?;
 });
 
 // ── Subscription tier ─────────────────────────────────────────────────────────
@@ -284,7 +373,7 @@ final chatPartnerIdProvider =
 });
 
 /// For a direct channel, returns the OTHER participant's display name.
-/// Falls back to 'Chat' if not found.
+/// Falls back to their role so both sides always know who the chat is with.
 final chatPartnerNameProvider =
     FutureProvider.autoDispose.family<String, String>((ref, channelId) async {
   final userId = Supabase.instance.client.auth.currentUser?.id;
@@ -304,8 +393,14 @@ final chatPartnerNameProvider =
   // Step 2: fetch their display name
   final profile = await Supabase.instance.client
       .from('profiles')
-      .select('display_name')
+      .select('display_name, role')
       .eq('id', partnerId)
       .maybeSingle();
-  return profile?['display_name'] as String? ?? 'Chat';
+  final displayName = profile?['display_name'] as String?;
+  if (displayName != null && displayName.trim().isNotEmpty) {
+    return displayName.trim();
+  }
+
+  final role = profile?['role'] as String?;
+  return role == 'trainer' ? 'Dein Trainer' : 'Dein Nutzer';
 });
