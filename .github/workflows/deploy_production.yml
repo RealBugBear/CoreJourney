@@ -149,7 +149,7 @@ jobs:
           echo $PROVISIONING_PROFILE_BASE64 | base64 --decode > ~/Library/MobileDevice/Provisioning\ Profiles/profile.mobileprovision
 
       - name: Build iOS IPA (Production)
-        run: flutter build ipa --flavor production -t lib/main_production.dart --release --export-options-plist=ios/ExportOptions.plist
+        run: flutter build ipa -t lib/main_production.dart --release --export-options-plist=ios/ExportOptions.plist
 
       - name: Upload to TestFlight
         env:
