@@ -1,7 +1,7 @@
 name: corejourney
 description: CoreJourney — Nervous System Training
 publish_to: none
-version: 1.0.2+2026042901
+version: 1.0.3+2026043001
 
 environment:
   sdk: '>=3.3.0 <4.0.0'
