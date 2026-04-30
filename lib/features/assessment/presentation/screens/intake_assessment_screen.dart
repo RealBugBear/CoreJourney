@@ -88,7 +88,7 @@ class IntakeAssessmentScreen extends ConsumerWidget {
                     : () {
                         ref.read(_hadTrainerProvider.notifier).state = null;
                         context.push(
-                          Routes.durationRecommendation,
+                          Routes.trainerOnboardingPrompt,
                           extra: {
                             'packageId': packageId,
                             'hadIsometricWithTrainer': hadTrainer,

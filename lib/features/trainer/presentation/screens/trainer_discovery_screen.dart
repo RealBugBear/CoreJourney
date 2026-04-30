@@ -11,7 +11,9 @@ import '../../domain/models/trainer_profile.dart';
 import '../providers/trainer_discovery_provider.dart';
 
 class TrainerDiscoveryScreen extends ConsumerStatefulWidget {
-  const TrainerDiscoveryScreen({super.key});
+  const TrainerDiscoveryScreen({super.key, this.onboardingExtra});
+
+  final Map<String, dynamic>? onboardingExtra;
 
   @override
   ConsumerState<TrainerDiscoveryScreen> createState() =>
@@ -81,7 +83,8 @@ class _TrainerDiscoveryScreenState
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.location_off, size: 48, color: AppColors.error),
+                const Icon(Icons.location_off,
+                    size: 48, color: AppColors.error),
                 const SizedBox(height: 16),
                 Text(_locationError!, textAlign: TextAlign.center),
                 const SizedBox(height: 16),
@@ -133,14 +136,14 @@ class _TrainerDiscoveryScreenState
           ),
           Expanded(
             child: asyncTrainers.when(
-              loading: () =>
-                  const Center(child: CircularProgressIndicator()),
+              loading: () => const Center(child: CircularProgressIndicator()),
               error: (e, _) => Center(child: Text(e.toString())),
               data: (trainers) => _TrainerResults(
                 trainers: trainers,
                 userLat: _userPosition!.latitude,
                 userLng: _userPosition!.longitude,
                 l10n: l10n,
+                onboardingExtra: widget.onboardingExtra,
               ),
             ),
           ),
@@ -156,12 +159,14 @@ class _TrainerResults extends StatefulWidget {
     required this.userLat,
     required this.userLng,
     required this.l10n,
+    required this.onboardingExtra,
   });
 
   final List<TrainerProfile> trainers;
   final double userLat;
   final double userLng;
   final AppLocalizations l10n;
+  final Map<String, dynamic>? onboardingExtra;
 
   @override
   State<_TrainerResults> createState() => _TrainerResultsState();
@@ -206,8 +211,13 @@ class _TrainerResultsState extends State<_TrainerResults>
                 trainers: widget.trainers,
                 userLat: widget.userLat,
                 userLng: widget.userLng,
+                onboardingExtra: widget.onboardingExtra,
               ),
-              _ListView(trainers: widget.trainers, l10n: widget.l10n),
+              _ListView(
+                trainers: widget.trainers,
+                l10n: widget.l10n,
+                onboardingExtra: widget.onboardingExtra,
+              ),
             ],
           ),
         ),
@@ -221,11 +231,13 @@ class _MapView extends StatelessWidget {
     required this.trainers,
     required this.userLat,
     required this.userLng,
+    required this.onboardingExtra,
   });
 
   final List<TrainerProfile> trainers;
   final double userLat;
   final double userLng;
+  final Map<String, dynamic>? onboardingExtra;
 
   @override
   Widget build(BuildContext context) {
@@ -259,10 +271,13 @@ class _MapView extends StatelessWidget {
                   width: 36,
                   height: 36,
                   child: GestureDetector(
-                    onTap: () => context.push(
-                      '/trainers/${t.id}',
-                      extra: t,
-                    ),
+                    onTap: () => context.push('/trainers/${t.id}',
+                        extra: onboardingExtra == null
+                            ? t
+                            : {
+                                'trainer': t,
+                                'onboardingExtra': onboardingExtra,
+                              }),
                     child: const Icon(Icons.person_pin_circle,
                         color: AppColors.primary, size: 36),
                   ),
@@ -275,10 +290,15 @@ class _MapView extends StatelessWidget {
 }
 
 class _ListView extends StatelessWidget {
-  const _ListView({required this.trainers, required this.l10n});
+  const _ListView({
+    required this.trainers,
+    required this.l10n,
+    required this.onboardingExtra,
+  });
 
   final List<TrainerProfile> trainers;
   final AppLocalizations l10n;
+  final Map<String, dynamic>? onboardingExtra;
 
   @override
   Widget build(BuildContext context) {
@@ -296,15 +316,20 @@ class _ListView extends StatelessWidget {
               Text(t.displayName),
               if (t.verified) ...[
                 const SizedBox(width: 4),
-                const Icon(Icons.verified,
-                    color: AppColors.primary, size: 16),
+                const Icon(Icons.verified, color: AppColors.primary, size: 16),
               ],
             ],
           ),
           subtitle: t.distanceKm != null
               ? Text(l10n.trainerDiscoveryDistanceLabel(t.distanceKm!))
               : null,
-          onTap: () => context.push('/trainers/${t.id}', extra: t),
+          onTap: () => context.push('/trainers/${t.id}',
+              extra: onboardingExtra == null
+                  ? t
+                  : {
+                      'trainer': t,
+                      'onboardingExtra': onboardingExtra,
+                    }),
         );
       },
     );

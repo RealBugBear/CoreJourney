@@ -81,7 +81,10 @@ class _TrainingSessionScreenState extends ConsumerState<TrainingSessionScreen> {
       }
     }
 
+    var reachedPackageEnd = false;
     if (enrollment != null && progress != null) {
+      final totalDays = (enrollment.assignedDurationWeeks * 7).clamp(1, 3650);
+      reachedPackageEnd = progress.currentDay >= totalDays;
       await saveCompletedSession(
         db: db,
         syncService: syncService,
@@ -107,6 +110,12 @@ class _TrainingSessionScreenState extends ConsumerState<TrainingSessionScreen> {
 
     if (!mounted) return;
 
+    if (reachedPackageEnd) {
+      await _showPackageCompletionReachedDialog();
+    }
+
+    if (!mounted) return;
+
     // One combined experience prompt per day (mood + text + optional share).
     if (enrollment != null) {
       final shouldShow = await ExperiencePromptService.shouldShow();
@@ -121,6 +130,29 @@ class _TrainingSessionScreenState extends ConsumerState<TrainingSessionScreen> {
 
     if (!mounted) return;
     context.pop();
+  }
+
+  Future<void> _showPackageCompletionReachedDialog() async {
+    final l10n = AppLocalizations.of(context);
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        icon: const Icon(
+          Icons.emoji_events_outlined,
+          color: AppColors.primary,
+          size: 44,
+        ),
+        title: Text(l10n.completionReachedTitle),
+        content: Text(l10n.completionReachedBody),
+        actions: [
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(l10n.completionBackToDashboard),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<bool> _onWillPop() async {

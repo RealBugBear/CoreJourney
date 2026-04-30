@@ -1,15 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../../../core/navigation/app_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../domain/models/trainer_profile.dart';
 import '../providers/trainer_discovery_provider.dart';
 
 class TrainerPublicProfileScreen extends ConsumerStatefulWidget {
-  const TrainerPublicProfileScreen({super.key, required this.trainer});
+  const TrainerPublicProfileScreen({
+    super.key,
+    required this.trainer,
+    this.onboardingExtra,
+  });
 
   final TrainerProfile trainer;
+  final Map<String, dynamic>? onboardingExtra;
 
   @override
   ConsumerState<TrainerPublicProfileScreen> createState() =>
@@ -33,21 +40,26 @@ class _TrainerPublicProfileScreenState
     } on Exception catch (e) {
       final msg = e.toString();
       if (!mounted) return;
-      if (msg.contains('Anfrage bereits gesendet') ||
-          msg.contains('already')) {
+      if (msg.contains('Anfrage bereits gesendet') || msg.contains('already')) {
         final l10n = AppLocalizations.of(context);
-        setState(() =>
-            _errorMessage = l10n.trainerDiscoveryRequestAlreadySent);
-      } else if (msg.toLowerCase().contains('bereits verbunden') || msg.contains('connected')) {
+        setState(() => _errorMessage = l10n.trainerDiscoveryRequestAlreadySent);
+      } else if (msg.toLowerCase().contains('bereits verbunden') ||
+          msg.contains('connected')) {
         final l10n = AppLocalizations.of(context);
-        setState(() =>
-            _errorMessage = l10n.trainerDiscoveryRequestAlreadyConnected);
+        setState(
+            () => _errorMessage = l10n.trainerDiscoveryRequestAlreadyConnected);
       } else {
         setState(() => _errorMessage = msg);
       }
     } finally {
       if (mounted) setState(() => _isRequesting = false);
     }
+  }
+
+  void _continueOnboarding() {
+    final extra = widget.onboardingExtra;
+    if (extra == null) return;
+    context.go(Routes.durationRecommendation, extra: extra);
   }
 
   @override
@@ -110,11 +122,23 @@ class _TrainerPublicProfileScreenState
           ],
           const SizedBox(height: 32),
           if (_requestSent)
-            Center(
-              child: Text(
-                l10n.trainerDiscoveryRequestSent,
-                style: const TextStyle(color: AppColors.success),
-              ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Center(
+                  child: Text(
+                    l10n.trainerDiscoveryRequestSent,
+                    style: const TextStyle(color: AppColors.success),
+                  ),
+                ),
+                if (widget.onboardingExtra != null) ...[
+                  const SizedBox(height: 16),
+                  FilledButton(
+                    onPressed: _continueOnboarding,
+                    child: Text(l10n.trainerOnboardingContinueAfterRequest),
+                  ),
+                ],
+              ],
             )
           else ...[
             if (_errorMessage != null)

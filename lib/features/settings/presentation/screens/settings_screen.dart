@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../bootstrap/providers.dart';
+import '../../../../core/navigation/app_router.dart';
 import '../../../../core/settings/settings_provider.dart';
 import '../../../../core/sync/sync_status.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../features/progress/presentation/providers/progress_provider.dart';
 import '../../../../features/training/domain/models/training_session.dart'
     show TrainingSessionMode;
 import '../../../../l10n/app_localizations.dart';
@@ -12,11 +15,59 @@ import '../../../../l10n/app_localizations.dart';
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
 
+  Future<void> _confirmRestartMoro(
+    BuildContext context,
+    WidgetRef ref,
+  ) async {
+    final l10n = AppLocalizations.of(context);
+    final enrollment = ref.read(activeEnrollmentProvider).valueOrNull;
+    if (enrollment == null || enrollment.packageId == 'moro') return;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(l10n.moroRestartTitle),
+        content: Text(l10n.moroRestartBody),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(l10n.cancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(l10n.moroRestartConfirm),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !context.mounted) return;
+
+    try {
+      await restartMoroFromCurrentPackage(
+        db: ref.read(databaseProvider),
+        syncService: ref.read(syncServiceProvider),
+        currentEnrollment: enrollment,
+      );
+      ref.read(selectedPackageIdProvider.notifier).select('moro');
+      if (context.mounted) context.go(Routes.dashboard);
+    } catch (_) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.errorSaveFailed)),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final settings = ref.watch(settingsProvider);
     final notifier = ref.read(settingsProvider.notifier);
+    final enrollment = ref.watch(activeEnrollmentProvider).valueOrNull;
+    final showMoroRestart = ref.watch(moroCompletedProvider) &&
+        enrollment != null &&
+        enrollment.packageId != 'moro';
 
     return Scaffold(
       appBar: AppBar(title: Text(l10n.settings)),
@@ -127,6 +178,22 @@ class SettingsScreen extends ConsumerWidget {
             ),
           ),
           const _SectionHeader(title: 'Erweitert'),
+          if (showMoroRestart)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Card(
+                child: ListTile(
+                  leading: const Icon(
+                    Icons.replay_circle_filled_outlined,
+                    color: AppColors.warning,
+                  ),
+                  title: Text(l10n.moroRestartSettingsTitle),
+                  subtitle: Text(l10n.moroRestartSettingsSubtitle),
+                  trailing: const Icon(Icons.chevron_right_rounded),
+                  onTap: () => _confirmRestartMoro(context, ref),
+                ),
+              ),
+            ),
           const _SyncStatusTile(),
         ],
       ),

@@ -178,6 +178,61 @@ class AppLocalizationsDe extends AppLocalizations {
   String get confirm => 'Bestätigen';
 
   @override
+  String get durationWithoutTrainerInfo =>
+      'Ohne begleitenden Trainer empfehlen wir etwa 8 Wochen, damit der Körper mehr Zeit für die Integration hat.';
+
+  @override
+  String get durationTrainerMinimumInfo =>
+      'Mit begleitendem Trainer empfehlen wir mindestens 4 Wochen. Du kannst die Dauer verlängern, wenn du mehr Integrationszeit möchtest.';
+
+  @override
+  String get trainerOnboardingTitle => 'Trainer-Begleitung';
+
+  @override
+  String get trainerOnboardingFindTitle =>
+      'Starte mit einem Trainer in deiner Nähe';
+
+  @override
+  String get trainerOnboardingFindBody =>
+      'Da du die isometrische Aktivierung noch nicht mit einem Trainer gemacht hast, empfehlen wir dir, zuerst einen passenden Trainer zu finden. Du kannst trotzdem direkt starten, wenn du das möchtest.';
+
+  @override
+  String get trainerOnboardingConnectTitle =>
+      'Verknüpfe dich mit deinem Trainer';
+
+  @override
+  String get trainerOnboardingConnectBody =>
+      'Wenn du bereits mit einem Trainer gearbeitet hast, kannst du dich jetzt verbinden. So kann dein Trainer deinen Fortschritt begleiten und bei Bedarf Termine abstimmen.';
+
+  @override
+  String get trainerOnboardingSearchCta => 'Trainer in meiner Nähe suchen';
+
+  @override
+  String get trainerOnboardingInviteCta => 'Einladungscode eingeben';
+
+  @override
+  String get trainerOnboardingSkipCta => 'Später machen';
+
+  @override
+  String get trainerOnboardingInviteTitle => 'Mit Trainer verbinden';
+
+  @override
+  String get trainerOnboardingInviteBody =>
+      'Gib den 6-stelligen Einladungscode ein, den du von deinem Trainer erhalten hast.';
+
+  @override
+  String get trainerOnboardingInviteInvalid =>
+      'Bitte 6-stelligen Code eingeben.';
+
+  @override
+  String get trainerOnboardingInviteFailed =>
+      'Fehler beim Verbinden mit dem Trainer.';
+
+  @override
+  String get trainerOnboardingContinueAfterRequest =>
+      'Weiter zur Dauerempfehlung';
+
+  @override
   String get completionQuestionnaireTitle => 'Abschlussreflexion';
 
   @override
@@ -192,6 +247,31 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get completionBackToDashboard => 'Zum Dashboard';
+
+  @override
+  String get completionReachedTitle => 'Paketdauer erreicht';
+
+  @override
+  String get completionReachedBody =>
+      'Sehr gut. Du hast die geplante Trainingsdauer erreicht. Im Dashboard findest du jetzt oben den Einschätzungsfragebogen, mit dem du das Paket korrekt abschließen oder um 7 Tage verlängern kannst.';
+
+  @override
+  String get completionPlaceholderQuestion =>
+      'Platzhalter-Einschätzung: Kann dieses Trainingspaket korrekt abgeschlossen werden?';
+
+  @override
+  String get completionPass => 'Korrekt abschließen';
+
+  @override
+  String get completionInsufficient => 'Ungenügend abschließen (+7 Tage)';
+
+  @override
+  String get completionMoroReturnSubtitle =>
+      'Der erneute Moro-Durchlauf ist abgeschlossen. Du kehrst jetzt zu deinem unterbrochenen Paket zurück und startest dort wieder bei Tag 1.';
+
+  @override
+  String get completionBackToInterruptedPackage =>
+      'Zurück zum unterbrochenen Paket';
 
   @override
   String get completionExtendedTitle => 'Noch eine Woche';
@@ -248,6 +328,23 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get settingsConnectTrainer => 'Trainer verbinden';
+
+  @override
+  String get moroRestartSettingsTitle => 'Zurück zum Moro';
+
+  @override
+  String get moroRestartSettingsSubtitle =>
+      'Moro für 4 Wochen neu starten und das aktuelle Paket unterbrechen.';
+
+  @override
+  String get moroRestartTitle => 'Zum Moro zurückkehren?';
+
+  @override
+  String get moroRestartBody =>
+      'Der Moro-Reflex kann im Unterschied zu vielen anderen Reflexen durch stark belastende oder traumatische Ereignisse erneut aktiviert werden, zum Beispiel durch einen Autounfall, den Tod eines Angehörigen oder andere intensive Schockerlebnisse.\n\nWenn du fortfährst, wird dein aktuelles Paket unterbrochen. Du startest Moro für 4 Wochen neu. Nach dem Moro-Abschluss kehrst du zu deinem unterbrochenen Paket zurück und beginnst dort wieder bei Tag 1.';
+
+  @override
+  String get moroRestartConfirm => 'Moro neu starten';
 
   @override
   String get reminderEnabled => 'Erinnerungen aktiviert';
@@ -448,11 +545,11 @@ class AppLocalizationsDe extends AppLocalizations {
   String get profile => 'Profil';
 
   @override
-  String get completionBannerTitle => 'Block abgeschlossen!';
+  String get completionBannerTitle => 'Paket bereit zur Einschätzung';
 
   @override
   String get completionBannerSubtitle =>
-      'Du hast dein Zieldatum erreicht. Jetzt zur Abschlussreflexion.';
+      'Beantworte den kurzen Fragebogen, um dieses Paket abzuschließen oder um 7 Tage zu verlängern.';
 
   @override
   String get settingsDataSync => 'Daten & Sync';

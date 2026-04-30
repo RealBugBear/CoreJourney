@@ -174,6 +174,58 @@ class AppLocalizationsEn extends AppLocalizations {
   String get confirm => 'Confirm';
 
   @override
+  String get durationWithoutTrainerInfo =>
+      'Without trainer guidance, we recommend about 8 weeks so the body has more time for integration.';
+
+  @override
+  String get durationTrainerMinimumInfo =>
+      'With trainer guidance, we recommend at least 4 weeks. You can extend the duration if you want more integration time.';
+
+  @override
+  String get trainerOnboardingTitle => 'Trainer Guidance';
+
+  @override
+  String get trainerOnboardingFindTitle => 'Start with a trainer near you';
+
+  @override
+  String get trainerOnboardingFindBody =>
+      'Because you have not completed isometric activation with a trainer yet, we recommend finding a suitable trainer first. You can still continue directly if you prefer.';
+
+  @override
+  String get trainerOnboardingConnectTitle => 'Connect with your trainer';
+
+  @override
+  String get trainerOnboardingConnectBody =>
+      'If you have already worked with a trainer, you can connect now. This lets your trainer follow your progress and coordinate appointments when needed.';
+
+  @override
+  String get trainerOnboardingSearchCta => 'Find trainers nearby';
+
+  @override
+  String get trainerOnboardingInviteCta => 'Enter invite code';
+
+  @override
+  String get trainerOnboardingSkipCta => 'Do this later';
+
+  @override
+  String get trainerOnboardingInviteTitle => 'Connect with trainer';
+
+  @override
+  String get trainerOnboardingInviteBody =>
+      'Enter the 6-character invite code you received from your trainer.';
+
+  @override
+  String get trainerOnboardingInviteInvalid =>
+      'Please enter the 6-character code.';
+
+  @override
+  String get trainerOnboardingInviteFailed => 'Could not connect with trainer.';
+
+  @override
+  String get trainerOnboardingContinueAfterRequest =>
+      'Continue to duration recommendation';
+
+  @override
   String get completionQuestionnaireTitle => 'Final Reflection';
 
   @override
@@ -188,6 +240,31 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get completionBackToDashboard => 'Back to Dashboard';
+
+  @override
+  String get completionReachedTitle => 'Package duration reached';
+
+  @override
+  String get completionReachedBody =>
+      'Well done. You have reached the planned training duration. The dashboard now shows the assessment questionnaire at the top so you can complete this package or extend it by 7 days.';
+
+  @override
+  String get completionPlaceholderQuestion =>
+      'Placeholder assessment: Can this training package be completed correctly?';
+
+  @override
+  String get completionPass => 'Complete correctly';
+
+  @override
+  String get completionInsufficient => 'Insufficient completion (+7 days)';
+
+  @override
+  String get completionMoroReturnSubtitle =>
+      'The repeated Moro cycle is complete. You will now return to the interrupted package and restart it at day 1.';
+
+  @override
+  String get completionBackToInterruptedPackage =>
+      'Back to interrupted package';
 
   @override
   String get completionExtendedTitle => 'One more week';
@@ -244,6 +321,23 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsConnectTrainer => 'Connect to Trainer';
+
+  @override
+  String get moroRestartSettingsTitle => 'Back to Moro';
+
+  @override
+  String get moroRestartSettingsSubtitle =>
+      'Restart Moro for 4 weeks and interrupt the current package.';
+
+  @override
+  String get moroRestartTitle => 'Return to Moro?';
+
+  @override
+  String get moroRestartBody =>
+      'Unlike many other reflexes, the Moro reflex can be reactivated by highly stressful or traumatic events, for example a car accident, the death of a loved one, or other intense shock experiences.\n\nIf you continue, your current package will be interrupted. You will restart Moro for 4 weeks. After completing Moro, you will return to the interrupted package and begin there again at day 1.';
+
+  @override
+  String get moroRestartConfirm => 'Restart Moro';
 
   @override
   String get reminderEnabled => 'Reminders enabled';
@@ -442,11 +536,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get profile => 'Profile';
 
   @override
-  String get completionBannerTitle => 'Block complete!';
+  String get completionBannerTitle => 'Package ready for assessment';
 
   @override
   String get completionBannerSubtitle =>
-      'You\'ve reached your target date. Time for your final reflection.';
+      'Answer the short questionnaire to complete this package or extend it by 7 days.';
 
   @override
   String get settingsDataSync => 'Data & Sync';

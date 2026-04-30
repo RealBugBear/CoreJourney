@@ -5,12 +5,13 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../../bootstrap/providers.dart';
 import '../../../../core/navigation/app_router.dart';
+import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/error_retry_widget.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../progress/presentation/providers/progress_provider.dart';
 
 int _computeRecommendedWeeks({required bool hadIsometricWithTrainer}) {
-  return hadIsometricWithTrainer ? 6 : 8;
+  return hadIsometricWithTrainer ? 4 : 8;
 }
 
 class DurationRecommendationScreen extends ConsumerStatefulWidget {
@@ -25,6 +26,7 @@ class _DurationRecommendationScreenState
     extends ConsumerState<DurationRecommendationScreen> {
   late int _selectedWeeks;
   late String _packageId;
+  bool _hadTrainer = false;
   bool _saving = false;
 
   @override
@@ -32,9 +34,9 @@ class _DurationRecommendationScreenState
     super.didChangeDependencies();
     final extra = GoRouterState.of(context).extra as Map<String, dynamic>?;
     _packageId = extra?['packageId'] as String? ?? 'moro';
-    final hadTrainer = extra?['hadIsometricWithTrainer'] as bool? ?? false;
+    _hadTrainer = extra?['hadIsometricWithTrainer'] as bool? ?? false;
     _selectedWeeks =
-        _computeRecommendedWeeks(hadIsometricWithTrainer: hadTrainer);
+        _computeRecommendedWeeks(hadIsometricWithTrainer: _hadTrainer);
   }
 
   Future<void> _confirm() async {
@@ -56,8 +58,9 @@ class _DurationRecommendationScreenState
 
       if (mounted) context.go(Routes.dashboard);
     } catch (_) {
-      if (mounted)
+      if (mounted) {
         showErrorSnackBar(context, AppLocalizations.of(context).errorGeneric);
+      }
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -89,7 +92,13 @@ class _DurationRecommendationScreenState
                     ),
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 32),
+              const SizedBox(height: 20),
+              _RecommendationInfo(
+                text: _hadTrainer
+                    ? l10n.durationTrainerMinimumInfo
+                    : l10n.durationWithoutTrainerInfo,
+              ),
+              const SizedBox(height: 28),
               Slider(
                 value: _selectedWeeks.toDouble(),
                 min: 4,
@@ -124,6 +133,44 @@ class _DurationRecommendationScreenState
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _RecommendationInfo extends StatelessWidget {
+  const _RecommendationInfo({required this.text});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.primary.withValues(alpha: 0.08),
+        border: Border.all(color: AppColors.primary.withValues(alpha: 0.18)),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(
+            Icons.info_outline,
+            color: AppColors.primary,
+            size: 20,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              text,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: AppColors.textSecondary,
+                    height: 1.4,
+                  ),
+            ),
+          ),
+        ],
       ),
     );
   }

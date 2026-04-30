@@ -10,7 +10,7 @@ import '../../features/training/domain/models/training_session.dart';
 
 const _kFeedbackMode = 'settings.feedbackMode';
 const _kWeeklyGoal = 'settings.weeklyGoal';
-const _kLanguage = 'settings.languageCode';
+const languagePreferenceKey = 'settings.languageCode';
 // Theme is user-scoped: 'settings.themeMode_<userId>' so each account
 // independently remembers its own theme preference.
 // Falls back to 'settings.themeMode' for unauthenticated state.
@@ -32,6 +32,7 @@ class AppSettings {
   final TrainingFeedbackMode feedbackMode;
   final int weeklyGoal;
   final String languageCode;
+  final bool hasSelectedLanguage;
   final ThemeMode themeMode;
   final bool remindersEnabled;
   final int reminderStartMinutes; // hour*60 + minute
@@ -43,6 +44,7 @@ class AppSettings {
     this.feedbackMode = TrainingFeedbackMode.haptic,
     this.weeklyGoal = 5,
     this.languageCode = 'de',
+    this.hasSelectedLanguage = false,
     this.themeMode = ThemeMode.system,
     this.remindersEnabled = false,
     this.reminderStartMinutes = 8 * 60, // 08:00
@@ -60,6 +62,7 @@ class AppSettings {
     TrainingFeedbackMode? feedbackMode,
     int? weeklyGoal,
     String? languageCode,
+    bool? hasSelectedLanguage,
     ThemeMode? themeMode,
     bool? remindersEnabled,
     int? reminderStartMinutes,
@@ -71,6 +74,7 @@ class AppSettings {
       feedbackMode: feedbackMode ?? this.feedbackMode,
       weeklyGoal: weeklyGoal ?? this.weeklyGoal,
       languageCode: languageCode ?? this.languageCode,
+      hasSelectedLanguage: hasSelectedLanguage ?? this.hasSelectedLanguage,
       themeMode: themeMode ?? this.themeMode,
       remindersEnabled: remindersEnabled ?? this.remindersEnabled,
       reminderStartMinutes: reminderStartMinutes ?? this.reminderStartMinutes,
@@ -104,7 +108,8 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
 
     // If no language has been saved yet (first launch), detect from device locale.
     // We support 'de' and 'en'; everything else defaults to 'en'.
-    final savedLanguage = prefs.getString(_kLanguage);
+    final savedLanguage = prefs.getString(languagePreferenceKey);
+    final hasSelectedLanguage = prefs.containsKey(languagePreferenceKey);
     final languageCode = savedLanguage ??
         (WidgetsBinding.instance.platformDispatcher.locale.languageCode == 'de'
             ? 'de'
@@ -115,13 +120,14 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
           .values[modeIndex.clamp(0, TrainingFeedbackMode.values.length - 1)],
       weeklyGoal: prefs.getInt(_kWeeklyGoal) ?? 5,
       languageCode: languageCode,
+      hasSelectedLanguage: hasSelectedLanguage,
       themeMode: ThemeMode.values[themeModeIndex.clamp(0, 2)],
       remindersEnabled: prefs.getBool(_kRemindersEnabled) ?? false,
       reminderStartMinutes: prefs.getInt(_kReminderStart) ?? 8 * 60,
       reminderEndMinutes: prefs.getInt(_kReminderEnd) ?? 20 * 60,
       childAssistMode: prefs.getBool(_kChildAssist) ?? false,
-      trainingMode: TrainingSessionMode.values[
-          (prefs.getInt(_kTrainingMode) ?? 0).clamp(0, 1)],
+      trainingMode: TrainingSessionMode
+          .values[(prefs.getInt(_kTrainingMode) ?? 0).clamp(0, 1)],
     );
   }
 
@@ -135,9 +141,9 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
     _prefs.setInt(_kWeeklyGoal, goal);
   }
 
-  void setLanguage(String code) {
-    state = state.copyWith(languageCode: code);
-    _prefs.setString(_kLanguage, code);
+  Future<void> setLanguage(String code) async {
+    state = state.copyWith(languageCode: code, hasSelectedLanguage: true);
+    await _prefs.setString(languagePreferenceKey, code);
   }
 
   void setThemeMode(ThemeMode mode) {
@@ -182,6 +188,10 @@ final settingsProvider =
   final userId = ref.watch(authStateProvider).valueOrNull?.session?.user.id ??
       Supabase.instance.client.auth.currentUser?.id;
   return SettingsNotifier(prefs, userId);
+});
+
+final hasSelectedLanguageProvider = Provider<bool>((ref) {
+  return ref.watch(settingsProvider).hasSelectedLanguage;
 });
 
 // ── Derived providers consumed by app.dart ────────────────────────────────────

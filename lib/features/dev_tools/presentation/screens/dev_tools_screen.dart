@@ -81,6 +81,17 @@ class DevToolsScreen extends ConsumerWidget {
                   'Enrollment Status',
                   enrollment?.status ?? '—',
                 ),
+                if (progress == null || enrollment == null) ...[
+                  const Divider(),
+                  Text(
+                    'Kein aktives Training gefunden. Melde dich mit dem Test-Account an oder starte ein Trainingspaket, dann werden die Simulations-Buttons aktiv.',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey.shade700,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
               ],
             ),
             const SizedBox(height: 16),
@@ -501,15 +512,25 @@ class _SectionCard extends StatelessWidget {
         border: Border.all(color: Colors.black12),
       ),
       padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(title,
-              style:
-                  const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-          const SizedBox(height: 12),
-          ...children,
-        ],
+      child: DefaultTextStyle.merge(
+        style: TextStyle(color: Colors.grey.shade900),
+        child: IconTheme.merge(
+          data: IconThemeData(color: Colors.grey.shade800),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 15,
+                ),
+              ),
+              const SizedBox(height: 12),
+              ...children,
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -539,7 +560,7 @@ class _StatusRow extends StatelessWidget {
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
-                color: valueColor,
+                color: valueColor ?? Colors.grey.shade900,
               ),
             ),
           ),
@@ -570,7 +591,9 @@ class _ActionButton extends StatelessWidget {
       label: Text(label, style: const TextStyle(fontSize: 13)),
       style: ElevatedButton.styleFrom(
         backgroundColor: color,
+        disabledBackgroundColor: Colors.grey.shade300,
         foregroundColor: Colors.white,
+        disabledForegroundColor: Colors.grey.shade700,
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       ),

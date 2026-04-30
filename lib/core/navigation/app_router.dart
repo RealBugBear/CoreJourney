@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../features/auth/presentation/providers/auth_provider.dart';
+import '../settings/settings_provider.dart';
 import '../../features/auth/presentation/screens/login_screen.dart';
 import '../../features/auth/presentation/screens/reset_password_screen.dart';
 import '../../features/auth/presentation/screens/change_password_screen.dart';
@@ -12,9 +13,11 @@ import '../../features/dashboard/presentation/screens/dashboard_screen.dart';
 import '../../features/assessment/presentation/screens/analysis_placeholder_screen.dart';
 import '../../features/assessment/presentation/screens/intake_assessment_screen.dart';
 import '../../features/assessment/presentation/screens/duration_recommendation_screen.dart';
+import '../../features/assessment/presentation/screens/trainer_onboarding_prompt_screen.dart';
 import '../../features/assessment/presentation/screens/completion_questionnaire_screen.dart';
 import '../../features/training/presentation/screens/training_session_screen.dart';
 import '../../features/settings/presentation/screens/settings_screen.dart';
+import '../../features/settings/presentation/screens/language_selection_screen.dart';
 import '../../features/profile/presentation/screens/profile_screen.dart';
 import '../../features/trainer/presentation/screens/trainer_clients_screen.dart';
 import '../../features/trainer/presentation/screens/trainer_client_detail_screen.dart';
@@ -45,6 +48,7 @@ import 'app_shell.dart';
 // Route name constants
 class Routes {
   static const login = '/login';
+  static const languageSelection = '/language';
   static const resetPassword = '/auth/reset-password';
   static const changePassword = '/profile/change-password';
   static const devTools = '/dev-tools';
@@ -52,6 +56,7 @@ class Routes {
   static const analysisPlaceholder = '/onboarding/analysis';
   static const dashboard = '/dashboard';
   static const intakeAssessment = '/intake-assessment';
+  static const trainerOnboardingPrompt = '/intake-assessment/trainer';
   static const durationRecommendation = '/intake-assessment/duration';
   static const completionQuestionnaire = '/completion-questionnaire';
   static const trainingSession = '/training/session';
@@ -145,11 +150,18 @@ final routerProvider = Provider<GoRouter>((ref) {
     redirect: (context, state) {
       final user = Supabase.instance.client.auth.currentUser;
       final isPasswordRecovery = ref.read(passwordRecoveryActiveProvider);
+      final hasSelectedLanguage = ref.read(hasSelectedLanguageProvider);
       final loc = state.matchedLocation;
 
       // Password-Recovery Deep Link: Vorrang vor allem anderen
       if (isPasswordRecovery && loc != Routes.resetPassword) {
         return Routes.resetPassword;
+      }
+      if (!hasSelectedLanguage && loc != Routes.languageSelection) {
+        return Routes.languageSelection;
+      }
+      if (hasSelectedLanguage && loc == Routes.languageSelection) {
+        return user == null ? Routes.login : Routes.dashboard;
       }
       // Nicht eingeloggt → Login (außer während Recovery)
       if (user == null && loc != Routes.login && loc != Routes.resetPassword) {
@@ -162,6 +174,11 @@ final routerProvider = Provider<GoRouter>((ref) {
       return null;
     },
     routes: [
+      GoRoute(
+        path: Routes.languageSelection,
+        name: 'language-selection',
+        builder: (context, state) => const LanguageSelectionScreen(),
+      ),
       GoRoute(
         path: Routes.login,
         name: 'login',
@@ -191,6 +208,11 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: Routes.intakeAssessment,
         name: 'intake-assessment',
         builder: (context, state) => const IntakeAssessmentScreen(),
+      ),
+      GoRoute(
+        path: Routes.trainerOnboardingPrompt,
+        name: 'trainer-onboarding-prompt',
+        builder: (context, state) => const TrainerOnboardingPromptScreen(),
       ),
       GoRoute(
         path: Routes.durationRecommendation,
@@ -348,7 +370,11 @@ final routerProvider = Provider<GoRouter>((ref) {
             name: 'trainer-discovery',
             pageBuilder: (context, state) => NoTransitionPage(
               key: state.pageKey,
-              child: const TrainerDiscoveryScreen(),
+              child: TrainerDiscoveryScreen(
+                onboardingExtra:
+                    (state.extra as Map<String, Object?>?)?['onboardingExtra']
+                        as Map<String, dynamic>?,
+              ),
             ),
           ),
         ],
@@ -384,7 +410,17 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: Routes.trainerPublicProfile,
         name: 'trainer-public-profile',
         builder: (context, state) {
-          final trainer = state.extra as TrainerProfile;
+          final extra = state.extra;
+          if (extra is Map<String, Object?>) {
+            final trainer = extra['trainer'] as TrainerProfile;
+            final onboardingExtra =
+                extra['onboardingExtra'] as Map<String, dynamic>?;
+            return TrainerPublicProfileScreen(
+              trainer: trainer,
+              onboardingExtra: onboardingExtra,
+            );
+          }
+          final trainer = extra as TrainerProfile;
           return TrainerPublicProfileScreen(trainer: trainer);
         },
       ),

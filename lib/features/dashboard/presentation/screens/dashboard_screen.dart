@@ -301,6 +301,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 now: now,
               ),
               const SizedBox(height: 16),
+              const _CompletionQuestionnaireBanner(),
+              const SizedBox(height: 12),
               const _AppointmentProposalBanner(),
               Expanded(
                 child: Center(
@@ -352,6 +354,76 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   padding: const EdgeInsets.symmetric(vertical: 16),
                 ),
               ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _CompletionQuestionnaireBanner extends ConsumerWidget {
+  const _CompletionQuestionnaireBanner();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final ready = ref.watch(completionReadyProvider);
+    final enrollment = ref.watch(activeEnrollmentProvider).valueOrNull;
+    if (!ready || enrollment == null) return const SizedBox.shrink();
+
+    final l10n = AppLocalizations.of(context);
+    return Material(
+      color: AppColors.primary.withValues(alpha: 0.1),
+      borderRadius: BorderRadius.circular(16),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: () => context.push(
+          Routes.completionQuestionnaire,
+          extra: enrollment.id,
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          child: Row(
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.16),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(
+                  Icons.emoji_events_outlined,
+                  color: AppColors.primary,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      l10n.completionBannerTitle,
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                            fontWeight: FontWeight.w800,
+                          ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      l10n.completionBannerSubtitle,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: AppColors.textSecondary,
+                            height: 1.25,
+                          ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              const Icon(Icons.chevron_right_rounded),
             ],
           ),
         ),
