@@ -118,7 +118,7 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.24.x'
+          flutter-version: '3.38.x'
           channel: 'stable'
           cache: true
 
@@ -164,7 +164,7 @@ jobs:
       - name: Clean up keychain
         if: always()
         run: |
-          security delete-keychain build.keychain
+          security delete-keychain build.keychain || true
           rm -f ~/Library/MobileDevice/Provisioning\ Profiles/profile.mobileprovision
           rm -f certificate.p12
 
