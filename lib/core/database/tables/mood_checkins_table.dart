@@ -16,6 +16,7 @@ class MoodCheckinsTable extends Table {
   TextColumn get note => text().nullable()();
   // 'post_training' | 'manual'
   TextColumn get source => text()();
+  TextColumn get subjectProfileId => text().nullable()();
   BoolColumn get needsSync => boolean().withDefault(const Constant(true))();
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
 

@@ -51,7 +51,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get dashboard => 'Dashboard';
 
   @override
-  String get startTraining => 'Training starten';
+  String get startTraining => 'Einheit beginnen';
 
   @override
   String currentDay(int day, int total) {
@@ -59,7 +59,7 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
-  String get dailyStreak => 'Tages-Streak';
+  String get dailyStreak => 'Regelmäßigkeit';
 
   @override
   String weeklyProgress(int count, int goal) {
@@ -75,7 +75,7 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
-  String get trainingMode => 'Trainingsmodus';
+  String get trainingMode => 'Einheitsmodus';
 
   @override
   String get tutorialMode => 'Tutorial';
@@ -107,11 +107,11 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
-  String get sessionComplete => 'Training abgeschlossen';
+  String get sessionComplete => 'Einheit abgeschlossen';
 
   @override
   String get sessionCompleteSubtitle =>
-      'Gut gemacht! Du hast dein Training für heute abgeschlossen.';
+      'Du hast deine heutige Einheit abgeschlossen.';
 
   @override
   String get moodCheckIn => 'Wie geht es dir?';
@@ -133,7 +133,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get moodChartEmpty =>
-      'Schließe eine Trainingseinheit ab, um deine Stimmung zu verfolgen.';
+      'Trage eine Einheit ein, um dein Befinden im Verlauf zu sehen.';
 
   @override
   String get intakeAssessmentTitle => 'Programmstart';
@@ -151,14 +151,14 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get intakeTrainerBody =>
-      'Wir empfehlen, das Programm mit einem zertifizierten Trainer zu beginnen und begleiten zu lassen. Ein Trainer führt isometrisches Aktivierungstraining durch, das die betreffenden Reflexe gezielt anspricht. Diese gezielte Aktivierung beschleunigt den Integrationsprozess. Ohne sie braucht der Körper in der Regel länger, bis die Reflexe ausreichend angesprochen werden.';
+      'Wir empfehlen, das Programm mit einem zertifizierten Trainer zu beginnen und begleiten zu lassen. Ein Trainer führt isometrische Partnerübungen durch, die klares Spüren von Richtung, Bewegung und Widerstand unterstützen. Ohne diese Begleitung braucht der Körper in der Regel mehr ruhige Wiederholung.';
 
   @override
   String get intakeQuestionLabel => 'Eine Frage zu deinem Start';
 
   @override
   String get questionIsometricWithTrainer =>
-      'Hast du bereits isometrisches Aktivierungstraining mit einem Trainer durchgeführt?';
+      'Hast du bereits isometrische Partnerübungen mit einem Trainer durchgeführt?';
 
   @override
   String get yes => 'Ja';
@@ -236,11 +236,11 @@ class AppLocalizationsDe extends AppLocalizations {
   String get completionQuestionnaireTitle => 'Abschlussreflexion';
 
   @override
-  String get completionCelebrationTitle => 'Block abgeschlossen! ⭐';
+  String get completionCelebrationTitle => 'Paket abgeschlossen';
 
   @override
   String get completionCelebrationSubtitle =>
-      'Du hast einen wichtigen Schritt in deiner Entwicklung abgeschlossen. Gut gemacht.';
+      'Du hast dieses Paket über die geplante Zeit begleitet.';
 
   @override
   String get completionNextPackage => 'Weiter zum nächsten Paket';
@@ -253,17 +253,17 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get completionReachedBody =>
-      'Sehr gut. Du hast die geplante Trainingsdauer erreicht. Im Dashboard findest du jetzt oben den Einschätzungsfragebogen, mit dem du das Paket korrekt abschließen oder um 7 Tage verlängern kannst.';
+      'Du hast die geplante Paketdauer erreicht. In Heute findest du jetzt oben eine kurze Einschätzung, mit der du das Paket abschließen oder um 7 Tage verlängern kannst.';
 
   @override
   String get completionPlaceholderQuestion =>
-      'Platzhalter-Einschätzung: Kann dieses Trainingspaket korrekt abgeschlossen werden?';
+      'Platzhalter-Einschätzung: Fühlt sich dieses Paket stimmig abgeschlossen an?';
 
   @override
-  String get completionPass => 'Korrekt abschließen';
+  String get completionPass => 'Paket abschließen';
 
   @override
-  String get completionInsufficient => 'Ungenügend abschließen (+7 Tage)';
+  String get completionInsufficient => 'Noch 7 Tage wiederholen';
 
   @override
   String get completionMoroReturnSubtitle =>
@@ -278,11 +278,11 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get completionExtendedSubtitle =>
-      'Kein Problem — du hast 7 weitere Tage. Mach weiter so.';
+      'Du hast 7 weitere Tage in diesem Paket.';
 
   @override
   String get completionQuestion =>
-      'Hattest du durch das Training eine verstärkte emotionale oder stressige Zeit und konntest dich mit diesen Themen konfrontieren – zu erkennen, dass deine emotionale Reaktion nicht immer mit der Realität übereinstimmt – und anfangen dich zu regulieren?';
+      'Hast du seit Beginn dieses Pakets stärkere emotionale oder stressbezogene Reaktionen bemerkt und konntest du sie etwas besser einordnen oder regulieren?';
 
   @override
   String get completionYes => 'Ja, ich bin bereit';
@@ -309,7 +309,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get settings => 'Einstellungen';
 
   @override
-  String get settingsTraining => 'Training';
+  String get settingsTraining => 'Einheiten';
 
   @override
   String get settingsReminders => 'Erinnerungen';
@@ -376,7 +376,7 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
-  String get settingsFeedback => 'Trainings-Feedback';
+  String get settingsFeedback => 'Einheits-Feedback';
 
   @override
   String get settingsAccount => 'Konto';
@@ -386,7 +386,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get disclaimerText =>
-      'Dieses Training ersetzt keine medizinische Behandlung. Bitte konsultiere einen Arzt, wenn du gesundheitliche Bedenken hast. Achte auf die Signale deines Körpers und mache Pausen, wenn nötig.';
+      'Diese Einheiten ersetzen keine medizinische Behandlung. Bitte konsultiere einen Arzt, wenn du gesundheitliche Bedenken hast. Achte auf die Signale deines Körpers und mache Pausen, wenn nötig.';
 
   @override
   String get disclaimerAccept => 'Verstanden, weiter';
@@ -516,7 +516,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get journalEmptySubtitle =>
-      'Schreib auf, was du in deinem Alltag beobachtest — nach jedem Training oder wann immer du möchtest.';
+      'Schreib auf, was du in deinem Alltag beobachtest — nach einer Einheit oder wann immer du möchtest.';
 
   @override
   String get journalEmptyHint =>
@@ -656,7 +656,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get trainerDashboard => 'Trainer-Dashboard';
 
   @override
-  String get trainerTabTrainees => 'Trainees';
+  String get trainerTabTrainees => 'Klienten';
 
   @override
   String get trainerTabCalendar => 'Kalender';

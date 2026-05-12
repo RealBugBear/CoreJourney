@@ -67,6 +67,7 @@ class _JournalEntryTileState extends ConsumerState<JournalEntryTile> {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     final entry = widget.entry;
     final dayText = DateFormat('dd', 'de').format(entry.createdAt);
     final monthText = DateFormat('MMM', 'de').format(entry.createdAt);
@@ -116,7 +117,7 @@ class _JournalEntryTileState extends ConsumerState<JournalEntryTile> {
                       Text(
                         monthText,
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: AppColors.textSecondary,
+                              color: cs.onSurfaceVariant,
                               fontWeight: FontWeight.w700,
                             ),
                       ),
@@ -162,7 +163,7 @@ class _JournalEntryTileState extends ConsumerState<JournalEntryTile> {
                                   .textTheme
                                   .bodySmall
                                   ?.copyWith(
-                                    color: AppColors.textSecondary,
+                                    color: cs.onSurfaceVariant,
                                     fontWeight: FontWeight.w700,
                                   ),
                             ),
@@ -174,12 +175,12 @@ class _JournalEntryTileState extends ConsumerState<JournalEntryTile> {
                                 color: AppColors.primary,
                               ),
                             const Spacer(),
-                            const Text(
+                            Text(
                               'Notiz',
                               style: TextStyle(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w700,
-                                color: AppColors.textSecondary,
+                                color: cs.onSurfaceVariant,
                               ),
                             ),
                           ],

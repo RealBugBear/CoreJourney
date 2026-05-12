@@ -35,6 +35,7 @@ class _AppointmentSchedulerScreenState
 
   List<TimeSlot>? _freeSlots;
   final Set<TimeSlot> _selectedSlots = {};
+  final Set<String> _selectedProfileIds = {};
   bool _loadingSlots = true;
   bool _sending = false;
   bool _sent = false;
@@ -163,6 +164,14 @@ class _AppointmentSchedulerScreenState
       final appointmentId = (data as Map<String, dynamic>)['id'] as String?;
       if (appointmentId != null) {
         unawaited(_notifyAppointmentProposal(appointmentId));
+        if (_selectedProfileIds.isNotEmpty) {
+          await Supabase.instance.client
+              .from('appointment_subject_profiles')
+              .insert([
+            for (final pid in _selectedProfileIds)
+              {'appointment_id': appointmentId, 'subject_profile_id': pid},
+          ]);
+        }
       }
 
       ref.invalidate(appointmentsProvider);
@@ -218,10 +227,11 @@ class _AppointmentSchedulerScreenState
                       ),
                 ),
                 const SizedBox(height: 8),
-                const Text(
+                Text(
                   'Die andere Person wählt einen passenden Slot aus.',
                   textAlign: TextAlign.center,
-                  style: TextStyle(color: AppColors.textSecondary),
+                  style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant),
                 ),
                 const SizedBox(height: 32),
                 OutlinedButton(
@@ -254,10 +264,8 @@ class _AppointmentSchedulerScreenState
             _isReviewFlow
                 ? 'Wähle 2–4 freie Slots für das Bewerbungsgespräch aus.'
                 : 'Wähle 2–4 freie Slots aus — dein Klient sucht sich einen aus.',
-            style: Theme.of(context)
-                .textTheme
-                .bodyMedium
-                ?.copyWith(color: AppColors.textSecondary),
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant),
           ),
           const SizedBox(height: 20),
 
@@ -286,10 +294,11 @@ class _AppointmentSchedulerScreenState
                   const Spacer(),
                   GestureDetector(
                     onTap: () => setState(() => _selectedSlots.clear()),
-                    child: const Text(
+                    child: Text(
                       'Zurücksetzen',
                       style: TextStyle(
-                          color: AppColors.textSecondary, fontSize: 12),
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          fontSize: 12),
                     ),
                   ),
                 ],
@@ -318,7 +327,9 @@ class _AppointmentSchedulerScreenState
                       child: CircularProgressIndicator(strokeWidth: 2)),
                   const SizedBox(width: 12),
                   Text(l10n.appointmentLoadingSlots,
-                      style: const TextStyle(color: AppColors.textSecondary)),
+                      style: TextStyle(
+                          color:
+                              Theme.of(context).colorScheme.onSurfaceVariant)),
                 ],
               ),
             )
@@ -326,7 +337,8 @@ class _AppointmentSchedulerScreenState
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 8),
               child: Text(l10n.appointmentNoFreeSlots,
-                  style: const TextStyle(color: AppColors.textSecondary)),
+                  style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant)),
             )
           else
             _SlotGrid(
@@ -348,9 +360,26 @@ class _AppointmentSchedulerScreenState
             icon: const Icon(Icons.add, size: 16),
             label: Text(l10n.appointmentOtherTime),
             onPressed: _pickCustomTime,
-            style:
-                TextButton.styleFrom(foregroundColor: AppColors.textSecondary),
+            style: TextButton.styleFrom(
+                foregroundColor:
+                    Theme.of(context).colorScheme.onSurfaceVariant),
           ),
+
+          // ── Profile selection (regular appointments only) ─────────────────
+          if (!_isReviewFlow) ...[
+            const Divider(height: 28),
+            _ProfileSelector(
+              clientId: widget.client.clientId,
+              selectedIds: _selectedProfileIds,
+              onToggle: (id) => setState(() {
+                if (_selectedProfileIds.contains(id)) {
+                  _selectedProfileIds.remove(id);
+                } else {
+                  _selectedProfileIds.add(id);
+                }
+              }),
+            ),
+          ],
 
           const Divider(height: 28),
 
@@ -413,6 +442,70 @@ class _AppointmentSchedulerScreenState
   }
 }
 
+// ── Profile selector chips ────────────────────────────────────────────────────
+
+class _ProfileSelector extends ConsumerWidget {
+  const _ProfileSelector({
+    required this.clientId,
+    required this.selectedIds,
+    required this.onToggle,
+  });
+
+  final String clientId;
+  final Set<String> selectedIds;
+  final ValueChanged<String> onToggle;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final profilesAsync =
+        ref.watch(trainerClientSharedProfilesProvider(clientId));
+
+    return profilesAsync.when(
+      loading: () => const SizedBox.shrink(),
+      error: (_, __) => const SizedBox.shrink(),
+      data: (profiles) {
+        if (profiles.isEmpty) return const SizedBox.shrink();
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Termin für (optional)',
+              style: Theme.of(context)
+                  .textTheme
+                  .titleSmall
+                  ?.copyWith(fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              'Wähle Profile aus, wenn dieser Termin für bestimmte Kinder ist.',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+            ),
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: profiles.map((p) {
+                final selected = selectedIds.contains(p.subjectProfileId);
+                return FilterChip(
+                  label: Text(p.displayName),
+                  selected: selected,
+                  onSelected: (_) => onToggle(p.subjectProfileId),
+                  showCheckmark: false,
+                  avatar: selected
+                      ? const Icon(Icons.person, size: 16)
+                      : const Icon(Icons.person_outline, size: 16),
+                );
+              }).toList(),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
 // ── Multi-select slot grid ────────────────────────────────────────────────────
 
 class _SlotGrid extends StatelessWidget {
@@ -448,10 +541,10 @@ class _SlotGrid extends StatelessWidget {
             children: [
               Text(
                 dayLabel,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.textSecondary,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
                   letterSpacing: 0.3,
                 ),
               ),

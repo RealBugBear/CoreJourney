@@ -230,7 +230,7 @@ Future<void> _handleNotificationPayload(
     ref.invalidate(traineeProposalsProvider);
     final context = rootNavigatorKey.currentContext;
     if (context != null) {
-      context.push(Routes.appointmentProposals);
+      context.push(Routes.accompaniment);
     }
     return;
   }
@@ -329,9 +329,9 @@ Future<void> _syncNotifications(
   final isDE = next.languageCode == 'de';
   await ns.scheduleReminder(
     startMinutes: next.reminderStartMinutes,
-    titleDe: isDE ? 'Zeit für dein Training 🧘' : 'Time for your training 🧘',
+    titleDe: isDE ? 'Zeit für deine Einheit' : 'Time for your unit',
     bodyDe: isDE
-        ? 'Mach dein tägliches Reflexintegrations-Training.'
-        : 'Complete your daily reflex integration training.',
+        ? 'Nimm dir Zeit für deine heutige Reflexintegrations-Einheit.'
+        : "Take time for today's reflex integration unit.",
   );
 }

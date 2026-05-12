@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../bootstrap/providers.dart';
 import '../../../../core/database/app_database.dart';
 import '../../../../core/time/app_clock_provider.dart';
+import '../../../assessment/presentation/providers/reflex_profile_provider.dart';
 import '../../../mood/domain/models/mood_daily_aggregate.dart';
 import '../../../mood/presentation/providers/mood_provider.dart';
 import '../../../progress/presentation/providers/progress_provider.dart';
@@ -65,6 +66,8 @@ class JournalNotifier extends StateNotifier<JournalState> {
 
   String? get _enrollmentId =>
       _ref.read(activeEnrollmentProvider).valueOrNull?.id;
+  String? get _subjectProfileId =>
+      _ref.read(selectedSubjectProfileProvider)?.id;
 
   DateTime _defaultFrom() {
     final now = _ref.read(appClockProvider).now();
@@ -95,16 +98,19 @@ class JournalNotifier extends StateNotifier<JournalState> {
       final moodRepo = _ref.read(moodRepositoryProvider);
       final effectiveFrom = from ?? _defaultFrom();
       final effectiveTo = to ?? _ref.read(appClockProvider).now();
+      final subjectProfileId = _subjectProfileId;
 
       final entries = await journalRepo.getEntriesInRange(
         enrollmentId: enrollmentId,
         from: effectiveFrom,
         to: effectiveTo,
+        subjectProfileId: subjectProfileId,
       );
       final aggregates = await moodRepo.getDailyAggregatesInRange(
         enrollmentId: enrollmentId,
         from: effectiveFrom,
         to: effectiveTo,
+        subjectProfileId: subjectProfileId,
       );
 
       _setStateIfMounted(state.copyWith(
@@ -129,5 +135,6 @@ class JournalNotifier extends StateNotifier<JournalState> {
 final journalProvider =
     StateNotifierProvider.autoDispose<JournalNotifier, JournalState>((ref) {
   ref.watch(activeEnrollmentProvider);
+  ref.watch(selectedSubjectProfileProvider);
   return JournalNotifier(ref);
 });

@@ -128,7 +128,7 @@ class _CheckRow extends StatelessWidget {
       contentPadding: EdgeInsets.zero,
       leading: Icon(
         checked ? Icons.check_circle : Icons.radio_button_unchecked,
-        color: checked ? AppColors.success : AppColors.textSecondary,
+        color: checked ? AppColors.success : Theme.of(context).colorScheme.onSurfaceVariant,
       ),
       title: Text(title),
     );

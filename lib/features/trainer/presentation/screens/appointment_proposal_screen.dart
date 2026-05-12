@@ -23,16 +23,16 @@ class AppointmentProposalScreen extends ConsumerWidget {
         error: (e, _) => Center(child: Text(e.toString())),
         data: (proposals) {
           if (proposals.isEmpty) {
-            return const Center(
+            return Center(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.calendar_today_outlined,
+                  const Icon(Icons.calendar_today_outlined,
                       size: 56, color: AppColors.textDisabled),
-                  SizedBox(height: 16),
+                  const SizedBox(height: 16),
                   Text(
                     'Keine offenen Terminvorschläge.',
-                    style: TextStyle(color: AppColors.textSecondary),
+                    style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
                   ),
                 ],
               ),
@@ -180,8 +180,8 @@ class _ProposalCardState extends State<_ProposalCard> {
                     ),
                     Text(
                       proposal.title,
-                      style: const TextStyle(
-                          color: AppColors.textSecondary, fontSize: 12),
+                      style: TextStyle(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 12),
                     ),
                   ],
                 ),
@@ -189,12 +189,12 @@ class _ProposalCardState extends State<_ProposalCard> {
             ),
 
             const SizedBox(height: 14),
-            const Text(
+            Text(
               'Wähle einen passenden Termin:',
               style: TextStyle(
                   fontWeight: FontWeight.w600,
                   fontSize: 13,
-                  color: AppColors.textSecondary),
+                  color: Theme.of(context).colorScheme.onSurfaceVariant),
             ),
             const SizedBox(height: 10),
 

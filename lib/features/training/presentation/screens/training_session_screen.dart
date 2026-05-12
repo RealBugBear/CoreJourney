@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:drift/drift.dart' as drift;
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
@@ -9,6 +10,7 @@ import '../../../../core/navigation/app_router.dart';
 import '../../../../bootstrap/providers.dart';
 import '../../../../core/database/app_database.dart';
 import '../../../../core/notifications/notification_service.dart';
+import '../../../../core/sync/sync_service.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../../core/settings/settings_provider.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -17,6 +19,7 @@ import '../../../mood/presentation/widgets/training_experience_sheet.dart';
 import '../../domain/services/experience_prompt_service.dart';
 import '../../domain/models/training_session.dart';
 import '../../../progress/presentation/providers/progress_provider.dart';
+import '../../../assessment/presentation/providers/reflex_profile_provider.dart';
 import '../providers/training_flow_provider.dart';
 import '../widgets/disclaimer_dialog.dart';
 import '../widgets/training_intro_widget.dart';
@@ -25,10 +28,25 @@ import 'immersive_session_screen.dart';
 
 enum _TrainingPhase { intro, session, outro }
 
+class TrainingSessionLaunchArgs {
+  const TrainingSessionLaunchArgs({
+    required this.packageId,
+    this.companionSubjectProfileIds = const [],
+  });
+
+  final String packageId;
+  final List<String> companionSubjectProfileIds;
+}
+
 class TrainingSessionScreen extends ConsumerStatefulWidget {
   final String packageId;
+  final List<String> companionSubjectProfileIds;
 
-  const TrainingSessionScreen({super.key, this.packageId = 'moro'});
+  const TrainingSessionScreen({
+    super.key,
+    this.packageId = 'moro',
+    this.companionSubjectProfileIds = const [],
+  });
 
   @override
   ConsumerState<TrainingSessionScreen> createState() =>
@@ -61,6 +79,7 @@ class _TrainingSessionScreenState extends ConsumerState<TrainingSessionScreen> {
     final syncService = ref.read(syncServiceProvider);
     final userId = ref.read(authStateProvider).valueOrNull?.session?.user.id ??
         Supabase.instance.client.auth.currentUser?.id;
+    final subjectProfileId = ref.read(selectedSubjectProfileProvider)?.id;
 
     EnrollmentsTableData? enrollment;
     ProgressEntriesTableData? progress;
@@ -69,7 +88,18 @@ class _TrainingSessionScreenState extends ConsumerState<TrainingSessionScreen> {
       final rows = await (db.select(db.enrollmentsTable)
             ..where((t) => t.userId.equals(userId))
             ..where((t) => t.packageId.equals(widget.packageId))
+            ..where((t) => subjectProfileId == null
+                ? t.subjectProfileId.isNull()
+                : (t.subjectProfileId.equals(subjectProfileId) |
+                    t.subjectProfileId.isNull()))
             ..where((t) => t.status.equals('active'))
+            ..orderBy([
+              (t) => drift.OrderingTerm(
+                    expression:
+                        t.subjectProfileId.equals(subjectProfileId ?? ''),
+                    mode: drift.OrderingMode.desc,
+                  ),
+            ])
             ..limit(1))
           .get();
       enrollment = rows.firstOrNull;
@@ -92,6 +122,12 @@ class _TrainingSessionScreenState extends ConsumerState<TrainingSessionScreen> {
         progress: progress,
         completedExerciseIds: state.completedExerciseIds,
       );
+      await _saveCompanionSessions(
+        db: db,
+        syncService: syncService,
+        userId: userId,
+        completedExerciseIds: state.completedExerciseIds,
+      );
     }
 
     // Suppress today's training reminder since the session is done.
@@ -100,11 +136,10 @@ class _TrainingSessionScreenState extends ConsumerState<TrainingSessionScreen> {
       final isDE = settings.languageCode == 'de';
       await NotificationService.instance.suppressTodayAndReschedule(
         startMinutes: settings.reminderStartMinutes,
-        titleDe:
-            isDE ? 'Zeit für dein Training 🧘' : 'Time for your training 🧘',
+        titleDe: isDE ? 'Zeit für deine Einheit' : 'Time for your unit',
         bodyDe: isDE
-            ? 'Mach dein tägliches Reflexintegrations-Training.'
-            : 'Complete your daily reflex integration training.',
+            ? 'Nimm dir Zeit für deine heutige Reflexintegrations-Einheit.'
+            : "Take time for today's reflex integration unit.",
       );
     }
 
@@ -130,6 +165,50 @@ class _TrainingSessionScreenState extends ConsumerState<TrainingSessionScreen> {
 
     if (!mounted) return;
     context.pop();
+  }
+
+  Future<void> _saveCompanionSessions({
+    required AppDatabase db,
+    required SyncService syncService,
+    required String? userId,
+    required List<String> completedExerciseIds,
+  }) async {
+    if (userId == null || widget.companionSubjectProfileIds.isEmpty) return;
+
+    final today = DateTime.now();
+    final todayDate = DateTime(today.year, today.month, today.day);
+
+    for (final subjectProfileId in widget.companionSubjectProfileIds) {
+      final enrollment = await (db.select(db.enrollmentsTable)
+            ..where((t) => t.userId.equals(userId))
+            ..where((t) => t.subjectProfileId.equals(subjectProfileId))
+            ..where((t) => t.packageId.equals(widget.packageId))
+            ..where((t) => t.status.equals('active'))
+            ..limit(1))
+          .getSingleOrNull();
+      if (enrollment == null) continue;
+
+      final progress = await (db.select(db.progressEntriesTable)
+            ..where((t) => t.enrollmentId.equals(enrollment.id))
+            ..limit(1))
+          .getSingleOrNull();
+      if (progress == null) continue;
+
+      final lastActivity = progress.lastActivityDate;
+      final completedToday = lastActivity != null &&
+          lastActivity.year == todayDate.year &&
+          lastActivity.month == todayDate.month &&
+          lastActivity.day == todayDate.day;
+      if (completedToday) continue;
+
+      await saveCompletedSession(
+        db: db,
+        syncService: syncService,
+        enrollment: enrollment,
+        progress: progress,
+        completedExerciseIds: completedExerciseIds,
+      );
+    }
   }
 
   Future<void> _showPackageCompletionReachedDialog() async {
@@ -162,7 +241,7 @@ class _TrainingSessionScreenState extends ConsumerState<TrainingSessionScreen> {
       builder: (ctx) => AlertDialog(
         title: Text(l10n.cancel),
         content: const Text(
-            'Dein Training wird nicht gespeichert. Wirklich abbrechen?'),
+            'Deine Einheit wird nicht gespeichert. Wirklich abbrechen?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),

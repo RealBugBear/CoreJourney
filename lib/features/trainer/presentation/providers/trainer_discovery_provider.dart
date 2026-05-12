@@ -56,6 +56,11 @@ final nearbyTrainersProvider =
   },
 );
 
+final publicTrainersProvider = FutureProvider<List<TrainerProfile>>((ref) {
+  ref.watch(authStateProvider);
+  return ref.read(trainerProfileRepositoryProvider).listPublicTrainers();
+});
+
 // ── Pending trainers (admin) ──────────────────────────────────────────────────
 
 class PendingTrainersNotifier extends AsyncNotifier<List<TrainerProfile>> {
@@ -88,9 +93,7 @@ class IncomingRequestsNotifier
   @override
   Future<List<TrainerDiscoveryRequest>> build() {
     ref.watch(authStateProvider);
-    return ref
-        .read(trainerProfileRepositoryProvider)
-        .getIncomingRequests();
+    return ref.read(trainerProfileRepositoryProvider).getIncomingRequests();
   }
 
   Future<void> respond(String relationshipId, {required bool accept}) async {
@@ -101,14 +104,21 @@ class IncomingRequestsNotifier
   }
 }
 
-final incomingRequestsProvider =
-    AsyncNotifierProvider<IncomingRequestsNotifier,
-        List<TrainerDiscoveryRequest>>(
+final incomingRequestsProvider = AsyncNotifierProvider<IncomingRequestsNotifier,
+    List<TrainerDiscoveryRequest>>(
   IncomingRequestsNotifier.new,
 );
 
 // ── Send connection request ───────────────────────────────────────────────────
 
 Future<void> sendDiscoveryRequest(WidgetRef ref, String trainerId) {
-  return ref.read(trainerProfileRepositoryProvider).sendConnectionRequest(trainerId);
+  return ref
+      .read(trainerProfileRepositoryProvider)
+      .sendConnectionRequest(trainerId);
+}
+
+Future<void> withdrawDiscoveryRequest(WidgetRef ref, String relationshipId) {
+  return ref
+      .read(trainerProfileRepositoryProvider)
+      .withdrawConnectionRequest(relationshipId);
 }

@@ -179,7 +179,7 @@ abstract class AppLocalizations {
   /// No description provided for @startTraining.
   ///
   /// In de, this message translates to:
-  /// **'Training starten'**
+  /// **'Einheit beginnen'**
   String get startTraining;
 
   /// No description provided for @currentDay.
@@ -191,7 +191,7 @@ abstract class AppLocalizations {
   /// No description provided for @dailyStreak.
   ///
   /// In de, this message translates to:
-  /// **'Tages-Streak'**
+  /// **'Regelmäßigkeit'**
   String get dailyStreak;
 
   /// No description provided for @weeklyProgress.
@@ -215,7 +215,7 @@ abstract class AppLocalizations {
   /// No description provided for @trainingMode.
   ///
   /// In de, this message translates to:
-  /// **'Trainingsmodus'**
+  /// **'Einheitsmodus'**
   String get trainingMode;
 
   /// No description provided for @tutorialMode.
@@ -275,13 +275,13 @@ abstract class AppLocalizations {
   /// No description provided for @sessionComplete.
   ///
   /// In de, this message translates to:
-  /// **'Training abgeschlossen'**
+  /// **'Einheit abgeschlossen'**
   String get sessionComplete;
 
   /// No description provided for @sessionCompleteSubtitle.
   ///
   /// In de, this message translates to:
-  /// **'Gut gemacht! Du hast dein Training für heute abgeschlossen.'**
+  /// **'Du hast deine heutige Einheit abgeschlossen.'**
   String get sessionCompleteSubtitle;
 
   /// No description provided for @moodCheckIn.
@@ -323,7 +323,7 @@ abstract class AppLocalizations {
   /// No description provided for @moodChartEmpty.
   ///
   /// In de, this message translates to:
-  /// **'Schließe eine Trainingseinheit ab, um deine Stimmung zu verfolgen.'**
+  /// **'Trage eine Einheit ein, um dein Befinden im Verlauf zu sehen.'**
   String get moodChartEmpty;
 
   /// No description provided for @intakeAssessmentTitle.
@@ -353,7 +353,7 @@ abstract class AppLocalizations {
   /// No description provided for @intakeTrainerBody.
   ///
   /// In de, this message translates to:
-  /// **'Wir empfehlen, das Programm mit einem zertifizierten Trainer zu beginnen und begleiten zu lassen. Ein Trainer führt isometrisches Aktivierungstraining durch, das die betreffenden Reflexe gezielt anspricht. Diese gezielte Aktivierung beschleunigt den Integrationsprozess. Ohne sie braucht der Körper in der Regel länger, bis die Reflexe ausreichend angesprochen werden.'**
+  /// **'Wir empfehlen, das Programm mit einem zertifizierten Trainer zu beginnen und begleiten zu lassen. Ein Trainer führt isometrische Partnerübungen durch, die klares Spüren von Richtung, Bewegung und Widerstand unterstützen. Ohne diese Begleitung braucht der Körper in der Regel mehr ruhige Wiederholung.'**
   String get intakeTrainerBody;
 
   /// No description provided for @intakeQuestionLabel.
@@ -365,7 +365,7 @@ abstract class AppLocalizations {
   /// No description provided for @questionIsometricWithTrainer.
   ///
   /// In de, this message translates to:
-  /// **'Hast du bereits isometrisches Aktivierungstraining mit einem Trainer durchgeführt?'**
+  /// **'Hast du bereits isometrische Partnerübungen mit einem Trainer durchgeführt?'**
   String get questionIsometricWithTrainer;
 
   /// No description provided for @yes.
@@ -497,13 +497,13 @@ abstract class AppLocalizations {
   /// No description provided for @completionCelebrationTitle.
   ///
   /// In de, this message translates to:
-  /// **'Block abgeschlossen! ⭐'**
+  /// **'Paket abgeschlossen'**
   String get completionCelebrationTitle;
 
   /// No description provided for @completionCelebrationSubtitle.
   ///
   /// In de, this message translates to:
-  /// **'Du hast einen wichtigen Schritt in deiner Entwicklung abgeschlossen. Gut gemacht.'**
+  /// **'Du hast dieses Paket über die geplante Zeit begleitet.'**
   String get completionCelebrationSubtitle;
 
   /// No description provided for @completionNextPackage.
@@ -527,25 +527,25 @@ abstract class AppLocalizations {
   /// No description provided for @completionReachedBody.
   ///
   /// In de, this message translates to:
-  /// **'Sehr gut. Du hast die geplante Trainingsdauer erreicht. Im Dashboard findest du jetzt oben den Einschätzungsfragebogen, mit dem du das Paket korrekt abschließen oder um 7 Tage verlängern kannst.'**
+  /// **'Du hast die geplante Paketdauer erreicht. In Heute findest du jetzt oben eine kurze Einschätzung, mit der du das Paket abschließen oder um 7 Tage verlängern kannst.'**
   String get completionReachedBody;
 
   /// No description provided for @completionPlaceholderQuestion.
   ///
   /// In de, this message translates to:
-  /// **'Platzhalter-Einschätzung: Kann dieses Trainingspaket korrekt abgeschlossen werden?'**
+  /// **'Platzhalter-Einschätzung: Fühlt sich dieses Paket stimmig abgeschlossen an?'**
   String get completionPlaceholderQuestion;
 
   /// No description provided for @completionPass.
   ///
   /// In de, this message translates to:
-  /// **'Korrekt abschließen'**
+  /// **'Paket abschließen'**
   String get completionPass;
 
   /// No description provided for @completionInsufficient.
   ///
   /// In de, this message translates to:
-  /// **'Ungenügend abschließen (+7 Tage)'**
+  /// **'Noch 7 Tage wiederholen'**
   String get completionInsufficient;
 
   /// No description provided for @completionMoroReturnSubtitle.
@@ -569,13 +569,13 @@ abstract class AppLocalizations {
   /// No description provided for @completionExtendedSubtitle.
   ///
   /// In de, this message translates to:
-  /// **'Kein Problem — du hast 7 weitere Tage. Mach weiter so.'**
+  /// **'Du hast 7 weitere Tage in diesem Paket.'**
   String get completionExtendedSubtitle;
 
   /// No description provided for @completionQuestion.
   ///
   /// In de, this message translates to:
-  /// **'Hattest du durch das Training eine verstärkte emotionale oder stressige Zeit und konntest dich mit diesen Themen konfrontieren – zu erkennen, dass deine emotionale Reaktion nicht immer mit der Realität übereinstimmt – und anfangen dich zu regulieren?'**
+  /// **'Hast du seit Beginn dieses Pakets stärkere emotionale oder stressbezogene Reaktionen bemerkt und konntest du sie etwas besser einordnen oder regulieren?'**
   String get completionQuestion;
 
   /// No description provided for @completionYes.
@@ -629,7 +629,7 @@ abstract class AppLocalizations {
   /// No description provided for @settingsTraining.
   ///
   /// In de, this message translates to:
-  /// **'Training'**
+  /// **'Einheiten'**
   String get settingsTraining;
 
   /// No description provided for @settingsReminders.
@@ -755,7 +755,7 @@ abstract class AppLocalizations {
   /// No description provided for @settingsFeedback.
   ///
   /// In de, this message translates to:
-  /// **'Trainings-Feedback'**
+  /// **'Einheits-Feedback'**
   String get settingsFeedback;
 
   /// No description provided for @settingsAccount.
@@ -773,7 +773,7 @@ abstract class AppLocalizations {
   /// No description provided for @disclaimerText.
   ///
   /// In de, this message translates to:
-  /// **'Dieses Training ersetzt keine medizinische Behandlung. Bitte konsultiere einen Arzt, wenn du gesundheitliche Bedenken hast. Achte auf die Signale deines Körpers und mache Pausen, wenn nötig.'**
+  /// **'Diese Einheiten ersetzen keine medizinische Behandlung. Bitte konsultiere einen Arzt, wenn du gesundheitliche Bedenken hast. Achte auf die Signale deines Körpers und mache Pausen, wenn nötig.'**
   String get disclaimerText;
 
   /// No description provided for @disclaimerAccept.
@@ -1007,7 +1007,7 @@ abstract class AppLocalizations {
   /// No description provided for @journalEmptySubtitle.
   ///
   /// In de, this message translates to:
-  /// **'Schreib auf, was du in deinem Alltag beobachtest — nach jedem Training oder wann immer du möchtest.'**
+  /// **'Schreib auf, was du in deinem Alltag beobachtest — nach einer Einheit oder wann immer du möchtest.'**
   String get journalEmptySubtitle;
 
   /// No description provided for @journalEmptyHint.
@@ -1253,7 +1253,7 @@ abstract class AppLocalizations {
   /// No description provided for @trainerTabTrainees.
   ///
   /// In de, this message translates to:
-  /// **'Trainees'**
+  /// **'Klienten'**
   String get trainerTabTrainees;
 
   /// No description provided for @trainerTabCalendar.

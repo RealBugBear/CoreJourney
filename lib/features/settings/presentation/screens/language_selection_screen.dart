@@ -34,6 +34,7 @@ class _LanguageSelectionScreenState
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Scaffold(
       body: SafeArea(
         child: Padding(
@@ -62,7 +63,7 @@ class _LanguageSelectionScreenState
               Text(
                 'Choose your language',
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: AppColors.textSecondary,
+                      color: cs.onSurfaceVariant,
                     ),
                 textAlign: TextAlign.center,
               ),

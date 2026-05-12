@@ -17,7 +17,7 @@ import '../providers/trainer_provider.dart';
 import '../providers/trainer_discovery_provider.dart';
 import '../widgets/trainer_location_picker_widget.dart';
 import '../../../chat/presentation/navigation/chat_navigation.dart';
-import '../../../chat/presentation/providers/chat_providers.dart';
+import '../../../chat/presentation/widgets/direct_messages_action.dart';
 
 class TrainerDashboardScreen extends ConsumerStatefulWidget {
   const TrainerDashboardScreen({super.key});
@@ -63,43 +63,15 @@ class _TrainerDashboardScreenState extends ConsumerState<TrainerDashboardScreen>
             tooltip: l10n.trainerRequestsTitle,
             onPressed: () => context.push(Routes.trainerRequests),
           ),
-          Consumer(builder: (context, ref, _) {
-            final unread = ref.watch(totalUnreadCountProvider);
-            return Stack(
-              alignment: Alignment.center,
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.chat_bubble_outline),
-                  onPressed: () => context.push(Routes.dm),
-                ),
-                if (unread > 0)
-                  Positioned(
-                    top: 8,
-                    right: 8,
-                    child: Container(
-                      padding: const EdgeInsets.all(2),
-                      decoration: const BoxDecoration(
-                        color: Colors.red,
-                        shape: BoxShape.circle,
-                      ),
-                      constraints:
-                          const BoxConstraints(minWidth: 14, minHeight: 14),
-                      child: Text(
-                        unread > 99 ? '99+' : '$unread',
-                        style:
-                            const TextStyle(color: Colors.white, fontSize: 9),
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-                  ),
-              ],
-            );
-          }),
+          const DirectMessagesAction(),
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: () {
               ref.invalidate(trainerClientsProvider);
               ref.invalidate(appointmentsProvider);
+              ref.invalidate(trainerOpenInvitesProvider);
+              ref.invalidate(incomingRequestsProvider);
+              ref.invalidate(trainerRecentObservationsProvider);
             },
           ),
         ],
@@ -124,25 +96,52 @@ class _TraineesTab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
+    final cs = Theme.of(context).colorScheme;
     final clientsAsync = ref.watch(trainerClientsProvider);
     final appointmentsAsync = ref.watch(appointmentsProvider);
+    final openInvitesAsync = ref.watch(trainerOpenInvitesProvider);
+    final incomingRequestsAsync = ref.watch(incomingRequestsProvider);
+    final observationsAsync = ref.watch(trainerRecentObservationsProvider);
 
     return RefreshIndicator(
-      onRefresh: () => ref.read(trainerClientsProvider.notifier).refresh(),
+      onRefresh: () async {
+        await ref.read(trainerClientsProvider.notifier).refresh();
+        ref.invalidate(appointmentsProvider);
+        ref.invalidate(trainerOpenInvitesProvider);
+        ref.invalidate(incomingRequestsProvider);
+        ref.invalidate(trainerRecentObservationsProvider);
+      },
       child: ListView(
+        padding: const EdgeInsets.only(bottom: 24),
         children: [
           // ── Invite link section ─────────────────────────────────────────
           _InviteBanner(l10n: l10n, ref: ref),
           const _DiscoveryVisibilityCard(),
+          _TrainerPriorityOverview(
+            clients: clientsAsync.valueOrNull ?? const [],
+            appointments: appointmentsAsync.valueOrNull ?? const [],
+            openInviteCount: openInvitesAsync.valueOrNull?.length ?? 0,
+            incomingRequestCount:
+                incomingRequestsAsync.valueOrNull?.length ?? 0,
+            observationCount: observationsAsync.valueOrNull?.length ?? 0,
+            onOpenRequests: () => context.push(Routes.trainerRequests),
+            onOpenCalendar: () => tabController.animateTo(1),
+          ),
+          _OpenInvitesCard(
+              openInvites: openInvitesAsync.valueOrNull ?? const []),
+          _RecentObservationsCard(
+            observations: observationsAsync.valueOrNull ?? const [],
+          ),
+          const _SharedExperienceReviewCard(),
           if (kDebugMode) const _TrainerClientsDebugPanel(),
 
           // ── Clients ─────────────────────────────────────────────────────
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
             child: Text(
-              'TRAINEES',
+              'KLIENTEN',
               style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    color: AppColors.textSecondary,
+                    color: cs.onSurfaceVariant,
                     letterSpacing: 0.8,
                     fontWeight: FontWeight.w600,
                   ),
@@ -168,7 +167,7 @@ class _TraineesTab extends ConsumerWidget {
                     children: [
                       Text(
                         l10n.trainerNoClients,
-                        style: const TextStyle(color: AppColors.textSecondary),
+                        style: TextStyle(color: cs.onSurfaceVariant),
                       ),
                     ],
                   ),
@@ -192,6 +191,343 @@ class _TraineesTab extends ConsumerWidget {
   }
 }
 
+class _TrainerPriorityOverview extends StatelessWidget {
+  const _TrainerPriorityOverview({
+    required this.clients,
+    required this.appointments,
+    required this.openInviteCount,
+    required this.incomingRequestCount,
+    required this.observationCount,
+    required this.onOpenRequests,
+    required this.onOpenCalendar,
+  });
+
+  final List<TrainerClient> clients;
+  final List<Appointment> appointments;
+  final int openInviteCount;
+  final int incomingRequestCount;
+  final int observationCount;
+  final VoidCallback onOpenRequests;
+  final VoidCallback onOpenCalendar;
+
+  int get _transitionCount => clients.where(_needsTransitionPlanning).length;
+
+  int get _upcomingAppointmentCount => appointments
+      .where((appointment) =>
+          appointment.status != 'cancelled' &&
+          appointment.status != 'done' &&
+          (appointment.scheduledFor?.isAfter(DateTime.now()) ?? false))
+      .length;
+
+  bool _needsTransitionPlanning(TrainerClient client) {
+    final hasOpenAppointment = appointments.any((appointment) =>
+        appointment.traineeId == client.clientId &&
+        appointment.status != 'cancelled' &&
+        appointment.status != 'done' &&
+        (appointment.isProposed ||
+            (appointment.scheduledFor?.isAfter(DateTime.now()) ?? false)));
+    return client.needsNextPackageAppointment && !hasOpenAppointment;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return Card(
+      margin: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Arbeitsuebersicht',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w800,
+                  ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Priorisiert nach Paketuebergaengen, Anfragen, Terminen und Beobachtungen.',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: cs.onSurfaceVariant,
+                    height: 1.35,
+                  ),
+            ),
+            const SizedBox(height: 14),
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: [
+                _PriorityTile(
+                  icon: Icons.flag_outlined,
+                  label: 'Paketuebergaenge',
+                  value: _transitionCount,
+                  highlighted: _transitionCount > 0,
+                ),
+                _PriorityTile(
+                  icon: Icons.link_outlined,
+                  label: 'Offene Einladungen',
+                  value: openInviteCount,
+                ),
+                _PriorityTile(
+                  icon: Icons.inbox_outlined,
+                  label: 'Neue Anfragen',
+                  value: incomingRequestCount,
+                  highlighted: incomingRequestCount > 0,
+                  onTap: onOpenRequests,
+                ),
+                _PriorityTile(
+                  icon: Icons.event_available_outlined,
+                  label: 'Termine',
+                  value: _upcomingAppointmentCount,
+                  onTap: onOpenCalendar,
+                ),
+                _PriorityTile(
+                  icon: Icons.edit_note_outlined,
+                  label: 'Neue Beobachtungen',
+                  value: observationCount,
+                  highlighted: observationCount > 0,
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _PriorityTile extends StatelessWidget {
+  const _PriorityTile({
+    required this.icon,
+    required this.label,
+    required this.value,
+    this.highlighted = false,
+    this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final int value;
+  final bool highlighted;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final color = highlighted ? AppColors.primary : cs.onSurfaceVariant;
+
+    return InkWell(
+      borderRadius: BorderRadius.circular(8),
+      onTap: onTap,
+      child: Container(
+        width: 150,
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: highlighted
+                ? AppColors.primary.withValues(alpha: 0.28)
+                : AppColors.divider,
+          ),
+          color: highlighted
+              ? AppColors.primary.withValues(alpha: 0.06)
+              : Theme.of(context).colorScheme.surface,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(icon, size: 20, color: color),
+            const SizedBox(height: 10),
+            Text(
+              '$value',
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w800,
+                  ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              label,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: cs.onSurfaceVariant,
+                    height: 1.2,
+                  ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _OpenInvitesCard extends StatelessWidget {
+  const _OpenInvitesCard({required this.openInvites});
+
+  final List<TrainerOpenInvite> openInvites;
+
+  @override
+  Widget build(BuildContext context) {
+    if (openInvites.isEmpty) return const SizedBox.shrink();
+    final visible = openInvites.take(3).toList();
+
+    return Card(
+      margin: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Offene Einladungen',
+              style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w800,
+                  ),
+            ),
+            const SizedBox(height: 10),
+            ...visible.map((invite) => _InviteCodeRow(invite: invite)),
+            if (openInvites.length > visible.length)
+              Padding(
+                padding: const EdgeInsets.only(top: 6),
+                child: Text(
+                  '${openInvites.length - visible.length} weitere Einladung${openInvites.length - visible.length == 1 ? '' : 'en'} offen',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _InviteCodeRow extends StatelessWidget {
+  const _InviteCodeRow({required this.invite});
+
+  final TrainerOpenInvite invite;
+
+  @override
+  Widget build(BuildContext context) {
+    final created = DateFormat('dd.MM.yyyy', 'de_DE').format(invite.createdAt);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        children: [
+          const Icon(Icons.link_outlined, size: 18),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              invite.code,
+              style: const TextStyle(
+                fontWeight: FontWeight.w700,
+                fontFeatures: [FontFeature.tabularFigures()],
+              ),
+            ),
+          ),
+          Text(
+            created,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RecentObservationsCard extends StatelessWidget {
+  const _RecentObservationsCard({required this.observations});
+
+  final List<TrainerClientObservation> observations;
+
+  @override
+  Widget build(BuildContext context) {
+    if (observations.isEmpty) return const SizedBox.shrink();
+
+    return Card(
+      margin: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Neue Beobachtungen',
+              style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w800,
+                  ),
+            ),
+            const SizedBox(height: 10),
+            ...observations.take(3).map(
+                  (observation) => _ObservationPreview(
+                    observation: observation,
+                    onTap: () => context.push(
+                      Routes.trainerClientDetail.replaceFirst(
+                        ':clientId',
+                        observation.clientId,
+                      ),
+                    ),
+                  ),
+                ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ObservationPreview extends StatelessWidget {
+  const _ObservationPreview({
+    required this.observation,
+    this.onTap,
+  });
+
+  final TrainerClientObservation observation;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final date =
+        DateFormat('dd.MM. HH:mm', 'de_DE').format(observation.recordedAt);
+
+    return ListTile(
+      contentPadding: EdgeInsets.zero,
+      leading: const Icon(Icons.edit_note_outlined),
+      title: Text(observation.clientName),
+      subtitle: Text(
+        '${observation.note}\n$date',
+        maxLines: 3,
+        overflow: TextOverflow.ellipsis,
+      ),
+      onTap: onTap,
+    );
+  }
+}
+
+class _SharedExperienceReviewCard extends StatelessWidget {
+  const _SharedExperienceReviewCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      margin: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+      child: ListTile(
+        leading: const Icon(Icons.rate_review_outlined),
+        title: const Text('Geteilte Erfahrungen pruefen'),
+        subtitle: const Text(
+          'Moderierte Erfahrungsbeitraege aus laufenden Paketen im Blick behalten.',
+        ),
+        trailing: const Icon(Icons.chevron_right),
+        onTap: () => context.push(Routes.community),
+      ),
+    );
+  }
+}
+
 class _TrainerClientsDebugPanel extends ConsumerWidget {
   const _TrainerClientsDebugPanel();
 
@@ -200,7 +536,7 @@ class _TrainerClientsDebugPanel extends ConsumerWidget {
     final debugAsync = ref.watch(trainerClientsDebugProvider);
     final textStyle = Theme.of(context).textTheme.bodySmall?.copyWith(
           fontFamily: 'monospace',
-          color: AppColors.textSecondary,
+          color: Theme.of(context).colorScheme.onSurfaceVariant,
           height: 1.35,
         );
 
@@ -316,10 +652,10 @@ class _InviteBannerState extends State<_InviteBanner> {
               ],
             ),
             const SizedBox(height: 4),
-            const Center(
+            Center(
               child: Text(
                 'Einmaliger Code — teile ihn mit deinem Klienten',
-                style: TextStyle(color: AppColors.textSecondary, fontSize: 11),
+                style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 11),
                 textAlign: TextAlign.center,
               ),
             ),
@@ -347,7 +683,7 @@ class _InviteBannerState extends State<_InviteBanner> {
                   label: const Text('Neu'),
                   onPressed: _loading ? null : () => _generate(context),
                   style: OutlinedButton.styleFrom(
-                      foregroundColor: AppColors.textSecondary),
+                      foregroundColor: Theme.of(context).colorScheme.onSurfaceVariant),
                 ),
               ],
             ),
@@ -473,10 +809,10 @@ class _DiscoveryVisibilityCardState
                                   ),
                         ),
                         const SizedBox(height: 4),
-                        const Text(
+                        Text(
                           'Dein Trainerprofil ist aktiv, erscheint aber erst in der Trainersuche, wenn ein Standort gesetzt ist. Öffentlich wird nur ein ungefährer Pin angezeigt.',
                           style: TextStyle(
-                            color: AppColors.textSecondary,
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
                             fontSize: 13,
                           ),
                         ),
@@ -669,8 +1005,8 @@ class _ClientCard extends ConsumerWidget {
                       ),
                       Text(
                         l10n.currentDay(client.currentDay, 28),
-                        style: const TextStyle(
-                            color: AppColors.textSecondary, fontSize: 13),
+                        style: TextStyle(
+                            color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 13),
                       ),
                     ],
                   ),
@@ -715,6 +1051,17 @@ class _ClientCard extends ConsumerWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
+                IconButton(
+                  icon: const Icon(Icons.insights_outlined, size: 20),
+                  tooltip: 'Detail oeffnen',
+                  onPressed: () => context.push(
+                    Routes.trainerClientDetail.replaceFirst(
+                      ':clientId',
+                      client.clientId,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 4),
                 IconButton(
                   icon: const Icon(Icons.chat_bubble_outline, size: 20),
                   tooltip: 'Chat öffnen',
@@ -793,7 +1140,7 @@ class _AppointmentsTab extends ConsumerWidget {
                   const SizedBox(height: 16),
                   Text(
                     l10n.trainerNoAppointments,
-                    style: const TextStyle(color: AppColors.textSecondary),
+                    style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
                     textAlign: TextAlign.center,
                   ),
                 ],
@@ -870,8 +1217,8 @@ class _AppointmentTile extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(date,
-              style: const TextStyle(
-                  color: AppColors.textSecondary, fontSize: 13)),
+              style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 13)),
           const SizedBox(height: 2),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),

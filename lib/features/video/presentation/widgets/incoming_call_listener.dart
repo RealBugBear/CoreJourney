@@ -27,7 +27,9 @@ class _IncomingCallListenerState extends ConsumerState<IncomingCallListener> {
 
   final Set<String> _knownCallIds = <String>{};
   final Set<String> _knownCallRequestIds = <String>{};
-  bool _dialogOpen = false;
+  VideoCall? _incomingCall;
+  ChatMessage? _incomingRequest;
+  bool _joining = false;
   ProviderSubscription<AsyncValue<List<VideoCall>>>? _callsSubscription;
   ProviderSubscription<AsyncValue<List<ChatMessage>>>?
       _callRequestsSubscription;
@@ -59,10 +61,42 @@ class _IncomingCallListenerState extends ConsumerState<IncomingCallListener> {
     ref.watch(activeCallsProvider);
     ref.watch(callRequestsProvider);
 
-    return widget.child;
+    final call = _incomingCall;
+    final request = _incomingRequest;
+
+    return Stack(
+      children: [
+        widget.child,
+        if (call != null || request != null)
+          _IncomingCallWindow(
+            isJoining: _joining,
+            title: call != null
+                ? 'Eingehender Video-Call'
+                : 'Video-Call angefragt',
+            message: call != null
+                ? 'Ein Video-Call wurde gestartet. Du kannst direkt beitreten.'
+                : 'Ein Klient fragt einen Video-Call an. Du kannst den Call jetzt starten.',
+            primaryLabel: call != null ? 'Beitreten' : 'Call starten',
+            secondaryLabel: call != null ? 'Ignorieren' : 'Später',
+            onPrimary: () async {
+              if (call != null) {
+                await _joinIncomingCall(call);
+              } else if (request != null) {
+                await _startRequestedCall(context, request.channelId);
+              }
+            },
+            onSecondary: _dismissIncomingWindow,
+          ),
+      ],
+    );
   }
 
   void _handleActiveCalls(List<VideoCall> calls) {
+    final visibleCallIds = calls.map((call) => call.id).toSet();
+    if (_incomingCall != null && !visibleCallIds.contains(_incomingCall!.id)) {
+      setState(() => _incomingCall = null);
+    }
+
     for (final call in calls) {
       _handleActiveCall(call);
     }
@@ -88,13 +122,9 @@ class _IncomingCallListenerState extends ConsumerState<IncomingCallListener> {
     }
 
     if (!_knownCallIds.add(call.id)) return;
-    if (_dialogOpen || !mounted) return;
+    if (!mounted || _incomingCall != null || _incomingRequest != null) return;
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!_dialogOpen && mounted) {
-        _showIncomingCall(context, call);
-      }
-    });
+    setState(() => _incomingCall = call);
   }
 
   void _handleCallRequest(ChatMessage request) {
@@ -108,85 +138,39 @@ class _IncomingCallListenerState extends ConsumerState<IncomingCallListener> {
     }
 
     if (!_knownCallRequestIds.add(request.id)) return;
-    if (_dialogOpen || !mounted) return;
+    if (!mounted || _incomingCall != null || _incomingRequest != null) return;
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!_dialogOpen && mounted) {
-        _showCallRequest(context, request);
-      }
+    setState(() => _incomingRequest = request);
+  }
+
+  void _dismissIncomingWindow() {
+    if (!mounted) return;
+    setState(() {
+      _incomingCall = null;
+      _incomingRequest = null;
+      _joining = false;
     });
   }
 
-  Future<void> _showIncomingCall(BuildContext context, VideoCall call) async {
-    _dialogOpen = true;
-    await showDialog<void>(
-      context: context,
-      useRootNavigator: true,
-      barrierDismissible: false,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Eingehender Video-Call'),
-        content: const Text(
-          'Dein Trainer startet gerade einen Video-Call.\nMöchtest du beitreten?',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Ignorieren'),
-          ),
-          FilledButton(
-            onPressed: () async {
-              Navigator.pop(ctx);
-              await openVideoCall(context, ref, call);
-            },
-            child: const Text('Beitreten'),
-          ),
-        ],
-      ),
-    );
-    _dialogOpen = false;
-  }
-
-  Future<void> _showCallRequest(
-    BuildContext context,
-    ChatMessage request,
-  ) async {
-    _dialogOpen = true;
-    await showDialog<void>(
-      context: context,
-      useRootNavigator: true,
-      barrierDismissible: false,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Video-Call angefragt'),
-        content: const Text(
-          'Dein Klient fragt einen Video-Call an.\nMöchtest du den Call jetzt starten?',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Später'),
-          ),
-          FilledButton(
-            onPressed: () async {
-              Navigator.pop(ctx);
-              await _startRequestedCall(context, request.channelId);
-            },
-            child: const Text('Call starten'),
-          ),
-        ],
-      ),
-    );
-    _dialogOpen = false;
+  Future<void> _joinIncomingCall(VideoCall call) async {
+    if (_joining) return;
+    setState(() => _joining = true);
+    await openVideoCall(context, ref, call);
+    _dismissIncomingWindow();
   }
 
   Future<void> _startRequestedCall(
     BuildContext context,
     String channelId,
   ) async {
+    if (_joining) return;
+    setState(() => _joining = true);
     final statuses = await [Permission.camera, Permission.microphone].request();
     final cameraOk = statuses[Permission.camera]?.isGranted ?? false;
     final micOk = statuses[Permission.microphone]?.isGranted ?? false;
 
     if (!cameraOk || !micOk) {
+      if (mounted) setState(() => _joining = false);
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -200,6 +184,7 @@ class _IncomingCallListenerState extends ConsumerState<IncomingCallListener> {
 
     final call = await ref.read(startCallProvider.notifier).start(channelId);
     if (call == null) {
+      if (mounted) setState(() => _joining = false);
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Call konnte nicht gestartet werden.')),
@@ -209,6 +194,105 @@ class _IncomingCallListenerState extends ConsumerState<IncomingCallListener> {
 
     if (!context.mounted) return;
     await openVideoCall(context, ref, call);
+    _dismissIncomingWindow();
+  }
+}
+
+class _IncomingCallWindow extends StatelessWidget {
+  const _IncomingCallWindow({
+    required this.title,
+    required this.message,
+    required this.primaryLabel,
+    required this.secondaryLabel,
+    required this.onPrimary,
+    required this.onSecondary,
+    required this.isJoining,
+  });
+
+  final String title;
+  final String message;
+  final String primaryLabel;
+  final String secondaryLabel;
+  final VoidCallback onPrimary;
+  final VoidCallback onSecondary;
+  final bool isJoining;
+
+  @override
+  Widget build(BuildContext context) {
+    final top = MediaQuery.paddingOf(context).top + 12;
+
+    return Positioned(
+      top: top,
+      left: 16,
+      right: 16,
+      child: Material(
+        color: Colors.transparent,
+        child: SafeArea(
+          top: false,
+          child: Card(
+            elevation: 10,
+            margin: EdgeInsets.zero,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const CircleAvatar(
+                    child: Icon(Icons.videocam_outlined),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          title,
+                          style: Theme.of(context)
+                              .textTheme
+                              .titleSmall
+                              ?.copyWith(fontWeight: FontWeight.w800),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          message,
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                        const SizedBox(height: 12),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: [
+                            FilledButton(
+                              onPressed: isJoining ? null : onPrimary,
+                              child: isJoining
+                                  ? const SizedBox.square(
+                                      dimension: 16,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                      ),
+                                    )
+                                  : Text(primaryLabel),
+                            ),
+                            TextButton(
+                              onPressed: isJoining ? null : onSecondary,
+                              child: Text(secondaryLabel),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }
 

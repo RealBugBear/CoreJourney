@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../core/theme/app_colors.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../domain/models/trainer_discovery_request.dart';
+import '../providers/trainer_provider.dart';
 import '../providers/trainer_discovery_provider.dart';
 
 class TrainerRequestsScreen extends ConsumerWidget {
@@ -27,8 +27,7 @@ class TrainerRequestsScreen extends ConsumerWidget {
             padding: const EdgeInsets.all(16),
             itemCount: requests.length,
             separatorBuilder: (_, __) => const SizedBox(height: 12),
-            itemBuilder: (context, i) =>
-                _RequestCard(request: requests[i]),
+            itemBuilder: (context, i) => _RequestCard(request: requests[i]),
           );
         },
       ),
@@ -55,6 +54,19 @@ class _RequestCardState extends ConsumerState<_RequestCard> {
       await ref
           .read(incomingRequestsProvider.notifier)
           .respond(widget.request.relationshipId, accept: accept);
+      ref.invalidate(trainerClientsProvider);
+      ref.invalidate(trainerRecentObservationsProvider);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              accept
+                  ? 'Anfrage angenommen. Der Klient erscheint jetzt in deiner Uebersicht.'
+                  : 'Anfrage abgelehnt.',
+            ),
+          ),
+        );
+      }
     } finally {
       if (mounted) setState(() => _isResponding = false);
     }
@@ -92,18 +104,16 @@ class _RequestCardState extends ConsumerState<_RequestCard> {
               children: [
                 Expanded(
                   child: FilledButton(
-                    onPressed: _isResponding ? null : () => _respond(accept: true),
+                    onPressed:
+                        _isResponding ? null : () => _respond(accept: true),
                     child: Text(l10n.trainerRequestAccept),
                   ),
                 ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: OutlinedButton(
-                    onPressed: _isResponding ? null : () => _respond(accept: false),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: AppColors.error,
-                      side: const BorderSide(color: AppColors.error),
-                    ),
+                    onPressed:
+                        _isResponding ? null : () => _respond(accept: false),
                     child: Text(l10n.trainerRequestDecline),
                   ),
                 ),

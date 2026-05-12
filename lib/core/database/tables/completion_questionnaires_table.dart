@@ -13,6 +13,7 @@ class CompletionQuestionnairesTable extends Table {
   BoolColumn get nextEnrollmentCreated =>
       boolean().withDefault(const Constant(false))();
   BoolColumn get needsSync => boolean().withDefault(const Constant(true))();
+  TextColumn get subjectProfileId => text().nullable()();
   DateTimeColumn get submittedAt => dateTime()();
 
   @override

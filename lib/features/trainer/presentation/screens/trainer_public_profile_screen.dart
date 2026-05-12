@@ -7,6 +7,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../domain/models/trainer_profile.dart';
 import '../providers/trainer_discovery_provider.dart';
+import '../providers/trainer_provider.dart';
 
 class TrainerPublicProfileScreen extends ConsumerStatefulWidget {
   const TrainerPublicProfileScreen({
@@ -30,22 +31,33 @@ class _TrainerPublicProfileScreenState
   String? _errorMessage;
 
   Future<void> _sendRequest() async {
+    final l10n = AppLocalizations.of(context);
+    final repository = ref.read(trainerProfileRepositoryProvider);
     setState(() {
       _isRequesting = true;
       _errorMessage = null;
     });
     try {
-      await sendDiscoveryRequest(ref, widget.trainer.id);
-      if (mounted) setState(() => _requestSent = true);
+      await repository.sendConnectionRequest(widget.trainer.id);
+      ref.invalidate(clientTrainerConnectionsProvider);
+
+      if (!mounted) return;
+      if (widget.onboardingExtra != null) {
+        setState(() => _requestSent = true);
+        return;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.trainerDiscoveryRequestSent)),
+      );
+      context.go(Routes.accompaniment);
     } on Exception catch (e) {
       final msg = e.toString();
       if (!mounted) return;
       if (msg.contains('Anfrage bereits gesendet') || msg.contains('already')) {
-        final l10n = AppLocalizations.of(context);
         setState(() => _errorMessage = l10n.trainerDiscoveryRequestAlreadySent);
       } else if (msg.toLowerCase().contains('bereits verbunden') ||
           msg.contains('connected')) {
-        final l10n = AppLocalizations.of(context);
         setState(
             () => _errorMessage = l10n.trainerDiscoveryRequestAlreadyConnected);
       } else {

@@ -293,6 +293,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     child: Text(_isSignUp ? l10n.signIn : l10n.signUp),
                   ),
 
+                if (!_showPasswordReset)
+                  OutlinedButton.icon(
+                    onPressed: () => context.go(Routes.reflexProfileDemo),
+                    icon: const Icon(Icons.radar_outlined),
+                    label: const Text('Kurztest ohne Konto'),
+                  ),
+
                 // Forgot password toggle
                 if (!_isSignUp)
                   TextButton(

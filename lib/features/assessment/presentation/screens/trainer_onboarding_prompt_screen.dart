@@ -20,6 +20,17 @@ class _TrainerOnboardingPromptScreenState
   bool _connecting = false;
   String? _inviteError;
 
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final hasTrainer =
+          ref.read(clientTrainerProvider).valueOrNull != null;
+      if (hasTrainer) _continueToDuration();
+    });
+  }
+
   Map<String, dynamic> get _extra {
     return GoRouterState.of(context).extra as Map<String, dynamic>? ??
         const <String, dynamic>{};
@@ -32,6 +43,8 @@ class _TrainerOnboardingPromptScreenState
   Map<String, dynamic> get _durationExtra => {
         'packageId': _packageId,
         'hadIsometricWithTrainer': _hadTrainer,
+        if (_extra['reflexProfileStatus'] != null)
+          'reflexProfileStatus': _extra['reflexProfileStatus'],
       };
 
   void _continueToDuration() {
@@ -138,6 +151,7 @@ class _TrainerOnboardingPromptScreenState
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     final l10n = AppLocalizations.of(context);
     final title = _hadTrainer
         ? l10n.trainerOnboardingConnectTitle
@@ -190,7 +204,7 @@ class _TrainerOnboardingPromptScreenState
                           body,
                           style:
                               Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                    color: AppColors.textSecondary,
+                                    color: cs.onSurfaceVariant,
                                     height: 1.45,
                                   ),
                         ),

@@ -89,6 +89,8 @@ class AppTheme {
       colorScheme: ColorScheme.fromSeed(
         seedColor: AppColors.primary,
         brightness: Brightness.dark,
+      ).copyWith(
+        onSurfaceVariant: const Color(0xFFC0C0C0),
       ),
       scaffoldBackgroundColor: AppColors.backgroundDark,
       textTheme: textTheme.apply(

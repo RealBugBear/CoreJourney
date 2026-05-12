@@ -11,6 +11,9 @@ import '../../features/auth/presentation/screens/change_password_screen.dart';
 import '../../features/consent/presentation/screens/consent_screen.dart';
 import '../../features/dashboard/presentation/screens/dashboard_screen.dart';
 import '../../features/assessment/presentation/screens/analysis_placeholder_screen.dart';
+import '../../features/assessment/presentation/screens/reflex_profile_demo_screen.dart';
+import '../../features/assessment/presentation/screens/reflex_profile_screen.dart';
+import '../../features/assessment/presentation/screens/reflex_profile_result_screen.dart';
 import '../../features/assessment/presentation/screens/intake_assessment_screen.dart';
 import '../../features/assessment/presentation/screens/duration_recommendation_screen.dart';
 import '../../features/assessment/presentation/screens/trainer_onboarding_prompt_screen.dart';
@@ -35,13 +38,17 @@ import '../../features/trainer/presentation/screens/trainer_public_profile_scree
 import '../../features/trainer/presentation/screens/trainer_requests_screen.dart';
 import '../../features/trainer/domain/models/trainer_profile.dart';
 import '../../features/journal/presentation/screens/journal_screen.dart';
+import '../../features/progress/presentation/screens/progress_overview_screen.dart';
 import '../../features/dev_tools/presentation/screens/dev_tools_screen.dart';
 import '../../features/chat/domain/models/chat_channel.dart';
 import '../../features/admin/presentation/screens/admin_panel_screen.dart';
+import '../../features/accompaniment/presentation/screens/accompaniment_screen.dart';
 import '../../features/chat/presentation/screens/chat_channel_screen.dart';
 import '../../features/community/presentation/screens/community_screen.dart';
 import '../../features/chat/presentation/screens/dm_screen.dart';
 import '../../features/experience/presentation/screens/experience_feed_screen.dart';
+import '../../features/packages/presentation/screens/packages_screen.dart';
+import '../../features/onboarding/presentation/screens/for_whom_screen.dart';
 import '../../features/profile/presentation/screens/username_setup_screen.dart';
 import 'app_shell.dart';
 
@@ -54,7 +61,12 @@ class Routes {
   static const devTools = '/dev-tools';
   static const consent = '/consent';
   static const analysisPlaceholder = '/onboarding/analysis';
+  static const reflexProfileDemo = '/reflex-profile/demo';
+  static const reflexProfile = '/reflex-profile';
+  static const reflexProfileResult = '/reflex-profile/result';
   static const dashboard = '/dashboard';
+  static const progress = '/verlauf';
+  static const accompaniment = '/begleitung';
   static const intakeAssessment = '/intake-assessment';
   static const trainerOnboardingPrompt = '/intake-assessment/trainer';
   static const durationRecommendation = '/intake-assessment/duration';
@@ -82,6 +94,7 @@ class Routes {
   static const trainerPublicProfile = '/trainers/:trainerId';
   static const trainerRequests = '/trainer/requests';
   static const usernameSetup = '/username-setup';
+  static const onboardingForWhom = '/onboarding/for-whom';
   static const experienceFeed = '/experience/:channelId';
 }
 
@@ -152,6 +165,9 @@ final routerProvider = Provider<GoRouter>((ref) {
       final isPasswordRecovery = ref.read(passwordRecoveryActiveProvider);
       final hasSelectedLanguage = ref.read(hasSelectedLanguageProvider);
       final loc = state.matchedLocation;
+      final isPublicRoute = loc == Routes.login ||
+          loc == Routes.resetPassword ||
+          loc == Routes.reflexProfileDemo;
 
       // Password-Recovery Deep Link: Vorrang vor allem anderen
       if (isPasswordRecovery && loc != Routes.resetPassword) {
@@ -164,7 +180,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         return user == null ? Routes.login : Routes.dashboard;
       }
       // Nicht eingeloggt → Login (außer während Recovery)
-      if (user == null && loc != Routes.login && loc != Routes.resetPassword) {
+      if (user == null && !isPublicRoute) {
         return Routes.login;
       }
       // Eingeloggt und auf Login → Dashboard
@@ -205,6 +221,21 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const AnalysisPlaceholderScreen(),
       ),
       GoRoute(
+        path: Routes.reflexProfileDemo,
+        name: 'reflex-profile-demo',
+        builder: (context, state) => const ReflexProfileDemoScreen(),
+      ),
+      GoRoute(
+        path: Routes.reflexProfile,
+        name: 'reflex-profile',
+        builder: (context, state) => const ReflexProfileScreen(),
+      ),
+      GoRoute(
+        path: Routes.reflexProfileResult,
+        name: 'reflex-profile-result',
+        builder: (context, state) => const ReflexProfileResultScreen(),
+      ),
+      GoRoute(
         path: Routes.intakeAssessment,
         name: 'intake-assessment',
         builder: (context, state) => const IntakeAssessmentScreen(),
@@ -231,7 +262,14 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: Routes.trainingSession,
         name: 'training-session',
         builder: (context, state) {
-          final packageId = state.extra as String? ?? 'moro';
+          final extra = state.extra;
+          if (extra is TrainingSessionLaunchArgs) {
+            return TrainingSessionScreen(
+              packageId: extra.packageId,
+              companionSubjectProfileIds: extra.companionSubjectProfileIds,
+            );
+          }
+          final packageId = extra as String? ?? 'moro';
           return TrainingSessionScreen(packageId: packageId);
         },
       ),
@@ -257,11 +295,6 @@ final routerProvider = Provider<GoRouter>((ref) {
           final clientId = state.pathParameters['clientId']!;
           return TrainerClientDetailScreen(clientId: clientId);
         },
-      ),
-      GoRoute(
-        path: Routes.trainerDashboard,
-        name: 'trainer-dashboard',
-        builder: (context, state) => const TrainerDashboardScreen(),
       ),
       GoRoute(
         path: Routes.appointmentScheduler,
@@ -293,14 +326,14 @@ final routerProvider = Provider<GoRouter>((ref) {
         },
       ),
       GoRoute(
-        path: Routes.appointmentProposals,
-        name: 'appointment-proposals',
-        builder: (context, state) => const AppointmentProposalScreen(),
-      ),
-      GoRoute(
         path: Routes.usernameSetup,
         name: 'username-setup',
         builder: (context, state) => const UsernameSetupScreen(),
+      ),
+      GoRoute(
+        path: Routes.onboardingForWhom,
+        name: 'onboarding-for-whom',
+        builder: (context, state) => const ForWhomScreen(),
       ),
       GoRoute(
         parentNavigatorKey: rootNavigatorKey,
@@ -317,25 +350,13 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const DevToolsScreen(),
       ),
       GoRoute(
-        path: Routes.adminPanel,
-        name: 'admin-panel',
-        builder: (context, state) => const AdminPanelScreen(),
-      ),
-      GoRoute(
-        path: Routes.dm,
-        name: 'dm',
-        builder: (context, state) => const DmScreen(),
-        routes: [
-          GoRoute(
-            path: ':channelId',
-            name: 'dm-channel',
-            builder: (context, state) {
-              final channelId = state.pathParameters['channelId']!;
-              final channel = state.extra as ChatChannel?;
-              return ChatChannelScreen(channelId: channelId, channel: channel);
-            },
-          ),
-        ],
+        path: Routes.trainerDiscovery,
+        name: 'trainer-discovery',
+        builder: (context, state) => TrainerDiscoveryScreen(
+          onboardingExtra:
+              (state.extra as Map<String, Object?>?)?['onboardingExtra']
+                  as Map<String, dynamic>?,
+        ),
       ),
       // ── Shell: persists bottom navigation bar ────────────────────────────
       ShellRoute(
@@ -347,6 +368,22 @@ final routerProvider = Provider<GoRouter>((ref) {
             pageBuilder: (context, state) => NoTransitionPage(
               key: state.pageKey,
               child: const DashboardScreen(),
+            ),
+          ),
+          GoRoute(
+            path: Routes.progress,
+            name: 'progress',
+            pageBuilder: (context, state) => NoTransitionPage(
+              key: state.pageKey,
+              child: const ProgressOverviewScreen(),
+            ),
+          ),
+          GoRoute(
+            path: Routes.accompaniment,
+            name: 'accompaniment',
+            pageBuilder: (context, state) => NoTransitionPage(
+              key: state.pageKey,
+              child: const AccompanimentScreen(),
             ),
           ),
           GoRoute(
@@ -366,15 +403,57 @@ final routerProvider = Provider<GoRouter>((ref) {
             ),
           ),
           GoRoute(
-            path: Routes.trainerDiscovery,
-            name: 'trainer-discovery',
+            path: Routes.trainerDashboard,
+            name: 'trainer-dashboard',
             pageBuilder: (context, state) => NoTransitionPage(
               key: state.pageKey,
-              child: TrainerDiscoveryScreen(
-                onboardingExtra:
-                    (state.extra as Map<String, Object?>?)?['onboardingExtra']
-                        as Map<String, dynamic>?,
+              child: const TrainerDashboardScreen(),
+            ),
+          ),
+          GoRoute(
+            path: Routes.adminPanel,
+            name: 'admin-panel',
+            pageBuilder: (context, state) => NoTransitionPage(
+              key: state.pageKey,
+              child: const AdminPanelScreen(),
+            ),
+          ),
+          GoRoute(
+            path: Routes.dm,
+            name: 'dm',
+            pageBuilder: (context, state) => NoTransitionPage(
+              key: state.pageKey,
+              child: const DmScreen(),
+            ),
+            routes: [
+              GoRoute(
+                path: ':channelId',
+                name: 'dm-channel',
+                builder: (context, state) {
+                  final channelId = state.pathParameters['channelId']!;
+                  final channel = state.extra as ChatChannel?;
+                  return ChatChannelScreen(
+                    channelId: channelId,
+                    channel: channel,
+                  );
+                },
               ),
+            ],
+          ),
+          GoRoute(
+            path: Routes.appointmentProposals,
+            name: 'appointment-proposals',
+            pageBuilder: (context, state) => NoTransitionPage(
+              key: state.pageKey,
+              child: const AppointmentProposalScreen(),
+            ),
+          ),
+          GoRoute(
+            path: Routes.packages,
+            name: 'packages',
+            pageBuilder: (context, state) => NoTransitionPage(
+              key: state.pageKey,
+              child: const PackagesScreen(),
             ),
           ),
         ],

@@ -119,6 +119,7 @@ class _JournalTopBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
@@ -135,7 +136,7 @@ class _JournalTopBar extends StatelessWidget {
               Text(
                 '$entryCount gesamt · $entriesThisWeek Woche',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: AppColors.textSecondary,
+                      color: cs.onSurfaceVariant,
                     ),
               ),
             ],
@@ -145,7 +146,7 @@ class _JournalTopBar extends StatelessWidget {
         Text(
           monthLabel,
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: AppColors.textSecondary,
+                color: cs.onSurfaceVariant,
                 fontWeight: FontWeight.w600,
                 letterSpacing: 0.2,
               ),
@@ -160,10 +161,11 @@ class _EmptyJournalState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceContainerHighest,
+        color: cs.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(14),
       ),
       child: Column(
@@ -179,7 +181,7 @@ class _EmptyJournalState extends StatelessWidget {
             'Deine Notizen erscheinen hier als kompakte Timeline. Der Verlauf bleibt im Dashboard.',
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: AppColors.textSecondary,
+                  color: cs.onSurfaceVariant,
                   height: 1.45,
                 ),
           ),

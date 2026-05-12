@@ -109,7 +109,7 @@ class _MoodChartWidgetState extends ConsumerState<MoodChartWidget> {
               const SizedBox(width: 4),
               IconButton(
                 icon: const Icon(Icons.edit_note_outlined, size: 18),
-                color: AppColors.textSecondary,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints(),
                 tooltip: 'Notiz schreiben',
@@ -137,7 +137,7 @@ class _MoodChartWidgetState extends ConsumerState<MoodChartWidget> {
                   child: Text(
                     l10n.moodChartEmpty,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: AppColors.textSecondary,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
                         ),
                     textAlign: TextAlign.center,
                   ),
@@ -268,9 +268,9 @@ class _LegendDot extends StatelessWidget {
         const SizedBox(width: 4),
         Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 11,
-            color: AppColors.textSecondary,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
           ),
         ),
       ],
@@ -327,7 +327,7 @@ class _NotesList extends StatelessWidget {
                           overflow: TextOverflow.ellipsis,
                           style:
                               Theme.of(context).textTheme.bodySmall?.copyWith(
-                                    color: AppColors.textSecondary,
+                                    color: Theme.of(context).colorScheme.onSurfaceVariant,
                                   ),
                         ),
                       ),

@@ -1,7 +1,7 @@
 name: corejourney
 description: CoreJourney — Nervous System Training
 publish_to: none
-version: 1.0.5+2026043003
+version: 1.0.5+2026051001
 
 environment:
   sdk: '>=3.3.0 <4.0.0'
@@ -68,6 +68,7 @@ dependencies:
   flutter_map: ^7.0.2
   geolocator: ^13.0.2
   latlong2: ^0.9.1
+  pdf: ^3.11.1
   share_plus: ^10.1.4
   logger: ^2.0.2+1
   cupertino_icons: ^1.0.8

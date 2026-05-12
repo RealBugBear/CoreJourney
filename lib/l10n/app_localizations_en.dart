@@ -48,7 +48,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get dashboard => 'Dashboard';
 
   @override
-  String get startTraining => 'Start Training';
+  String get startTraining => 'Begin Unit';
 
   @override
   String currentDay(int day, int total) {
@@ -56,7 +56,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get dailyStreak => 'Daily Streak';
+  String get dailyStreak => 'Regularity';
 
   @override
   String weeklyProgress(int count, int goal) {
@@ -72,7 +72,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get trainingMode => 'Training Mode';
+  String get trainingMode => 'Unit Mode';
 
   @override
   String get tutorialMode => 'Tutorial';
@@ -104,11 +104,10 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get sessionComplete => 'Session Complete';
+  String get sessionComplete => 'Unit Complete';
 
   @override
-  String get sessionCompleteSubtitle =>
-      'Well done! You\'ve completed your training for today.';
+  String get sessionCompleteSubtitle => 'You have completed today\'s unit.';
 
   @override
   String get moodCheckIn => 'How are you feeling?';
@@ -129,8 +128,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get moodSubmit => 'Save';
 
   @override
-  String get moodChartEmpty =>
-      'Complete a training session to start tracking your mood.';
+  String get moodChartEmpty => 'Log a unit to see your wellbeing over time.';
 
   @override
   String get intakeAssessmentTitle => 'Getting Started';
@@ -147,14 +145,14 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get intakeTrainerBody =>
-      'We recommend beginning and accompanying this program with a certified trainer. A trainer carries out isometric activation training to specifically target the relevant reflexes. This targeted activation accelerates the integration process. Without it, the body typically takes longer to engage the reflexes sufficiently.';
+      'We recommend beginning and accompanying this program with a certified trainer. A trainer guides isometric partner exercises that support clear perception of direction, movement, and resistance. Without this guidance, the body usually needs more calm repetition.';
 
   @override
   String get intakeQuestionLabel => 'One question about your start';
 
   @override
   String get questionIsometricWithTrainer =>
-      'Have you already completed isometric activation training with a trainer?';
+      'Have you already completed isometric partner exercises with a trainer?';
 
   @override
   String get yes => 'Yes';
@@ -229,11 +227,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get completionQuestionnaireTitle => 'Final Reflection';
 
   @override
-  String get completionCelebrationTitle => 'Block Complete! ⭐';
+  String get completionCelebrationTitle => 'Package Complete';
 
   @override
   String get completionCelebrationSubtitle =>
-      'You\'ve completed an important step in your development. Well done.';
+      'You have followed this package for the planned time.';
 
   @override
   String get completionNextPackage => 'Continue to next package';
@@ -246,17 +244,17 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get completionReachedBody =>
-      'Well done. You have reached the planned training duration. The dashboard now shows the assessment questionnaire at the top so you can complete this package or extend it by 7 days.';
+      'You have reached the planned package duration. Today now shows a short reflection so you can complete this package or repeat it for 7 more days.';
 
   @override
   String get completionPlaceholderQuestion =>
-      'Placeholder assessment: Can this training package be completed correctly?';
+      'Placeholder reflection: Does this package feel ready to complete?';
 
   @override
-  String get completionPass => 'Complete correctly';
+  String get completionPass => 'Complete package';
 
   @override
-  String get completionInsufficient => 'Insufficient completion (+7 days)';
+  String get completionInsufficient => 'Repeat 7 more days';
 
   @override
   String get completionMoroReturnSubtitle =>
@@ -271,11 +269,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get completionExtendedSubtitle =>
-      'No problem — you have 7 more days. Keep going.';
+      'You have 7 more days in this package.';
 
   @override
   String get completionQuestion =>
-      'Did you go through an intensified emotional or stressful time through the training, and were you able to confront these themes — learning that your emotional reaction does not always match reality — and begin to regulate yourself?';
+      'Since starting this package, have you noticed stronger emotional or stress-related reactions, and could you understand or regulate them a little more clearly?';
 
   @override
   String get completionYes => 'Yes, I\'m ready';
@@ -302,7 +300,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settings => 'Settings';
 
   @override
-  String get settingsTraining => 'Training';
+  String get settingsTraining => 'Units';
 
   @override
   String get settingsReminders => 'Reminders';
@@ -369,7 +367,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get settingsFeedback => 'Training Feedback';
+  String get settingsFeedback => 'Unit Feedback';
 
   @override
   String get settingsAccount => 'Account';
@@ -379,7 +377,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get disclaimerText =>
-      'This training does not replace medical treatment. Please consult a doctor if you have health concerns. Listen to your body and take breaks when needed.';
+      'These units do not replace medical treatment. Please consult a doctor if you have health concerns. Listen to your body and take breaks when needed.';
 
   @override
   String get disclaimerAccept => 'Understood, continue';
@@ -507,7 +505,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get journalEmptySubtitle =>
-      'Write down what you observe in your daily life — after each training or whenever you like.';
+      'Write down what you observe in daily life — after a unit or whenever you like.';
 
   @override
   String get journalEmptyHint =>
@@ -644,7 +642,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get trainerDashboard => 'Trainer Dashboard';
 
   @override
-  String get trainerTabTrainees => 'Trainees';
+  String get trainerTabTrainees => 'Clients';
 
   @override
   String get trainerTabCalendar => 'Calendar';

@@ -1,0 +1,654 @@
+import 'dart:math' as math;
+
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
+import '../../../../core/navigation/app_router.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../domain/reflex_profile_scoring.dart';
+import '../../domain/reflex_questionnaire.dart';
+import '../../domain/reflex_questionnaire_definitions.dart';
+
+class ReflexProfileDemoScreen extends StatefulWidget {
+  const ReflexProfileDemoScreen({super.key});
+
+  @override
+  State<ReflexProfileDemoScreen> createState() =>
+      _ReflexProfileDemoScreenState();
+}
+
+class _ReflexProfileDemoScreenState extends State<ReflexProfileDemoScreen> {
+  final _scoringService = const ReflexProfileScoringService();
+  final _answers = <String, ReflexAnswerValue>{};
+
+  String? _selectedFor; // 'child' or 'adult'
+
+  ReflexQuestionnaireDefinition get _definition =>
+      demoChildShortQuestionnaireV1;
+
+  void _setAnswer(ReflexQuestion question, ReflexAnswerValue answer) {
+    setState(() => _answers[question.id] = answer);
+  }
+
+  void _submit() {
+    final missing = _definition.questions
+        .where((question) => _answers[question.id]?.isAnswered != true)
+        .toList();
+    if (missing.isNotEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Bitte beantworte alle Fragen.')),
+      );
+      return;
+    }
+
+    final score = _scoringService.score(
+      definition: _definition,
+      answers: _answers,
+    );
+    final rankedScores = score.reflexScores.values.toList()
+      ..sort((a, b) => b.percent.compareTo(a.percent));
+
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => _DemoResultScreen(scores: rankedScores),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final user = Supabase.instance.client.auth.currentUser;
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Reflexprofil Kurztest'),
+        actions: [
+          TextButton(
+            onPressed: () =>
+                context.go(user == null ? Routes.login : Routes.reflexProfile),
+            child: Text(user == null ? 'Anmelden' : 'Volltest'),
+          ),
+        ],
+      ),
+      body: _selectedFor == null
+          ? _buildForWhom()
+          : _selectedFor == 'adult'
+              ? _buildAdultComingSoon()
+              : _buildQuestionnaire(user),
+    );
+  }
+
+  Widget _buildForWhom() {
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
+      children: [
+        const Icon(Icons.insights_outlined, size: 44, color: AppColors.primary),
+        const SizedBox(height: 18),
+        Text(
+          'Für wen machst du den Kurztest?',
+          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                fontWeight: FontWeight.w800,
+              ),
+        ),
+        const SizedBox(height: 10),
+        Text(
+          'Dieser Kurztest zeigt beispielhaft, wie eine Reflexprofil-Auswertung '
+          'aussehen kann. Er wird nicht gespeichert.',
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                height: 1.45,
+              ),
+        ),
+        const SizedBox(height: 28),
+        Card(
+          child: ListTile(
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            leading: const Icon(Icons.child_care_outlined,
+                color: AppColors.primary, size: 28),
+            title: const Text(
+              'Für mein Kind',
+              style: TextStyle(fontWeight: FontWeight.w800),
+            ),
+            subtitle: const Text('Elternfragebogen'),
+            trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+            onTap: () => setState(() => _selectedFor = 'child'),
+          ),
+        ),
+        const SizedBox(height: 12),
+        Card(
+          child: ListTile(
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            leading: Icon(Icons.person_outline,
+                color: Theme.of(context).colorScheme.onSurfaceVariant, size: 28),
+            title: Text(
+              'Für mich',
+              style: TextStyle(
+                fontWeight: FontWeight.w800,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+            ),
+            subtitle: const Text('Für mich selbst · bald verfügbar'),
+            trailing: const Icon(Icons.lock_outline, size: 16),
+            onTap: () => setState(() => _selectedFor = 'adult'),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildAdultComingSoon() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.construction_outlined,
+                size: 48, color: AppColors.primary),
+            const SizedBox(height: 16),
+            Text(
+              'Kurztest für mich selbst kommt bald',
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w800,
+                  ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 10),
+            Text(
+              'Der Fragebogen für dich selbst befindet sich noch in Entwicklung.',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    height: 1.45,
+                  ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24),
+            OutlinedButton.icon(
+              onPressed: () => setState(() => _selectedFor = null),
+              icon: const Icon(Icons.arrow_back),
+              label: const Text('Zurück'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildQuestionnaire(User? user) {
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
+      children: [
+        Text(
+          'Kurztest',
+          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                fontWeight: FontWeight.w800,
+              ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'Diese Demo zeigt beispielhaft, wie eine Reflexprofil-Auswertung '
+          'aussehen kann. Sie wird nicht gespeichert und ersetzt keinen '
+          'vollständigen Fragebogen.',
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                height: 1.4,
+              ),
+        ),
+        const SizedBox(height: 18),
+        for (final question in _definition.questions)
+          _DemoQuestionTile(
+            question: question,
+            answer: _answers[question.id],
+            onChanged: (answer) => _setAnswer(question, answer),
+          ),
+        const SizedBox(height: 12),
+        FilledButton.icon(
+          onPressed: _submit,
+          icon: const Icon(Icons.insights_outlined),
+          label: const Text('Demo auswerten'),
+        ),
+        const SizedBox(height: 12),
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(14),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  user == null
+                      ? 'Für den vollständigen Fragebogen anmelden'
+                      : 'Vollständigen Fragebogen starten',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w800,
+                      ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  user == null
+                      ? 'Nach der Registrierung kannst du Kinderprofile anlegen, '
+                          'den vollständigen Fragebogen speichern und die Auswertung '
+                          'später erneut ansehen.'
+                      : 'Im vollständigen Fragebogen werden alle Kategorien abgefragt '
+                          'und die Auswertung kann gespeichert werden.',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        height: 1.35,
+                      ),
+                ),
+                const SizedBox(height: 12),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: FilledButton(
+                    onPressed: () => context
+                        .go(user == null ? Routes.login : Routes.reflexProfile),
+                    child: Text(
+                        user == null ? 'Anmelden oder registrieren' : 'Volltest öffnen'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Demo Result Screen (Navigator.push, no route needed — data is local)
+// ---------------------------------------------------------------------------
+
+class _DemoResultScreen extends StatelessWidget {
+  const _DemoResultScreen({required this.scores});
+
+  final List<ReflexScoreResult> scores;
+
+  @override
+  Widget build(BuildContext context) {
+    final user = Supabase.instance.client.auth.currentUser;
+    final topScores = scores.take(8).toList();
+
+    return Scaffold(
+      appBar: AppBar(title: const Text('Demo-Auswertung')),
+      body: ListView(
+        padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
+        children: [
+          Text(
+            'Dein Demo-Ergebnis',
+            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.w900,
+                ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Diese Auswertung basiert nur auf dem Kurztest und ist keine Diagnose. '
+            'Sie zeigt Antwortmuster — für ein vollständiges Reflexprofil sind '
+            'alle 112 Fragen notwendig.',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  height: 1.4,
+                ),
+          ),
+          const SizedBox(height: 18),
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(18),
+              child: Column(
+                children: [
+                  AspectRatio(
+                    aspectRatio: 1.25,
+                    child: topScores.length >= 3
+                        ? CustomPaint(
+                            painter: _DemoRadarPainter(
+                              scores: topScores,
+                              gridColor: AppColors.divider,
+                              fillColor:
+                                  AppColors.primary.withValues(alpha: 0.13),
+                              strokeColor: AppColors.primary,
+                              labelStyle: Theme.of(context)
+                                  .textTheme
+                                  .labelSmall
+                                  ?.copyWith(
+                                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                            ),
+                          )
+                        : const Center(
+                            child: Text('Nicht genug Daten für die Grafik.')),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    'Die Grafik zeigt die stärksten Reflexbereiche aus deinen Kurztest-Antworten.',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 18),
+          Text(
+            'Reflexbereiche',
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.w900,
+                ),
+          ),
+          const SizedBox(height: 10),
+          for (final score in scores)
+            _DemoScoreTile(score: score),
+          const SizedBox(height: 20),
+          Card(
+            color: AppColors.primary.withValues(alpha: 0.06),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    user == null
+                        ? 'Vollständigen Fragebogen starten'
+                        : 'Volltest öffnen',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w800,
+                        ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    user == null
+                        ? 'Mit einem Konto kannst du den vollständigen Fragebogen '
+                            'ausfüllen, dein Ergebnis speichern und mit deinem Trainer teilen.'
+                        : 'Im vollständigen Fragebogen werden alle Kategorien erfasst '
+                            'und das Ergebnis dauerhaft gespeichert.',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          height: 1.35,
+                        ),
+                  ),
+                  const SizedBox(height: 12),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: FilledButton(
+                      onPressed: () => context.go(
+                          user == null ? Routes.login : Routes.reflexProfile),
+                      child: Text(user == null
+                          ? 'Anmelden oder registrieren'
+                          : 'Volltest öffnen'),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DemoScoreTile extends StatelessWidget {
+  const _DemoScoreTile({required this.score});
+
+  final ReflexScoreResult score;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = _bandColor(score.band);
+    return Card(
+      margin: const EdgeInsets.only(bottom: 8),
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    _reflexLabel(score.reflex),
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w800,
+                        ),
+                  ),
+                ),
+                Text(
+                  '${score.percent.round()}%',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w900,
+                        color: color,
+                      ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 4),
+            Text(
+              _bandLabel(score.band),
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: color,
+                    fontWeight: FontWeight.w700,
+                  ),
+            ),
+            const SizedBox(height: 8),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(999),
+              child: LinearProgressIndicator(
+                value: (score.percent / 100).clamp(0.0, 1.0),
+                minHeight: 8,
+                color: color,
+                backgroundColor:
+                    Theme.of(context).colorScheme.surfaceContainerHighest,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _DemoRadarPainter extends CustomPainter {
+  const _DemoRadarPainter({
+    required this.scores,
+    required this.gridColor,
+    required this.fillColor,
+    required this.strokeColor,
+    required this.labelStyle,
+  });
+
+  final List<ReflexScoreResult> scores;
+  final Color gridColor;
+  final Color fillColor;
+  final Color strokeColor;
+  final TextStyle? labelStyle;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+    final radius = math.min(size.width, size.height) * 0.32;
+    final gridPaint = Paint()
+      ..color = gridColor
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1;
+    final fillPaint = Paint()
+      ..color = fillColor
+      ..style = PaintingStyle.fill;
+    final strokePaint = Paint()
+      ..color = strokeColor
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.4
+      ..strokeJoin = StrokeJoin.round;
+
+    for (var ring = 1; ring <= 4; ring++) {
+      final path = Path();
+      final ringRadius = radius * ring / 4;
+      for (var i = 0; i < scores.length; i++) {
+        final point = _point(center, ringRadius, i, scores.length);
+        if (i == 0) {
+          path.moveTo(point.dx, point.dy);
+        } else {
+          path.lineTo(point.dx, point.dy);
+        }
+      }
+      path.close();
+      canvas.drawPath(path, gridPaint);
+    }
+
+    for (var i = 0; i < scores.length; i++) {
+      final point = _point(center, radius, i, scores.length);
+      canvas.drawLine(center, point, gridPaint);
+    }
+
+    final scorePath = Path();
+    for (var i = 0; i < scores.length; i++) {
+      final valueRadius =
+          radius * (scores[i].percent.clamp(0, 100) / 100);
+      final point = _point(center, valueRadius, i, scores.length);
+      if (i == 0) {
+        scorePath.moveTo(point.dx, point.dy);
+      } else {
+        scorePath.lineTo(point.dx, point.dy);
+      }
+    }
+    scorePath.close();
+    canvas.drawPath(scorePath, fillPaint);
+    canvas.drawPath(scorePath, strokePaint);
+
+    for (var i = 0; i < scores.length; i++) {
+      final labelPoint = _point(center, radius + 30, i, scores.length);
+      final label = _reflexShortLabel(scores[i].reflex);
+      final painter = TextPainter(
+        text: TextSpan(text: label, style: labelStyle),
+        textAlign: TextAlign.center,
+        textDirection: TextDirection.ltr,
+        maxLines: 2,
+      )..layout(maxWidth: 74);
+      painter.paint(
+        canvas,
+        labelPoint - Offset(painter.width / 2, painter.height / 2),
+      );
+    }
+  }
+
+  Offset _point(Offset center, double radius, int index, int count) {
+    final angle = -math.pi / 2 + (math.pi * 2 * index / count);
+    return Offset(
+      center.dx + math.cos(angle) * radius,
+      center.dy + math.sin(angle) * radius,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant _DemoRadarPainter oldDelegate) =>
+      oldDelegate.scores != scores;
+}
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+class _DemoQuestionTile extends StatelessWidget {
+  const _DemoQuestionTile({
+    required this.question,
+    required this.answer,
+    required this.onChanged,
+  });
+
+  final ReflexQuestion question;
+  final ReflexAnswerValue? answer;
+  final ValueChanged<ReflexAnswerValue> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 10),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              question.text,
+              style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+            ),
+            const SizedBox(height: 10),
+            SegmentedButton<String>(
+              showSelectedIcon: false,
+              emptySelectionAllowed: true,
+              segments: const [
+                ButtonSegment(value: 'yes', label: Text('Ja')),
+                ButtonSegment(value: 'no', label: Text('Nein')),
+                ButtonSegment(value: 'unknown', label: Text('Weiß ich nicht')),
+              ],
+              selected: {
+                if (answer?.yesNoUnknown == true)
+                  'yes'
+                else if (answer?.yesNoUnknown == false)
+                  'no'
+                else if (answer?.isUnknown == true)
+                  'unknown',
+              },
+              onSelectionChanged: (values) {
+                if (values.isEmpty) return;
+                final value = values.first;
+                onChanged(
+                  ReflexAnswerValue(
+                    yesNoUnknown: value == 'unknown' ? null : value == 'yes',
+                    isUnknown: value == 'unknown',
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+Color _bandColor(ReflexScoreBand band) => switch (band) {
+      ReflexScoreBand.strong => AppColors.error,
+      ReflexScoreBand.elevated => AppColors.warning,
+      ReflexScoreBand.indication => AppColors.primary,
+      ReflexScoreBand.inconspicuous => AppColors.success,
+      ReflexScoreBand.insufficientData => const Color(0xFF9E9E9E),
+    };
+
+String _bandLabel(ReflexScoreBand band) => switch (band) {
+      ReflexScoreBand.strong => 'stark ausgeprägt',
+      ReflexScoreBand.elevated => 'auffällig',
+      ReflexScoreBand.indication => 'Anzeichen',
+      ReflexScoreBand.inconspicuous => 'unauffällig',
+      ReflexScoreBand.insufficientData => 'zu wenig Daten',
+    };
+
+String _reflexLabel(PrimitiveReflex reflex) => switch (reflex) {
+      PrimitiveReflex.delay => 'Entwicklungsverzögerung',
+      PrimitiveReflex.flr => 'FLR',
+      PrimitiveReflex.moro => 'Moro',
+      PrimitiveReflex.spinalGalant => 'Spinaler Galant',
+      PrimitiveReflex.tlr => 'TLR',
+      PrimitiveReflex.atnr => 'ATNR',
+      PrimitiveReflex.stnr => 'STNR',
+      PrimitiveReflex.landau => 'Landau',
+      PrimitiveReflex.babinski => 'Babinski',
+      PrimitiveReflex.babkin => 'Babkin',
+      PrimitiveReflex.plantar => 'Plantar',
+      PrimitiveReflex.palmar => 'Palmar',
+      PrimitiveReflex.righting => 'Aufricht',
+      PrimitiveReflex.rootingSucking => 'Such-Saug',
+    };
+
+String _reflexShortLabel(PrimitiveReflex reflex) => switch (reflex) {
+      PrimitiveReflex.delay => 'Verzög.',
+      PrimitiveReflex.spinalGalant => 'Galant',
+      PrimitiveReflex.rootingSucking => 'Such',
+      PrimitiveReflex.righting => 'Aufr.',
+      _ => _reflexLabel(reflex),
+    };
+

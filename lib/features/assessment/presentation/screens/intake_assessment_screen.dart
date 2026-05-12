@@ -15,7 +15,13 @@ class IntakeAssessmentScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final hadTrainer = ref.watch(_hadTrainerProvider);
-    final packageId = GoRouterState.of(context).extra as String? ?? 'moro';
+    final extra = GoRouterState.of(context).extra;
+    final packageId = extra is Map<String, dynamic>
+        ? extra['packageId'] as String? ?? 'moro'
+        : extra as String? ?? 'moro';
+    final reflexProfileStatus = extra is Map<String, dynamic>
+        ? extra['reflexProfileStatus'] as String?
+        : null;
 
     return Scaffold(
       appBar: AppBar(title: Text(l10n.intakeAssessmentTitle)),
@@ -52,7 +58,7 @@ class IntakeAssessmentScreen extends ConsumerWidget {
               Text(
                 l10n.intakeQuestionLabel.toUpperCase(),
                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: AppColors.textSecondary,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
                       letterSpacing: 0.8,
                       fontWeight: FontWeight.w600,
                     ),
@@ -92,6 +98,8 @@ class IntakeAssessmentScreen extends ConsumerWidget {
                           extra: {
                             'packageId': packageId,
                             'hadIsometricWithTrainer': hadTrainer,
+                            if (reflexProfileStatus != null)
+                              'reflexProfileStatus': reflexProfileStatus,
                           },
                         );
                       },
@@ -169,7 +177,7 @@ class _InfoCard extends StatelessWidget {
                 Text(
                   body,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: AppColors.textSecondary,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
                         height: 1.5,
                       ),
                 ),

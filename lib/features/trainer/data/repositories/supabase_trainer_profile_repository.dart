@@ -27,6 +27,15 @@ class SupabaseTrainerProfileRepository implements TrainerProfileRepository {
   }
 
   @override
+  Future<List<TrainerProfile>> listPublicTrainers() async {
+    final res = await _client.rpc('list_public_trainers');
+    return (res as List)
+        .cast<Map<String, dynamic>>()
+        .map(TrainerProfile.fromJson)
+        .toList();
+  }
+
+  @override
   Future<TrainerProfile?> getOwnProfile() async {
     final res = await _client.rpc('get_own_trainer_profile');
     final list = (res as List).cast<Map<String, dynamic>>();
@@ -86,6 +95,13 @@ class SupabaseTrainerProfileRepository implements TrainerProfileRepository {
   Future<void> sendConnectionRequest(String trainerId) async {
     await _client.rpc('send_discovery_request', params: {
       'p_trainer_id': trainerId,
+    });
+  }
+
+  @override
+  Future<void> withdrawConnectionRequest(String relationshipId) async {
+    await _client.rpc('withdraw_discovery_request', params: {
+      'p_relationship_id': relationshipId,
     });
   }
 

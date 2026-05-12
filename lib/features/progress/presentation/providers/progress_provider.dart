@@ -12,6 +12,7 @@ import '../../../../core/settings/settings_provider.dart';
 import '../../../../core/database/app_database.dart';
 import '../../../../core/sync/sync_service.dart';
 import '../../../../core/time/app_clock_provider.dart';
+import '../../../assessment/presentation/providers/reflex_profile_provider.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 
 const _uuid = Uuid();
@@ -54,24 +55,36 @@ DateTime _weekStart(DateTime date) {
   return DateTime(date.year, date.month, date.day - (date.weekday - 1));
 }
 
-// ── Selected package (persisted to SharedPreferences, scoped per user) ───────
+// ── Selected package (persisted to SharedPreferences, scoped per profile) ─────
 //
-// Key format: 'selected_package_id_<userId>'
-// This prevents user A's package selection from leaking into user B's session
-// after a sign-out/sign-in within the same app lifetime or across reinstalls.
-// When authStateProvider changes (sign-out/sign-in), Riverpod re-creates the
-// notifier with the new userId, reading the correct user-scoped key.
+// Key format: 'selected_package_id_<userId>_<subjectProfileId>'
+// Fallback reads the previous user-scoped key once so existing installs keep
+// their current package selection until each profile gets its own value.
 
 class _SelectedPackageNotifier extends StateNotifier<String> {
-  static String _prefKey(String? userId) =>
+  static String _legacyPrefKey(String? userId) =>
       userId != null ? 'selected_package_id_$userId' : 'selected_package_id';
+
+  static String _prefKey(String? userId, String? subjectProfileId) {
+    if (userId == null || subjectProfileId == null) {
+      return _legacyPrefKey(userId);
+    }
+    return 'selected_package_id_${userId}_$subjectProfileId';
+  }
 
   final SharedPreferences _prefs;
   final String _storageKey;
 
-  _SelectedPackageNotifier(this._prefs, String? userId)
-      : _storageKey = _prefKey(userId),
-        super(_prefs.getString(_prefKey(userId)) ?? 'moro');
+  _SelectedPackageNotifier(
+    this._prefs,
+    String? userId,
+    String? subjectProfileId,
+  )   : _storageKey = _prefKey(userId, subjectProfileId),
+        super(
+          _prefs.getString(_prefKey(userId, subjectProfileId)) ??
+              _prefs.getString(_legacyPrefKey(userId)) ??
+              'moro',
+        );
 
   void select(String packageId) {
     state = packageId;
@@ -86,7 +99,8 @@ final selectedPackageIdProvider =
   // loading the correct user-scoped key from SharedPreferences.
   final userId = ref.watch(authStateProvider).valueOrNull?.session?.user.id ??
       Supabase.instance.client.auth.currentUser?.id;
-  return _SelectedPackageNotifier(prefs, userId);
+  final subjectProfileId = ref.watch(selectedSubjectProfileProvider)?.id;
+  return _SelectedPackageNotifier(prefs, userId, subjectProfileId);
 });
 
 // ── Active enrollment (for the currently selected package) ────────────────────
@@ -97,13 +111,24 @@ final activeEnrollmentProvider = StreamProvider<EnrollmentsTableData?>((ref) {
   final userId = ref.watch(authStateProvider).valueOrNull?.session?.user.id ??
       Supabase.instance.client.auth.currentUser?.id;
   final packageId = ref.watch(selectedPackageIdProvider);
+  final subjectProfileId = ref.watch(selectedSubjectProfileProvider)?.id;
   if (userId == null) return Stream.value(null);
 
   return (db.select(db.enrollmentsTable)
         ..where((t) =>
             t.userId.equals(userId) &
             t.packageId.equals(packageId) &
-            t.status.equals('active'))
+            t.status.equals('active') &
+            (subjectProfileId == null
+                ? t.subjectProfileId.isNull()
+                : (t.subjectProfileId.equals(subjectProfileId) |
+                    t.subjectProfileId.isNull())))
+        ..orderBy([
+          (t) => drift.OrderingTerm(
+                expression: t.subjectProfileId.equals(subjectProfileId ?? ''),
+                mode: drift.OrderingMode.desc,
+              ),
+        ])
         ..limit(1))
       .watchSingleOrNull();
 });
@@ -163,6 +188,7 @@ Future<void> createEnrollment({
   required AppDatabase db,
   required SyncService syncService,
   required String userId,
+  required String? subjectProfileId,
   required String packageId,
   required int durationWeeks,
 }) async {
@@ -172,6 +198,9 @@ Future<void> createEnrollment({
   final existing = await (db.select(db.enrollmentsTable)
         ..where((t) =>
             t.userId.equals(userId) &
+            (subjectProfileId == null
+                ? t.subjectProfileId.isNull()
+                : t.subjectProfileId.equals(subjectProfileId)) &
             t.packageId.equals(packageId) &
             t.status.equals('active'))
         ..limit(1))
@@ -187,6 +216,7 @@ Future<void> createEnrollment({
         EnrollmentsTableCompanion.insert(
           id: enrollmentId,
           userId: userId,
+          subjectProfileId: drift.Value(subjectProfileId),
           packageId: packageId,
           assignedDurationWeeks: durationWeeks,
           startDate: DateTime(now.year, now.month, now.day),
@@ -198,6 +228,7 @@ Future<void> createEnrollment({
         ProgressEntriesTableCompanion.insert(
           id: progressId,
           userId: userId,
+          subjectProfileId: drift.Value(subjectProfileId),
           enrollmentId: enrollmentId,
         ),
       );
@@ -208,6 +239,7 @@ Future<void> createEnrollment({
     payload: {
       'id': enrollmentId,
       'user_id': userId,
+      if (subjectProfileId != null) 'subject_profile_id': subjectProfileId,
       'package_id': packageId,
       'status': 'active',
       'assigned_duration_weeks': durationWeeks,
@@ -221,6 +253,7 @@ Future<void> createEnrollment({
     payload: {
       'id': progressId,
       'user_id': userId,
+      if (subjectProfileId != null) 'subject_profile_id': subjectProfileId,
       'enrollment_id': enrollmentId,
       'current_day': 1,
     },
@@ -277,12 +310,14 @@ Future<PackageCompletionResult> completeEnrollment({
   ));
 
   final qId = _uuid.v4();
+  final subjectProfileId = enrollment.subjectProfileId;
   await db.into(db.completionQuestionnairesTable).insert(
         CompletionQuestionnairesTableCompanion.insert(
           id: qId,
           enrollmentId: enrollment.id,
           response: true,
           result: 'passed',
+          subjectProfileId: drift.Value(subjectProfileId),
           submittedAt: now,
         ),
       );
@@ -306,6 +341,7 @@ Future<PackageCompletionResult> completeEnrollment({
       'response': true,
       'result': 'passed',
       'submitted_at': now.toIso8601String(),
+      if (subjectProfileId != null) 'subject_profile_id': subjectProfileId,
     },
   );
 
@@ -356,6 +392,7 @@ Future<void> extendEnrollment({
       .getSingleOrNull();
   final attempt = (existing?.attemptNumber ?? 0) + 1;
 
+  final extendSubjectProfileId = enrollment.subjectProfileId;
   await db.into(db.completionQuestionnairesTable).insert(
         CompletionQuestionnairesTableCompanion.insert(
           id: qId,
@@ -363,6 +400,7 @@ Future<void> extendEnrollment({
           attemptNumber: drift.Value(attempt),
           response: false,
           result: 'extend',
+          subjectProfileId: drift.Value(extendSubjectProfileId),
           submittedAt: now,
         ),
       );
@@ -385,6 +423,8 @@ Future<void> extendEnrollment({
       'response': false,
       'result': 'extend',
       'submitted_at': now.toIso8601String(),
+      if (extendSubjectProfileId != null)
+        'subject_profile_id': extendSubjectProfileId,
     },
   );
 }
@@ -500,6 +540,10 @@ Future<String> restartMoroFromCurrentPackage({
   final existingActiveMoro = await (db.select(db.enrollmentsTable)
         ..where((t) =>
             t.userId.equals(currentEnrollment.userId) &
+            (currentEnrollment.subjectProfileId == null
+                ? t.subjectProfileId.isNull()
+                : t.subjectProfileId
+                    .equals(currentEnrollment.subjectProfileId!)) &
             t.packageId.equals('moro') &
             t.status.equals('active')))
       .get();
@@ -508,6 +552,10 @@ Future<String> restartMoroFromCurrentPackage({
     await (db.update(db.enrollmentsTable)
           ..where((t) =>
               t.userId.equals(currentEnrollment.userId) &
+              (currentEnrollment.subjectProfileId == null
+                  ? t.subjectProfileId.isNull()
+                  : t.subjectProfileId
+                      .equals(currentEnrollment.subjectProfileId!)) &
               t.packageId.equals('moro') &
               t.status.equals('active')))
         .write(EnrollmentsTableCompanion(
@@ -529,6 +577,7 @@ Future<String> restartMoroFromCurrentPackage({
           EnrollmentsTableCompanion.insert(
             id: moroEnrollmentId,
             userId: currentEnrollment.userId,
+            subjectProfileId: drift.Value(currentEnrollment.subjectProfileId),
             packageId: 'moro',
             assignedDurationWeeks: 4,
             startDate: today,
@@ -541,6 +590,7 @@ Future<String> restartMoroFromCurrentPackage({
           ProgressEntriesTableCompanion.insert(
             id: progressId,
             userId: currentEnrollment.userId,
+            subjectProfileId: drift.Value(currentEnrollment.subjectProfileId),
             enrollmentId: moroEnrollmentId,
           ),
         );
@@ -571,6 +621,8 @@ Future<String> restartMoroFromCurrentPackage({
     payload: {
       'id': moroEnrollmentId,
       'user_id': currentEnrollment.userId,
+      if (currentEnrollment.subjectProfileId != null)
+        'subject_profile_id': currentEnrollment.subjectProfileId,
       'package_id': 'moro',
       'status': 'active',
       'assigned_duration_weeks': 4,
@@ -585,6 +637,8 @@ Future<String> restartMoroFromCurrentPackage({
     payload: {
       'id': progressId,
       'user_id': currentEnrollment.userId,
+      if (currentEnrollment.subjectProfileId != null)
+        'subject_profile_id': currentEnrollment.subjectProfileId,
       'enrollment_id': moroEnrollmentId,
       'current_day': 1,
     },
@@ -614,6 +668,7 @@ Future<void> saveCompletedSession({
         TrainingSessionsTableCompanion.insert(
           id: sessionId,
           userId: userId,
+          subjectProfileId: drift.Value(enrollment.subjectProfileId),
           enrollmentId: enrollment.id,
           sessionDate: today,
           dayNumber: progress.currentDay,
@@ -679,6 +734,8 @@ Future<void> saveCompletedSession({
     payload: {
       'id': sessionId,
       'user_id': userId,
+      if (enrollment.subjectProfileId != null)
+        'subject_profile_id': enrollment.subjectProfileId,
       'enrollment_id': enrollment.id,
       'session_date': today.toIso8601String().substring(0, 10),
       'day_number': progress.currentDay,
@@ -693,6 +750,8 @@ Future<void> saveCompletedSession({
     payload: {
       'id': progress.id,
       'user_id': userId,
+      if (progress.subjectProfileId != null)
+        'subject_profile_id': progress.subjectProfileId,
       'enrollment_id': enrollment.id,
       'current_day': progress.currentDay + 1,
       'last_activity_date': today.toIso8601String().substring(0, 10),

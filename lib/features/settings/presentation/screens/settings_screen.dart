@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../bootstrap/providers.dart';
 import '../../../../core/navigation/app_router.dart';
+import '../../../../core/onboarding/onboarding_hint_provider.dart';
 import '../../../../core/settings/settings_provider.dart';
 import '../../../../core/sync/sync_status.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -61,6 +62,7 @@ class SettingsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final cs = Theme.of(context).colorScheme;
     final l10n = AppLocalizations.of(context);
     final settings = ref.watch(settingsProvider);
     final notifier = ref.read(settingsProvider.notifier);
@@ -93,7 +95,7 @@ class SettingsScreen extends ConsumerWidget {
                     Text(
                       'Tutorial ist für den Einstieg. Routine ist kompakter.',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: AppColors.textSecondary,
+                            color: cs.onSurfaceVariant,
                           ),
                     ),
                     const SizedBox(height: 16),
@@ -178,6 +180,25 @@ class SettingsScreen extends ConsumerWidget {
             ),
           ),
           const _SectionHeader(title: 'Erweitert'),
+          ListTile(
+            leading: const Icon(Icons.help_outline),
+            title: const Text('Einführungen erneut anzeigen'),
+            subtitle: const Text(
+              'Zeigt die kurzen Hinweise auf Heute, Verlauf, Begleitung und Profil wieder an.',
+            ),
+            onTap: () async {
+              await ref
+                  .read(onboardingHintControllerProvider.notifier)
+                  .resetAll();
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Einführungen werden wieder angezeigt.'),
+                  ),
+                );
+              }
+            },
+          ),
           if (showMoroRestart)
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -208,12 +229,13 @@ class _SectionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 24, 16, 4),
       child: Text(
         title.toUpperCase(),
         style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              color: AppColors.textSecondary,
+              color: cs.onSurfaceVariant,
               letterSpacing: 0.8,
               fontWeight: FontWeight.w600,
             ),
@@ -260,12 +282,13 @@ class _SyncStatusTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final cs = Theme.of(context).colorScheme;
     final l10n = AppLocalizations.of(context);
     final status = ref.watch(syncStatusProvider).valueOrNull;
     final syncService = ref.read(syncServiceProvider);
 
     final (icon, color, label) = switch (status) {
-      null => (Icons.sync, AppColors.textSecondary, l10n.loading),
+      null => (Icons.sync, cs.onSurfaceVariant, l10n.loading),
       SyncStatus(isSyncing: true) => (
           Icons.sync,
           AppColors.primary,

@@ -8,6 +8,8 @@ abstract class TrainerProfileRepository {
     double radiusKm = 25,
   });
 
+  Future<List<TrainerProfile>> listPublicTrainers();
+
   Future<TrainerProfile?> getOwnProfile();
 
   Future<void> upsertProfile({
@@ -27,6 +29,8 @@ abstract class TrainerProfileRepository {
   Future<void> suspendTrainer(String trainerId);
 
   Future<void> sendConnectionRequest(String trainerId);
+
+  Future<void> withdrawConnectionRequest(String relationshipId);
 
   Future<List<TrainerDiscoveryRequest>> getIncomingRequests();
 

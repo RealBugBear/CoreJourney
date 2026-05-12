@@ -11,11 +11,16 @@ class AppShell extends ConsumerWidget {
 
   final Widget child;
 
-  List<String> _buildTabRoutes(bool trainerLinked) => [
+  List<String> _buildTabRoutes({
+    required bool isTrainer,
+    required bool isAdmin,
+  }) =>
+      [
         Routes.dashboard,
-        Routes.community,
-        Routes.trainerDiscovery,
-        if (trainerLinked) Routes.dm,
+        Routes.progress,
+        Routes.accompaniment,
+        if (isTrainer) Routes.trainerDashboard,
+        if (isAdmin) Routes.adminPanel,
         Routes.profile,
       ];
 
@@ -24,14 +29,22 @@ class AppShell extends ConsumerWidget {
     for (int i = 0; i < tabRoutes.length; i++) {
       if (location.startsWith(tabRoutes[i])) return i;
     }
+    if (location.startsWith(Routes.trainerDiscovery) ||
+        location.startsWith(Routes.dm) ||
+        location.startsWith(Routes.appointmentProposals) ||
+        location.startsWith(Routes.community)) {
+      return tabRoutes.indexOf(Routes.accompaniment);
+    }
     return 0;
   }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final trainerLinked = ref.watch(trainerLinkedProvider);
+    final role = ref.watch(userRoleProvider).valueOrNull ?? 'practitioner';
+    final isAdmin = role == 'admin';
+    final isTrainer = role == 'trainer' || isAdmin;
     final unreadDm = ref.watch(unreadDmCountProvider);
-    final tabRoutes = _buildTabRoutes(trainerLinked);
+    final tabRoutes = _buildTabRoutes(isTrainer: isTrainer, isAdmin: isAdmin);
     final currentIndex = _currentIndex(context, tabRoutes);
 
     return Scaffold(
@@ -43,31 +56,37 @@ class AppShell extends ConsumerWidget {
           const NavigationDestination(
             icon: Icon(Icons.home_outlined),
             selectedIcon: Icon(Icons.home),
-            label: 'Home',
+            label: 'Heute',
           ),
           const NavigationDestination(
-            icon: Icon(Icons.groups_outlined),
-            selectedIcon: Icon(Icons.groups),
-            label: 'Community',
+            icon: Icon(Icons.insights_outlined),
+            selectedIcon: Icon(Icons.insights),
+            label: 'Verlauf',
           ),
-          const NavigationDestination(
-            icon: Icon(Icons.search_outlined),
-            selectedIcon: Icon(Icons.search),
-            label: 'Trainer',
+          NavigationDestination(
+            icon: Badge(
+              isLabelVisible: unreadDm > 0,
+              label: unreadDm > 99 ? const Text('99+') : Text('$unreadDm'),
+              child: const Icon(Icons.handshake_outlined),
+            ),
+            selectedIcon: Badge(
+              isLabelVisible: unreadDm > 0,
+              label: unreadDm > 99 ? const Text('99+') : Text('$unreadDm'),
+              child: const Icon(Icons.handshake),
+            ),
+            label: 'Begleitung',
           ),
-          if (trainerLinked)
-            NavigationDestination(
-              icon: Badge(
-                isLabelVisible: unreadDm > 0,
-                label: unreadDm > 99 ? const Text('99+') : Text('$unreadDm'),
-                child: const Icon(Icons.chat_bubble_outline),
-              ),
-              selectedIcon: Badge(
-                isLabelVisible: unreadDm > 0,
-                label: unreadDm > 99 ? const Text('99+') : Text('$unreadDm'),
-                child: const Icon(Icons.chat_bubble),
-              ),
-              label: 'Nachrichten',
+          if (isTrainer)
+            const NavigationDestination(
+              icon: Icon(Icons.supervisor_account_outlined),
+              selectedIcon: Icon(Icons.supervisor_account),
+              label: 'Trainer',
+            ),
+          if (isAdmin)
+            const NavigationDestination(
+              icon: Icon(Icons.admin_panel_settings_outlined),
+              selectedIcon: Icon(Icons.admin_panel_settings),
+              label: 'Admin',
             ),
           const NavigationDestination(
             icon: Icon(Icons.person_outline),

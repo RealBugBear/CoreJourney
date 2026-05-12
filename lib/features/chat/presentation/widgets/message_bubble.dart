@@ -12,6 +12,7 @@ class MessageBubble extends StatelessWidget {
     this.onDeleteRequested,
     this.onAcceptCall,
     this.onProposeAppointment,
+    this.onOpenAppointmentProposals,
   });
 
   final ChatMessage message;
@@ -19,6 +20,7 @@ class MessageBubble extends StatelessWidget {
   final VoidCallback? onDeleteRequested;
   final VoidCallback? onAcceptCall;
   final VoidCallback? onProposeAppointment;
+  final VoidCallback? onOpenAppointmentProposals;
 
   @override
   Widget build(BuildContext context) {
@@ -33,6 +35,13 @@ class MessageBubble extends StatelessWidget {
         isModerator: isModerator,
         onAccept: isModerator ? onAcceptCall : null,
         onProposeAppointment: isModerator ? onProposeAppointment : null,
+      );
+    }
+    if (message.isAppointmentProposalNotice) {
+      return _AppointmentProposalBubble(
+        message: message,
+        isOwn: isOwn,
+        onOpenAppointmentProposals: isOwn ? null : onOpenAppointmentProposals,
       );
     }
 
@@ -80,6 +89,102 @@ class MessageBubble extends StatelessWidget {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+extension _ChatMessagePresentation on ChatMessage {
+  bool get isAppointmentProposalNotice {
+    final normalised = content.toLowerCase();
+    return normalised.contains('terminvorschlag') ||
+        normalised.contains('terminvorschläge');
+  }
+}
+
+class _AppointmentProposalBubble extends StatelessWidget {
+  const _AppointmentProposalBubble({
+    required this.message,
+    required this.isOwn,
+    this.onOpenAppointmentProposals,
+  });
+
+  final ChatMessage message;
+  final bool isOwn;
+  final VoidCallback? onOpenAppointmentProposals;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final showAction = !isOwn && onOpenAppointmentProposals != null;
+
+    return Align(
+      alignment: isOwn ? Alignment.centerRight : Alignment.centerLeft,
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+        constraints:
+            BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.82),
+        decoration: BoxDecoration(
+          color: theme.colorScheme.tertiaryContainer,
+          borderRadius: BorderRadius.only(
+            topLeft: const Radius.circular(16),
+            topRight: const Radius.circular(16),
+            bottomLeft: Radius.circular(isOwn ? 16 : 4),
+            bottomRight: Radius.circular(isOwn ? 4 : 16),
+          ),
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  Icons.event_available_outlined,
+                  size: 18,
+                  color: theme.colorScheme.onTertiaryContainer,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Terminvorschlag',
+                    style: theme.textTheme.labelLarge?.copyWith(
+                      color: theme.colorScheme.onTertiaryContainer,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            Text(
+              message.content,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onTertiaryContainer,
+              ),
+            ),
+            if (showAction) ...[
+              const SizedBox(height: 10),
+              FilledButton.icon(
+                onPressed: onOpenAppointmentProposals,
+                icon: const Icon(Icons.arrow_forward_outlined, size: 18),
+                label: const Text('Vorschlag ansehen'),
+              ),
+            ],
+            const SizedBox(height: 4),
+            Align(
+              alignment: Alignment.centerRight,
+              child: Text(
+                DateFormat.Hm().format(message.createdAt.toLocal()),
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: theme.colorScheme.onTertiaryContainer
+                      .withValues(alpha: 0.65),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );

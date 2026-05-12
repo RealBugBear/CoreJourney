@@ -192,7 +192,7 @@ class _CompletionQuestionnaireScreenState
                     ? l10n.completionMoroReturnSubtitle
                     : l10n.completionCelebrationSubtitle,
                 style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      color: AppColors.textSecondary,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
                       height: 1.5,
                     ),
                 textAlign: TextAlign.center,
@@ -242,7 +242,7 @@ class _CompletionQuestionnaireScreenState
               Text(
                 l10n.completionExtendedSubtitle,
                 style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      color: AppColors.textSecondary,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
                       height: 1.5,
                     ),
                 textAlign: TextAlign.center,

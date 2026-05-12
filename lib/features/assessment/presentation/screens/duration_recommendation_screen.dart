@@ -8,9 +8,12 @@ import '../../../../core/navigation/app_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/error_retry_widget.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../providers/reflex_profile_provider.dart';
 import '../../../progress/presentation/providers/progress_provider.dart';
 
 int _computeRecommendedWeeks({required bool hadIsometricWithTrainer}) {
+  // Until the expert Reflexprofil questionnaire and scoring are available,
+  // skipped profiles intentionally use the default rule from the product plan.
   return hadIsometricWithTrainer ? 4 : 8;
 }
 
@@ -27,6 +30,7 @@ class _DurationRecommendationScreenState
   late int _selectedWeeks;
   late String _packageId;
   bool _hadTrainer = false;
+  bool _reflexProfileSkipped = false;
   bool _saving = false;
 
   @override
@@ -35,6 +39,7 @@ class _DurationRecommendationScreenState
     final extra = GoRouterState.of(context).extra as Map<String, dynamic>?;
     _packageId = extra?['packageId'] as String? ?? 'moro';
     _hadTrainer = extra?['hadIsometricWithTrainer'] as bool? ?? false;
+    _reflexProfileSkipped = extra?['reflexProfileStatus'] == 'skipped';
     _selectedWeeks =
         _computeRecommendedWeeks(hadIsometricWithTrainer: _hadTrainer);
   }
@@ -49,6 +54,7 @@ class _DurationRecommendationScreenState
         db: ref.read(databaseProvider),
         syncService: ref.read(syncServiceProvider),
         userId: userId,
+        subjectProfileId: ref.read(selectedSubjectProfileProvider)?.id,
         packageId: _packageId,
         durationWeeks: _selectedWeeks,
       );
@@ -94,9 +100,11 @@ class _DurationRecommendationScreenState
               ),
               const SizedBox(height: 20),
               _RecommendationInfo(
-                text: _hadTrainer
-                    ? l10n.durationTrainerMinimumInfo
-                    : l10n.durationWithoutTrainerInfo,
+                text: _reflexProfileSkipped
+                    ? 'Du hast das Reflexprofil übersprungen. Die Empfehlung nutzt deshalb die Standard-Dauerlogik und deine Angabe zur isometrischen Begleitung.'
+                    : (_hadTrainer
+                        ? l10n.durationTrainerMinimumInfo
+                        : l10n.durationWithoutTrainerInfo),
               ),
               const SizedBox(height: 28),
               Slider(
@@ -145,6 +153,7 @@ class _RecommendationInfo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -165,7 +174,7 @@ class _RecommendationInfo extends StatelessWidget {
             child: Text(
               text,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: AppColors.textSecondary,
+                    color: cs.onSurfaceVariant,
                     height: 1.4,
                   ),
             ),

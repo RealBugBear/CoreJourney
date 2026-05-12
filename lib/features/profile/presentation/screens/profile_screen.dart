@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../../core/navigation/app_router.dart';
+import '../../../../core/onboarding/onboarding_hint_gate.dart';
+import '../../../../core/onboarding/onboarding_hint_provider.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../features/assessment/presentation/providers/reflex_profile_provider.dart';
 import '../../../../features/auth/presentation/providers/auth_provider.dart';
-import '../../../../features/chat/presentation/navigation/chat_navigation.dart';
 import '../../../../features/chat/presentation/widgets/direct_messages_action.dart';
 import '../../../../features/trainer/presentation/providers/trainer_provider.dart';
 import '../../../../l10n/app_localizations.dart';
@@ -35,374 +36,145 @@ class ProfileScreen extends ConsumerWidget {
           ),
         ],
       ),
-      body: ListView(
-        padding: const EdgeInsets.only(bottom: 32),
-        children: [
-          if (user != null) ...[
-            const SizedBox(height: 24),
-            Center(
-              child: CircleAvatar(
-                radius: 36,
-                backgroundColor: AppColors.primary.withValues(alpha: 0.12),
-                child: Text(
-                  (user.email ?? '?')[0].toUpperCase(),
-                  style: const TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.primary,
+      body: OnboardingHintGate(
+        hint: AppOnboardingHint.profile,
+        child: ListView(
+          padding: const EdgeInsets.only(bottom: 32),
+          children: [
+            if (user != null) ...[
+              const SizedBox(height: 24),
+              Center(
+                child: CircleAvatar(
+                  radius: 36,
+                  backgroundColor: AppColors.primary.withValues(alpha: 0.12),
+                  child: Text(
+                    (user.email ?? '?')[0].toUpperCase(),
+                    style: const TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.primary,
+                    ),
                   ),
                 ),
               ),
-            ),
-            const SizedBox(height: 12),
-            Center(
-              child: Text(
-                user.email ?? '',
-                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      fontWeight: FontWeight.w500,
-                    ),
-              ),
-            ),
-            const SizedBox(height: 32),
-          ],
-          const SizedBox(height: 24),
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16),
-            child: _UsernameSection(),
-          ),
-          const SizedBox(height: 8),
-          const _SectionHeader(title: 'Tagebuch'),
-          ListTile(
-            leading: const Icon(Icons.menu_book_outlined),
-            title: const Text('Journal'),
-            subtitle: const Text(
-              'Deine Eintraege und Reflexionen',
-              style: TextStyle(fontSize: 12),
-            ),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () => context.push(Routes.journal),
-          ),
-          const _SectionHeader(title: 'Trainer'),
-          ListTile(
-            leading: Icon(
-              trainerName != null ? Icons.link : Icons.link_off,
-              color: trainerName != null ? AppColors.success : null,
-            ),
-            title: Text(
-              trainerName != null ? 'Trainer wechseln' : 'Trainer verbinden',
-            ),
-            subtitle: Text(
-              trainerName != null
-                  ? 'Aktuell verbunden mit $trainerName'
-                  : 'Einladungscode vom Trainer eingeben',
-              style: const TextStyle(fontSize: 12),
-            ),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () => trainerName != null
-                ? _showSwitchTrainerDialog(context, ref)
-                : _showConnectTrainerDialog(context, ref),
-          ),
-          if (trainerName != null)
-            ListTile(
-              leading: const Icon(Icons.chat_bubble_outline),
-              title: const Text('Nachricht an Trainer'),
-              trailing: const Icon(Icons.chevron_right),
-              onTap: () => _openTrainerChat(context, ref),
-            ),
-          if (role == 'admin' || role == 'trainer') ...[
-            const _SectionHeader(title: 'Arbeitsbereich'),
-            if (role == 'admin')
-              ListTile(
-                leading: const Icon(Icons.admin_panel_settings_outlined),
-                title: const Text('Admin Panel'),
-                trailing: const Icon(Icons.chevron_right),
-                onTap: () => context.push(Routes.adminPanel),
-              ),
-            if (role == 'admin')
-              ListTile(
-                leading: const Icon(Icons.chat_bubble_outline),
-                title: const Text('Nachrichten'),
-                subtitle: const Text(
-                  'Trainer-Bewerbungen und Review-Kanäle',
-                  style: TextStyle(fontSize: 12),
+              const SizedBox(height: 12),
+              Center(
+                child: Text(
+                  user.email ?? '',
+                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                        fontWeight: FontWeight.w500,
+                      ),
                 ),
-                trailing: const Icon(Icons.chevron_right),
-                onTap: () => context.push(Routes.dm),
               ),
-            if (role == 'trainer')
-              ListTile(
-                leading: const Icon(Icons.group_outlined),
-                title: const Text('Trainerbereich'),
-                trailing: const Icon(Icons.chevron_right),
-                onTap: () => context.push(Routes.trainerDashboard),
-              ),
-          ],
-          if (role != 'admin' && role != 'trainer') ...[
-            const _SectionHeader(title: 'Beruflicher Zugang'),
+              const SizedBox(height: 32),
+            ],
+            const SizedBox(height: 24),
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16),
+              child: _UsernameSection(),
+            ),
+            const _SectionHeader(title: 'Trainingsprofile'),
+            const _SubjectProfilesSection(),
+            const SizedBox(height: 8),
+            const _SectionHeader(title: 'Tagebuch'),
             ListTile(
-              leading: const Icon(Icons.verified_user_outlined),
-              title: const Text('Trainer werden'),
+              leading: const Icon(Icons.menu_book_outlined),
+              title: const Text('Journal'),
               subtitle: const Text(
-                'Bewerbung einreichen und prüfen lassen',
+                'Deine Einträge und Reflexionen',
                 style: TextStyle(fontSize: 12),
               ),
               trailing: const Icon(Icons.chevron_right),
-              onTap: () => _openTrainerApplication(context),
+              onTap: () => context.push(Routes.journal),
+            ),
+            const _SectionHeader(title: 'Trainer'),
+            ListTile(
+              leading: Icon(
+                trainerName != null ? Icons.link : Icons.link_off,
+                color: trainerName != null ? AppColors.success : null,
+              ),
+              title: const Text('Begleitung verwalten'),
+              subtitle: Text(
+                trainerName != null
+                    ? 'Aktuell verbunden mit $trainerName'
+                    : 'Trainer finden, Anfragen und Termine verwalten',
+                style: const TextStyle(fontSize: 12),
+              ),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => context.push(Routes.accompaniment),
+            ),
+            if (role == 'admin' || role == 'trainer') ...[
+              const _SectionHeader(title: 'Arbeitsbereich'),
+              if (role == 'admin')
+                ListTile(
+                  leading: const Icon(Icons.admin_panel_settings_outlined),
+                  title: const Text('Admin Panel'),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => context.push(Routes.adminPanel),
+                ),
+              if (role == 'admin')
+                ListTile(
+                  leading: const Icon(Icons.chat_bubble_outline),
+                  title: const Text('Nachrichten'),
+                  subtitle: const Text(
+                    'Trainer-Bewerbungen und Review-Kanäle',
+                    style: TextStyle(fontSize: 12),
+                  ),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => context.push(Routes.dm),
+                ),
+              if (role == 'trainer')
+                ListTile(
+                  leading: const Icon(Icons.group_outlined),
+                  title: const Text('Trainerbereich'),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => context.push(Routes.trainerDashboard),
+                ),
+            ],
+            if (role != 'admin' && role != 'trainer') ...[
+              const _SectionHeader(title: 'Beruflicher Zugang'),
+              ListTile(
+                leading: const Icon(Icons.verified_user_outlined),
+                title: const Text('Trainer werden'),
+                subtitle: const Text(
+                  'Bewerbung einreichen und prüfen lassen',
+                  style: TextStyle(fontSize: 12),
+                ),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => _openTrainerApplication(context),
+              ),
+            ],
+            const _SectionHeader(title: 'Account'),
+            ListTile(
+              leading: const Icon(Icons.lock_outline),
+              title: Text(l10n.profileChangePassword),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => context.push(Routes.changePassword),
+            ),
+            ListTile(
+              leading: const Icon(Icons.logout),
+              title: Text(l10n.signOut),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () async {
+                await ref.read(authNotifierProvider.notifier).signOut();
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.delete_outline, color: AppColors.error),
+              title: Text(
+                l10n.profileDeleteAccount,
+                style: const TextStyle(color: AppColors.error),
+              ),
+              onTap: () => _confirmDeleteAccount(context, ref),
             ),
           ],
-          const _SectionHeader(title: 'Account'),
-          ListTile(
-            leading: const Icon(Icons.lock_outline),
-            title: Text(l10n.profileChangePassword),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () => context.push(Routes.changePassword),
-          ),
-          ListTile(
-            leading: const Icon(Icons.logout),
-            title: Text(l10n.signOut),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () async {
-              await ref.read(authNotifierProvider.notifier).signOut();
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.delete_outline, color: AppColors.error),
-            title: Text(
-              l10n.profileDeleteAccount,
-              style: const TextStyle(color: AppColors.error),
-            ),
-            onTap: () => _confirmDeleteAccount(context, ref),
-          ),
-        ],
+        ),
       ),
     );
   }
 
   Future<void> _openTrainerApplication(BuildContext context) async {
     context.push(Routes.trainerApplicationStatus);
-  }
-
-  Future<void> _showConnectTrainerDialog(
-    BuildContext context,
-    WidgetRef ref,
-  ) async {
-    final ctrl = TextEditingController();
-    String? errorMsg;
-
-    await showDialog<void>(
-      context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setDialogState) => AlertDialog(
-          title: const Text('Trainer verbinden'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Gib den 6-stelligen Code ein, den du von deinem Trainer erhalten hast:',
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: ctrl,
-                autofocus: true,
-                keyboardType: TextInputType.number,
-                maxLength: 6,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 8,
-                ),
-                decoration: InputDecoration(
-                  labelText: 'Einladungscode',
-                  border: const OutlineInputBorder(),
-                  errorText: errorMsg,
-                  counterText: '',
-                  hintText: '000000',
-                ),
-                onChanged: (_) => setDialogState(() => errorMsg = null),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text('Abbrechen'),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                final code = ctrl.text.replaceAll(RegExp(r'\s'), '').trim();
-                if (code.length != 6) {
-                  setDialogState(
-                    () => errorMsg = 'Bitte 6-stelligen Code eingeben.',
-                  );
-                  return;
-                }
-                try {
-                  await acceptInvite(code);
-                  ref.invalidate(clientTrainerProvider);
-                  if (ctx.mounted) Navigator.pop(ctx);
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Trainer erfolgreich verbunden'),
-                      ),
-                    );
-                  }
-                } catch (_) {
-                  setDialogState(
-                    () => errorMsg = 'Fehler beim Verbinden mit dem Trainer.',
-                  );
-                }
-              },
-              child: const Text('Verbinden'),
-            ),
-          ],
-        ),
-      ),
-    );
-
-    ctrl.dispose();
-  }
-
-  Future<void> _showSwitchTrainerDialog(
-    BuildContext context,
-    WidgetRef ref,
-  ) async {
-    final ctrl = TextEditingController();
-    String? errorMsg;
-
-    await showDialog<void>(
-      context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setDialogState) => AlertDialog(
-          title: const Text('Trainer wechseln'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Gib den 6-stelligen Einladungscode deines neuen Trainers ein:',
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: ctrl,
-                autofocus: true,
-                keyboardType: TextInputType.visiblePassword,
-                textCapitalization: TextCapitalization.characters,
-                maxLength: 6,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 8,
-                ),
-                decoration: InputDecoration(
-                  labelText: 'Einladungscode',
-                  border: const OutlineInputBorder(),
-                  errorText: errorMsg,
-                  counterText: '',
-                  hintText: 'A1B2C3',
-                ),
-                onChanged: (_) => setDialogState(() => errorMsg = null),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text('Abbrechen'),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                final code = ctrl.text
-                    .replaceAll(RegExp(r'\s'), '')
-                    .trim()
-                    .toUpperCase();
-                if (code.length != 6) {
-                  setDialogState(
-                    () => errorMsg = 'Bitte 6-stelligen Code eingeben.',
-                  );
-                  return;
-                }
-                try {
-                  await switchTrainer(code);
-                  ref.invalidate(clientTrainerProvider);
-                  if (ctx.mounted) Navigator.pop(ctx);
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Trainer erfolgreich gewechselt'),
-                      ),
-                    );
-                  }
-                } catch (e) {
-                  final raw = e.toString();
-                  if (raw.contains('Invalid or already used')) {
-                    setDialogState(
-                      () => errorMsg = 'Code ungültig oder bereits verwendet.',
-                    );
-                  } else {
-                    if (ctx.mounted) Navigator.pop(ctx);
-                    if (context.mounted) {
-                      await showDialog<void>(
-                        context: context,
-                        builder: (c) => AlertDialog(
-                          title: const Text('Fehler beim Trainer-Wechsel'),
-                          content: SingleChildScrollView(
-                            child: SelectableText(raw),
-                          ),
-                          actions: [
-                            TextButton(
-                              onPressed: () {
-                                Clipboard.setData(ClipboardData(text: raw));
-                                Navigator.pop(c);
-                              },
-                              child: const Text('Kopieren & schließen'),
-                            ),
-                            TextButton(
-                              onPressed: () => Navigator.pop(c),
-                              child: const Text('Schließen'),
-                            ),
-                          ],
-                        ),
-                      );
-                    }
-                  }
-                }
-              },
-              child: const Text('Bestätigen'),
-            ),
-          ],
-        ),
-      ),
-    );
-
-    ctrl.dispose();
-  }
-
-  Future<void> _openTrainerChat(BuildContext context, WidgetRef ref) async {
-    final userId = Supabase.instance.client.auth.currentUser?.id;
-    if (userId == null) return;
-
-    try {
-      final rel = await Supabase.instance.client
-          .from('trainer_client_relationships')
-          .select('trainer_id')
-          .eq('client_id', userId)
-          .eq('status', 'active')
-          .maybeSingle();
-      if (rel == null || !context.mounted) return;
-
-      final trainerId = rel['trainer_id'] as String;
-      await openDirectChatWithUser(context, ref, trainerId);
-    } catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Chat konnte nicht geöffnet werden: $e')),
-        );
-      }
-    }
   }
 
   Future<void> _confirmDeleteAccount(
@@ -447,6 +219,256 @@ class ProfileScreen extends ConsumerWidget {
   }
 }
 
+class _SubjectProfilesSection extends ConsumerWidget {
+  const _SubjectProfilesSection();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final profilesAsync = ref.watch(allReflexSubjectProfilesProvider);
+    final selected = ref.watch(selectedSubjectProfileProvider);
+
+    return profilesAsync.when(
+      loading: () => const Padding(
+        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        child: LinearProgressIndicator(),
+      ),
+      error: (error, _) => Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        child: Text('Profile konnten nicht geladen werden: $error'),
+      ),
+      data: (profiles) {
+        if (profiles.isEmpty) {
+          return ListTile(
+            leading: const Icon(Icons.person_add_alt_outlined),
+            title: const Text('Erstes Profil anlegen'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => context.push(Routes.onboardingForWhom),
+          );
+        }
+
+        return Column(
+          children: [
+            for (final profile in profiles)
+              ListTile(
+                leading: Icon(
+                  profile.profileType == 'adult_self'
+                      ? Icons.person_outline
+                      : Icons.child_care_outlined,
+                  color: selected?.id == profile.id ? AppColors.primary : null,
+                ),
+                title: Text(profile.displayName),
+                subtitle: Text(
+                  _subjectProfileSubtitle(profile),
+                  style: const TextStyle(fontSize: 12),
+                ),
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.edit_outlined),
+                      tooltip: 'Profil bearbeiten',
+                      onPressed: () => _showSubjectProfileEditor(
+                        context,
+                        ref,
+                        profile,
+                      ),
+                    ),
+                    if (selected?.id == profile.id)
+                      const Icon(Icons.check_circle, color: AppColors.primary)
+                    else
+                      TextButton(
+                        onPressed: () => ref
+                            .read(selectedSubjectProfileIdProvider.notifier)
+                            .select(profile.id),
+                        child: const Text('Aktivieren'),
+                      ),
+                  ],
+                ),
+              ),
+            ListTile(
+              leading: const Icon(Icons.add_circle_outline),
+              title: const Text('Profil hinzufügen'),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => context.push(Routes.onboardingForWhom),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _showSubjectProfileEditor(
+    BuildContext context,
+    WidgetRef ref,
+    ReflexSubjectProfile profile,
+  ) async {
+    final updated = await showDialog<_SubjectProfileEditResult>(
+      context: context,
+      builder: (ctx) => _SubjectProfileEditDialog(profile: profile),
+    );
+    if (updated == null || !context.mounted) return;
+
+    try {
+      await updateReflexSubjectProfile(
+        ref,
+        subjectProfileId: profile.id,
+        displayName: updated.displayName,
+        birthDate: profile.profileType == 'child' ? updated.birthDate : null,
+      );
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Profil gespeichert.')),
+        );
+      }
+    } catch (error) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content: Text('Profil konnte nicht gespeichert werden: $error')),
+        );
+      }
+    }
+  }
+
+  static String _subjectProfileSubtitle(ReflexSubjectProfile profile) {
+    if (profile.profileType == 'adult_self') return 'Erwachsenenprofil';
+    final parts = <String>['Kinderprofil'];
+    if (profile.ageYears != null) parts.add('${profile.ageYears} Jahre');
+    if (profile.ageGroup != null) parts.add(profile.ageGroup!);
+    return parts.join(' · ');
+  }
+}
+
+class _SubjectProfileEditResult {
+  const _SubjectProfileEditResult({
+    required this.displayName,
+    this.birthDate,
+  });
+
+  final String displayName;
+  final DateTime? birthDate;
+}
+
+class _SubjectProfileEditDialog extends StatefulWidget {
+  const _SubjectProfileEditDialog({required this.profile});
+
+  final ReflexSubjectProfile profile;
+
+  @override
+  State<_SubjectProfileEditDialog> createState() =>
+      _SubjectProfileEditDialogState();
+}
+
+class _SubjectProfileEditDialogState extends State<_SubjectProfileEditDialog> {
+  late final TextEditingController _nameController;
+  DateTime? _birthDate;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _nameController = TextEditingController(text: widget.profile.displayName);
+    _birthDate = widget.profile.birthDate;
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _pickBirthDate() async {
+    final now = DateTime.now();
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _birthDate ?? DateTime(now.year - 6, now.month, now.day),
+      firstDate: DateTime(now.year - 100),
+      lastDate: now,
+      helpText: 'Geburtsdatum auswählen',
+    );
+    if (picked != null) {
+      setState(() {
+        _birthDate = picked;
+        _error = null;
+      });
+    }
+  }
+
+  void _submit() {
+    final name = _nameController.text.trim();
+    if (name.isEmpty) {
+      setState(() => _error = 'Bitte gib einen Namen an.');
+      return;
+    }
+    if (widget.profile.profileType == 'child' && _birthDate == null) {
+      setState(() => _error = 'Bitte gib ein Geburtsdatum an.');
+      return;
+    }
+    Navigator.pop(
+      context,
+      _SubjectProfileEditResult(
+        displayName: name,
+        birthDate: _birthDate,
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isChild = widget.profile.profileType == 'child';
+
+    return AlertDialog(
+      title: const Text('Profil bearbeiten'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          TextField(
+            controller: _nameController,
+            textCapitalization: TextCapitalization.words,
+            onChanged: (_) => setState(() => _error = null),
+            decoration: InputDecoration(
+              labelText: isChild ? 'Name oder Spitzname' : 'Profilname',
+              errorText: _error,
+              border: const OutlineInputBorder(),
+            ),
+          ),
+          if (isChild) ...[
+            const SizedBox(height: 12),
+            InkWell(
+              onTap: _pickBirthDate,
+              borderRadius: BorderRadius.circular(4),
+              child: InputDecorator(
+                decoration: const InputDecoration(
+                  labelText: 'Geburtsdatum',
+                  border: OutlineInputBorder(),
+                  suffixIcon: Icon(Icons.calendar_month_outlined),
+                ),
+                child: Text(
+                  _birthDate == null
+                      ? 'Datum auswählen'
+                      : '${_birthDate!.day.toString().padLeft(2, '0')}.'
+                          '${_birthDate!.month.toString().padLeft(2, '0')}.'
+                          '${_birthDate!.year}',
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Abbrechen'),
+        ),
+        FilledButton(
+          onPressed: _submit,
+          child: const Text('Speichern'),
+        ),
+      ],
+    );
+  }
+}
+
 class _SectionHeader extends StatelessWidget {
   const _SectionHeader({required this.title});
 
@@ -459,7 +481,7 @@ class _SectionHeader extends StatelessWidget {
       child: Text(
         title.toUpperCase(),
         style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              color: AppColors.textSecondary,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
               letterSpacing: 0.8,
               fontWeight: FontWeight.w600,
             ),

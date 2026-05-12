@@ -15,6 +15,9 @@ class Appointment {
   final String? calendarEventId;
   final String? calendarId;
   final DateTime createdAt;
+  // Subject profiles this appointment targets; empty = whole-account (legacy).
+  final List<String> subjectProfileIds;
+  final List<String> subjectProfileNames;
 
   const Appointment({
     required this.id,
@@ -33,9 +36,17 @@ class Appointment {
     this.calendarEventId,
     this.calendarId,
     required this.createdAt,
+    this.subjectProfileIds = const [],
+    this.subjectProfileNames = const [],
   });
 
   bool get isProposed => status == 'proposed';
+
+  /// Display label for the targeted profile(s), or null if account-wide.
+  String? get profileLabel {
+    if (subjectProfileNames.isEmpty) return null;
+    return subjectProfileNames.join(' + ');
+  }
 
   factory Appointment.fromJson(Map<String, dynamic> json) {
     final rawSlots = json['proposed_slots'];
@@ -45,11 +56,21 @@ class Appointment {
 
     final scheduledRaw = json['scheduled_for'] as String?;
 
+    final rawProfileIds = json['subject_profile_ids'];
+    final subjectProfileIds = rawProfileIds is List
+        ? rawProfileIds.whereType<String>().toList()
+        : <String>[];
+
+    final rawProfileNames = json['subject_profile_names'];
+    final subjectProfileNames = rawProfileNames is List
+        ? rawProfileNames.whereType<String>().toList()
+        : <String>[];
+
     return Appointment(
       id: json['id'] as String,
       trainerId: json['trainer_id'] as String,
       traineeId: json['trainee_id'] as String,
-      traineeName: json['trainee_name'] as String? ?? 'Trainee',
+      traineeName: json['trainee_name'] as String? ?? 'Klient',
       title: json['title'] as String? ?? 'Isometrische Partnerübung',
       scheduledFor:
           scheduledRaw != null ? _parseLocalDateTime(scheduledRaw) : null,
@@ -63,6 +84,8 @@ class Appointment {
       calendarEventId: json['calendar_event_id'] as String?,
       calendarId: json['calendar_id'] as String?,
       createdAt: _parseLocalDateTime(json['created_at'] as String),
+      subjectProfileIds: subjectProfileIds,
+      subjectProfileNames: subjectProfileNames,
     );
   }
 
@@ -95,6 +118,8 @@ class Appointment {
     DateTime? scheduledFor,
     String? calendarEventId,
     String? calendarId,
+    List<String>? subjectProfileIds,
+    List<String>? subjectProfileNames,
   }) {
     return Appointment(
       id: id,
@@ -113,6 +138,8 @@ class Appointment {
       calendarEventId: calendarEventId ?? this.calendarEventId,
       calendarId: calendarId ?? this.calendarId,
       createdAt: createdAt,
+      subjectProfileIds: subjectProfileIds ?? this.subjectProfileIds,
+      subjectProfileNames: subjectProfileNames ?? this.subjectProfileNames,
     );
   }
 }

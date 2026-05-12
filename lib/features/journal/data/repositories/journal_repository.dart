@@ -23,18 +23,28 @@ class JournalRepository {
     required String enrollmentId,
     required DateTime from,
     required DateTime to,
+    String? subjectProfileId,
   }) async {
     final userId = _userId;
     if (userId == null) return [];
 
-    return (_db.select(_db.journalEntriesTable)
-          ..where((t) =>
-              t.userId.equals(userId) &
-              t.enrollmentId.equals(enrollmentId) &
-              t.createdAt.isBiggerOrEqualValue(from) &
-              t.createdAt.isSmallerOrEqualValue(to))
-          ..orderBy([(t) => drift.OrderingTerm.desc(t.createdAt)]))
-        .get();
+    final query = _db.select(_db.journalEntriesTable)
+      ..where((t) =>
+          t.userId.equals(userId) &
+          t.enrollmentId.equals(enrollmentId) &
+          t.createdAt.isBiggerOrEqualValue(from) &
+          t.createdAt.isSmallerOrEqualValue(to))
+      ..orderBy([(t) => drift.OrderingTerm.desc(t.createdAt)]);
+
+    if (subjectProfileId != null) {
+      query.where(
+        (t) =>
+            t.subjectProfileId.equals(subjectProfileId) |
+            t.subjectProfileId.isNull(),
+      );
+    }
+
+    return query.get();
   }
 
   /// Fetches the mood_checkin linked to a journal entry, if any.
@@ -82,6 +92,8 @@ class JournalRepository {
             'stress': checkin.stress,
             'note': null,
             'source': checkin.source,
+            if (checkin.subjectProfileId != null)
+              'subject_profile_id': checkin.subjectProfileId,
           },
         );
       }

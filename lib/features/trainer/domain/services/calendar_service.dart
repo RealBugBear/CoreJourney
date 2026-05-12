@@ -70,7 +70,7 @@ class CalendarService {
       await Share.shareXFiles(
         [XFile(calendarFile.path, mimeType: 'text/calendar')],
         subject: title,
-        text: 'Kalendereintrag fuer $title importieren',
+        text: 'Kalendereintrag für $title importieren',
         sharePositionOrigin:
             sharePositionOrigin ?? const Rect.fromLTWH(1, 1, 1, 1),
         fileNameOverrides: [fileName],

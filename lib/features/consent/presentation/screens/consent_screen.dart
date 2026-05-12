@@ -644,7 +644,7 @@ class _ConsentContent extends StatelessWidget {
           intro,
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 height: 1.6,
-                color: AppColors.textSecondary,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
         ),
         const SizedBox(height: 24),
@@ -661,7 +661,7 @@ class _ConsentContent extends StatelessWidget {
             closing,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   height: 1.6,
-                  color: AppColors.textSecondary,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
           ),
         ),
@@ -716,7 +716,7 @@ class _PointCard extends StatelessWidget {
                 Text(
                   point.body,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: AppColors.textSecondary,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
                         height: 1.6,
                       ),
                 ),

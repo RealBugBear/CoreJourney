@@ -6,6 +6,7 @@ class ProgressEntriesTable extends Table {
 
   TextColumn get id => text()();
   TextColumn get userId => text()();
+  TextColumn get subjectProfileId => text().nullable()();
   TextColumn get enrollmentId => text()();
   IntColumn get currentDay => integer().withDefault(const Constant(1))();
   DateTimeColumn get lastActivityDate => dateTime().nullable()();

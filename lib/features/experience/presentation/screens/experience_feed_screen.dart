@@ -21,6 +21,7 @@ class ExperienceFeedScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final cs = Theme.of(context).colorScheme;
     final sharesAsync = ref.watch(experienceSharesProvider(_packageId));
     final isModerator = channel.isModerator;
     final currentUserId = Supabase.instance.client.auth.currentUser?.id ?? '';
@@ -64,7 +65,7 @@ class ExperienceFeedScreen extends ConsumerWidget {
                   const SizedBox(height: 16),
                   Text(
                     'Noch keine Erfahrungen geteilt.',
-                    style: TextStyle(color: AppColors.textSecondary),
+                    style: TextStyle(color: cs.onSurfaceVariant),
                   ),
                   const SizedBox(height: 8),
                   Text(
@@ -73,7 +74,7 @@ class ExperienceFeedScreen extends ConsumerWidget {
                     style: Theme.of(context)
                         .textTheme
                         .bodySmall
-                        ?.copyWith(color: AppColors.textSecondary),
+                        ?.copyWith(color: cs.onSurfaceVariant),
                   ),
                 ],
               ),

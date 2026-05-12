@@ -81,7 +81,7 @@ class AnalysisPlaceholderScreen extends ConsumerWidget {
                     ? 'Vor dem ersten Training wird hier ein kurzer Fragebogen stehen. Damit kann CoreJourney deinen aktuellen Stand besser einordnen und die Empfehlung sauberer machen.'
                     : 'Before your first training, this will become a short questionnaire. It will help CoreJourney understand your current baseline and improve the recommendation.',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: AppColors.textSecondary,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
                       height: 1.45,
                     ),
               ),
@@ -148,7 +148,7 @@ class _PlaceholderStep extends StatelessWidget {
                 Text(
                   body,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: AppColors.textSecondary,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
                         height: 1.4,
                       ),
                 ),

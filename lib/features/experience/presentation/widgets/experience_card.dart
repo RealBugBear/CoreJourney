@@ -22,6 +22,7 @@ class ExperienceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     final timeLabel = _formatRelative(share.createdAt);
 
     return GestureDetector(
@@ -59,7 +60,7 @@ class ExperienceCard extends StatelessWidget {
                 Text(
                   timeLabel,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: AppColors.textSecondary,
+                        color: cs.onSurfaceVariant,
                       ),
                 ),
                 if (isModerator || _isOwn)
@@ -68,7 +69,7 @@ class ExperienceCard extends StatelessWidget {
                     child: Padding(
                       padding: const EdgeInsets.only(left: 8),
                       child: Icon(Icons.more_vert,
-                          size: 18, color: AppColors.textSecondary),
+                          size: 18, color: cs.onSurfaceVariant),
                     ),
                   ),
               ],

@@ -18,7 +18,7 @@
   "authErrorWeakPassword": "Password must be at least 8 characters.",
 
   "dashboard": "Dashboard",
-  "startTraining": "Start Training",
+  "startTraining": "Begin Unit",
   "currentDay": "Day {day} of {total}",
   "@currentDay": {
     "placeholders": {
@@ -26,7 +26,7 @@
       "total": { "type": "int" }
     }
   },
-  "dailyStreak": "Daily Streak",
+  "dailyStreak": "Regularity",
   "weeklyProgress": "{count} of {goal} this week",
   "@weeklyProgress": {
     "placeholders": {
@@ -42,7 +42,7 @@
     }
   },
 
-  "trainingMode": "Training Mode",
+  "trainingMode": "Unit Mode",
   "tutorialMode": "Tutorial",
   "routineMode": "Routine",
   "silentMode": "Silent",
@@ -58,8 +58,8 @@
       "count": { "type": "int" }
     }
   },
-  "sessionComplete": "Session Complete",
-  "sessionCompleteSubtitle": "Well done! You've completed your training for today.",
+  "sessionComplete": "Unit Complete",
+  "sessionCompleteSubtitle": "You have completed today's unit.",
 
   "moodCheckIn": "How are you feeling?",
   "moodLabel": "Mood",
@@ -67,15 +67,15 @@
   "stressLabel": "Stress",
   "moodSkip": "Skip",
   "moodSubmit": "Save",
-  "moodChartEmpty": "Complete a training session to start tracking your mood.",
+  "moodChartEmpty": "Log a unit to see your wellbeing over time.",
 
   "intakeAssessmentTitle": "Getting Started",
   "intakeWelcomeTitle": "Welcome to your Reflex Integration Program",
   "intakeWelcomeBody": "CoreJourney guides you through the integration of prenatal reflexes — a process that can help transform deeply rooted physical and emotional patterns.",
   "intakeTrainerTitle": "Recommendation: Start with a Trainer",
-  "intakeTrainerBody": "We recommend beginning and accompanying this program with a certified trainer. A trainer carries out isometric activation training to specifically target the relevant reflexes. This targeted activation accelerates the integration process. Without it, the body typically takes longer to engage the reflexes sufficiently.",
+  "intakeTrainerBody": "We recommend beginning and accompanying this program with a certified trainer. A trainer guides isometric partner exercises that support clear perception of direction, movement, and resistance. Without this guidance, the body usually needs more calm repetition.",
   "intakeQuestionLabel": "One question about your start",
-  "questionIsometricWithTrainer": "Have you already completed isometric activation training with a trainer?",
+  "questionIsometricWithTrainer": "Have you already completed isometric partner exercises with a trainer?",
   "yes": "Yes",
   "no": "No",
   "durationRecommendation": "Recommended duration: {weeks} weeks",
@@ -103,20 +103,20 @@
   "trainerOnboardingContinueAfterRequest": "Continue to duration recommendation",
 
   "completionQuestionnaireTitle": "Final Reflection",
-  "completionCelebrationTitle": "Block Complete! ⭐",
-  "completionCelebrationSubtitle": "You've completed an important step in your development. Well done.",
+  "completionCelebrationTitle": "Package Complete",
+  "completionCelebrationSubtitle": "You have followed this package for the planned time.",
   "completionNextPackage": "Continue to next package",
   "completionBackToDashboard": "Back to Dashboard",
   "completionReachedTitle": "Package duration reached",
-  "completionReachedBody": "Well done. You have reached the planned training duration. The dashboard now shows the assessment questionnaire at the top so you can complete this package or extend it by 7 days.",
-  "completionPlaceholderQuestion": "Placeholder assessment: Can this training package be completed correctly?",
-  "completionPass": "Complete correctly",
-  "completionInsufficient": "Insufficient completion (+7 days)",
+  "completionReachedBody": "You have reached the planned package duration. Today now shows a short reflection so you can complete this package or repeat it for 7 more days.",
+  "completionPlaceholderQuestion": "Placeholder reflection: Does this package feel ready to complete?",
+  "completionPass": "Complete package",
+  "completionInsufficient": "Repeat 7 more days",
   "completionMoroReturnSubtitle": "The repeated Moro cycle is complete. You will now return to the interrupted package and restart it at day 1.",
   "completionBackToInterruptedPackage": "Back to interrupted package",
   "completionExtendedTitle": "One more week",
-  "completionExtendedSubtitle": "No problem — you have 7 more days. Keep going.",
-  "completionQuestion": "Did you go through an intensified emotional or stressful time through the training, and were you able to confront these themes — learning that your emotional reaction does not always match reality — and begin to regulate yourself?",
+  "completionExtendedSubtitle": "You have 7 more days in this package.",
+  "completionQuestion": "Since starting this package, have you noticed stronger emotional or stress-related reactions, and could you understand or regulate them a little more clearly?",
   "completionYes": "Yes, I'm ready",
   "completionNotYet": "Not yet",
 
@@ -127,7 +127,7 @@
   "packageAvailable": "Available",
 
   "settings": "Settings",
-  "settingsTraining": "Training",
+  "settingsTraining": "Units",
   "settingsReminders": "Reminders",
   "settingsLanguage": "Language",
   "settingsTheme": "Appearance",
@@ -155,11 +155,11 @@
     "placeholders": { "goal": { "type": "int" } }
   },
 
-  "settingsFeedback": "Training Feedback",
+  "settingsFeedback": "Unit Feedback",
   "settingsAccount": "Account",
 
   "disclaimer": "Health Notice",
-  "disclaimerText": "This training does not replace medical treatment. Please consult a doctor if you have health concerns. Listen to your body and take breaks when needed.",
+  "disclaimerText": "These units do not replace medical treatment. Please consult a doctor if you have health concerns. Listen to your body and take breaks when needed.",
   "disclaimerAccept": "Understood, continue",
 
   "errorGeneric": "Something went wrong. Please try again.",
@@ -215,7 +215,7 @@
 
   "journal": "Journal",
   "journalEmptyTitle": "No entries yet.",
-  "journalEmptySubtitle": "Write down what you observe in your daily life — after each training or whenever you like.",
+  "journalEmptySubtitle": "Write down what you observe in daily life — after a unit or whenever you like.",
   "journalEmptyHint": "Keep track of what changes in your daily life.",
   "journalNewEntry": "New Note",
   "journalPostTrainingTitle": "Changes in everyday life?",
@@ -272,7 +272,7 @@
   "profileDeleteAccountError": "Could not delete account. Please contact support."
 ,
   "trainerDashboard": "Trainer Dashboard",
-  "trainerTabTrainees": "Trainees",
+  "trainerTabTrainees": "Clients",
   "trainerTabCalendar": "Calendar",
   "trainerMyLink": "My Invite Link",
   "trainerCopyLink": "Copy Link",

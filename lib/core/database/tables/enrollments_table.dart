@@ -6,6 +6,7 @@ class EnrollmentsTable extends Table {
 
   TextColumn get id => text()();
   TextColumn get userId => text()();
+  TextColumn get subjectProfileId => text().nullable()();
   TextColumn get packageId => text()();
   // 'active' | 'paused' | 'completed' | 'abandoned'
   TextColumn get status => text().withDefault(const Constant('active'))();

@@ -5,6 +5,8 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/navigation/app_router.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../assessment/domain/reflex_questionnaire_definitions.dart';
+import '../../../chat/presentation/widgets/direct_messages_action.dart';
 import '../../../trainer/domain/models/trainer_application.dart';
 import '../../../trainer/presentation/providers/trainer_application_provider.dart';
 import '../providers/admin_provider.dart';
@@ -15,32 +17,43 @@ class AdminPanelScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return DefaultTabController(
-      length: 3,
+      length: 6,
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Admin Panel'),
+          title: const Text('Admin'),
           actions: [
+            const DirectMessagesAction(),
             IconButton(
               icon: const Icon(Icons.refresh_outlined),
               onPressed: () {
                 ref.invalidate(adminUsersProvider);
+                ref.invalidate(adminTrainerProfilesProvider);
+                ref.invalidate(adminExperienceSharesProvider);
+                ref.invalidate(adminReflexProfileRollupProvider);
                 ref.invalidate(trainerApplicationsForReviewProvider);
               },
             ),
           ],
           bottom: const TabBar(
+            isScrollable: true,
             tabs: [
               Tab(text: 'Bewerbungen'),
-              Tab(text: 'Bestätigte Trainer'),
-              Tab(text: 'Premium'),
+              Tab(text: 'Trainer'),
+              Tab(text: 'Rollen'),
+              Tab(text: 'Zugriff'),
+              Tab(text: 'Reflexprofil'),
+              Tab(text: 'Erfahrungen'),
             ],
           ),
         ),
         body: const TabBarView(
           children: [
             _TrainerApplicationsTab(),
-            _ConfirmedTrainersTab(),
-            _PremiumTab(),
+            _TrainerVisibilityTab(),
+            _RolesTab(),
+            _AccessTab(),
+            _ReflexAnalyticsTab(),
+            _SharedExperienceAdminTab(),
           ],
         ),
       ),
@@ -48,10 +61,92 @@ class AdminPanelScreen extends ConsumerWidget {
   }
 }
 
-// ── Premium Tab ───────────────────────────────────────────────────────────────
+String _roleLabel(String role) {
+  return switch (role) {
+    'admin' => 'Admin',
+    'trainer' => 'Trainer',
+    _ => 'Nutzer',
+  };
+}
 
-class _PremiumTab extends ConsumerWidget {
-  const _PremiumTab();
+Future<bool> _confirmRemoveShare(BuildContext context) async {
+  final result = await showDialog<bool>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: const Text('Beitrag entfernen?'),
+      content: const Text(
+        'Der Beitrag wird aus den geteilten Erfahrungen entfernt. Diese Aktion sollte nur bei unpassenden oder sensiblen Inhalten genutzt werden.',
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(ctx, false),
+          child: const Text('Abbrechen'),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.pop(ctx, true),
+          child: const Text('Entfernen'),
+        ),
+      ],
+    ),
+  );
+  return result ?? false;
+}
+
+class _AdminInfoCard extends StatelessWidget {
+  const _AdminInfoCard({
+    required this.icon,
+    required this.title,
+    required this.body,
+  });
+
+  final IconData icon;
+  final String title;
+  final String body;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return Card(
+      margin: EdgeInsets.zero,
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(icon, color: AppColors.primary),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w800,
+                        ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    body,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: cs.onSurfaceVariant,
+                          height: 1.35,
+                        ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ── Temporary Access Tab ──────────────────────────────────────────────────────
+
+class _AccessTab extends ConsumerWidget {
+  const _AccessTab();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -60,17 +155,23 @@ class _PremiumTab extends ConsumerWidget {
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (e, _) => Center(child: Text('Fehler: $e')),
       data: (users) {
-        final practitioners =
-            users.where((u) => u.role == 'practitioner').toList();
-        if (practitioners.isEmpty) {
+        if (users.isEmpty) {
           return const Center(child: Text('Keine Nutzer gefunden.'));
         }
         return ListView.separated(
           padding: const EdgeInsets.all(16),
-          itemCount: practitioners.length,
+          itemCount: users.length + 1,
           separatorBuilder: (_, __) => const Divider(height: 1),
           itemBuilder: (context, index) {
-            final user = practitioners[index];
+            if (index == 0) {
+              return const _AdminInfoCard(
+                icon: Icons.workspace_premium_outlined,
+                title: 'Temporärer Zugriff',
+                body:
+                    'Manueller Premium-Zugriff ist ein Admin-Override. Langfristig wird das durch Paywall und Kaufprozess ersetzt.',
+              );
+            }
+            final user = users[index - 1];
             return ListTile(
               leading: CircleAvatar(
                 child: Text(
@@ -80,7 +181,8 @@ class _PremiumTab extends ConsumerWidget {
                 ),
               ),
               title: Text(user.displayName),
-              subtitle: Text(user.isPremium ? 'Premium' : 'Free'),
+              subtitle: Text(
+                  '${_roleLabel(user.role)} · ${user.isPremium ? 'Premium' : 'Free'}'),
               trailing: Switch(
                 value: user.isPremium,
                 onChanged: (value) async {
@@ -92,6 +194,87 @@ class _PremiumTab extends ConsumerWidget {
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(content: Text('Fehler: $e')),
+                      );
+                    }
+                  }
+                },
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+}
+
+// ── Roles Tab ────────────────────────────────────────────────────────────────
+
+class _RolesTab extends ConsumerWidget {
+  const _RolesTab();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final usersAsync = ref.watch(adminUsersProvider);
+    return usersAsync.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (e, _) => Center(child: Text('Fehler: $e')),
+      data: (users) {
+        if (users.isEmpty) {
+          return const Center(child: Text('Keine Nutzer gefunden.'));
+        }
+        return ListView.separated(
+          padding: const EdgeInsets.all(16),
+          itemCount: users.length + 1,
+          separatorBuilder: (_, __) => const Divider(height: 1),
+          itemBuilder: (context, index) {
+            if (index == 0) {
+              return const _AdminInfoCard(
+                icon: Icons.manage_accounts_outlined,
+                title: 'Rollenverwaltung',
+                body:
+                    'Rollen steuern App-Rechte. Öffentliche Trainer-Sichtbarkeit wird separat im Trainer-Tab verwaltet.',
+              );
+            }
+            final user = users[index - 1];
+            return ListTile(
+              leading: CircleAvatar(
+                child: Text(
+                  user.displayName.isNotEmpty
+                      ? user.displayName[0].toUpperCase()
+                      : '?',
+                ),
+              ),
+              title: Text(user.displayName),
+              subtitle: Text(user.id),
+              trailing: DropdownButton<String>(
+                value: user.role,
+                items: const [
+                  DropdownMenuItem(
+                    value: 'practitioner',
+                    child: Text('Nutzer'),
+                  ),
+                  DropdownMenuItem(
+                    value: 'trainer',
+                    child: Text('Trainer'),
+                  ),
+                  DropdownMenuItem(
+                    value: 'admin',
+                    child: Text('Admin'),
+                  ),
+                ],
+                onChanged: (role) async {
+                  if (role == null || role == user.role) return;
+                  try {
+                    await ref
+                        .read(adminUsersProvider.notifier)
+                        .setRole(user.id, role);
+                    ref.invalidate(adminTrainerProfilesProvider);
+                  } catch (e) {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                            content:
+                                Text('Rolle konnte nicht geändert werden: $e')),
                       );
                     }
                   }
@@ -134,156 +317,760 @@ class _TrainerApplicationsTab extends ConsumerWidget {
   }
 }
 
-class _ConfirmedTrainersTab extends ConsumerWidget {
-  const _ConfirmedTrainersTab();
+class _TrainerVisibilityTab extends ConsumerWidget {
+  const _TrainerVisibilityTab();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final asyncApplications = ref.watch(trainerApplicationsForReviewProvider);
+    final trainersAsync = ref.watch(adminTrainerProfilesProvider);
 
-    return asyncApplications.when(
+    return trainersAsync.when(
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (e, _) => Center(child: Text(e.toString())),
-      data: (applications) {
-        final confirmed = applications
-            .where((a) => a.status == TrainerApplicationStatus.approved)
-            .toList();
-        if (confirmed.isEmpty) {
-          return const Center(child: Text('Noch keine bestätigten Trainer.'));
+      error: (e, _) => Center(child: Text('Fehler: $e')),
+      data: (trainers) {
+        if (trainers.isEmpty) {
+          return const Center(child: Text('Noch keine Trainerprofile.'));
         }
         return ListView.separated(
           padding: const EdgeInsets.all(16),
-          itemCount: confirmed.length,
-          separatorBuilder: (_, __) => const SizedBox(height: 12),
-          itemBuilder: (context, i) =>
-              _ConfirmedTrainerCard(application: confirmed[i]),
+          itemCount: trainers.length + 1,
+          separatorBuilder: (_, __) => const Divider(height: 1),
+          itemBuilder: (context, index) {
+            if (index == 0) {
+              return const _AdminInfoCard(
+                icon: Icons.travel_explore_outlined,
+                title: 'Öffentliche Trainer-Sichtbarkeit',
+                body:
+                    'Trainerrolle und öffentliche Sichtbarkeit sind getrennt. Nur aktive Profile erscheinen in der Suche.',
+              );
+            }
+            final trainer = trainers[index - 1];
+            return ListTile(
+              leading: CircleAvatar(
+                child: Icon(
+                  trainer.isPublic
+                      ? Icons.visibility_outlined
+                      : Icons.visibility_off_outlined,
+                ),
+              ),
+              title: Text(trainer.displayName),
+              subtitle: Text(
+                [
+                  trainer.isPublic ? 'Öffentlich sichtbar' : 'Nicht sichtbar',
+                  trainer.hasLocation ? 'Standort gesetzt' : 'Standort fehlt',
+                ].join(' · '),
+              ),
+              trailing: Switch(
+                value: trainer.isPublic,
+                onChanged: (value) async {
+                  try {
+                    await ref
+                        .read(adminTrainerProfilesProvider.notifier)
+                        .setPublicStatus(trainer.id, value);
+                  } catch (e) {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            'Sichtbarkeit konnte nicht geändert werden: $e',
+                          ),
+                        ),
+                      );
+                    }
+                  }
+                },
+              ),
+            );
+          },
         );
       },
     );
   }
 }
 
-class _ConfirmedTrainerCard extends StatelessWidget {
-  const _ConfirmedTrainerCard({required this.application});
+class _ReflexAnalyticsTab extends ConsumerWidget {
+  const _ReflexAnalyticsTab();
 
-  final TrainerApplication application;
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final rollupAsync = ref.watch(adminReflexProfileRollupProvider);
+
+    return rollupAsync.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (e, _) => Center(child: Text('Fehler: $e')),
+      data: (rows) {
+        if (rows.isEmpty) {
+          return const Center(
+            child: Text('Noch keine abgeschlossenen Reflexprofile.'),
+          );
+        }
+        final summary = _ReflexAnalyticsSummary.fromRollup(rows);
+        return ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
+            const _AdminInfoCard(
+              icon: Icons.analytics_outlined,
+              title: 'Reflexprofil-Auswertung',
+              body:
+                  'Die Auswertung ist pseudonymisiert und enthält keine Namen. Demo-Fragebögen sind hier ausgeschlossen.',
+            ),
+            const SizedBox(height: 10),
+            Align(
+              alignment: Alignment.centerRight,
+              child: OutlinedButton.icon(
+                onPressed: () => _copyReflexAnalyticsCsv(context, summary),
+                icon: const Icon(Icons.copy_all_outlined),
+                label: const Text('CSV kopieren'),
+              ),
+            ),
+            const SizedBox(height: 12),
+            _ReflexOverviewCard(summary: summary),
+            const SizedBox(height: 12),
+            _MetricListCard(
+              title: 'Auffälligste Reflexbereiche',
+              icon: Icons.radar_outlined,
+              metrics: summary.topReflexes,
+              valueSuffix: '% Ø',
+            ),
+            const SizedBox(height: 12),
+            _MetricListCard(
+              title: 'Häufigste Ja-Antworten',
+              icon: Icons.check_circle_outline,
+              metrics: summary.topQuestions,
+              valueSuffix: 'x Ja',
+            ),
+            const SizedBox(height: 12),
+            _MetricListCard(
+              title: 'Sicherheitsrelevante Angaben',
+              icon: Icons.warning_amber_outlined,
+              metrics: summary.safetyFlags,
+              valueSuffix: 'x Ja',
+              emptyText: 'Keine Sicherheitsangaben vorhanden.',
+            ),
+            const SizedBox(height: 12),
+            _MetricListCard(
+              title: 'Schwangerschaft',
+              icon: Icons.medical_information_outlined,
+              metrics: summary.pregnancyMetrics,
+              valueSuffix: 'x',
+              emptyText: 'Noch keine auswertbaren Angaben.',
+            ),
+            const SizedBox(height: 12),
+            _DevelopmentMonthsCard(summary: summary),
+          ],
+        );
+      },
+    );
+  }
+}
+
+Future<void> _copyReflexAnalyticsCsv(
+  BuildContext context,
+  _ReflexAnalyticsSummary summary,
+) async {
+  final lines = <List<String>>[
+    ['bereich', 'label', 'wert', 'detail'],
+    ['gesamt', 'frageboegen', summary.totalAssessments.toString(), ''],
+    for (final metric in summary.ageGroups)
+      [
+        'altersgruppe',
+        metric.label,
+        metric.value.toStringAsFixed(metric.decimals),
+        metric.detail ?? '',
+      ],
+    for (final metric in summary.topReflexes)
+      [
+        'reflex_durchschnitt',
+        metric.label,
+        metric.value.toStringAsFixed(metric.decimals),
+        metric.detail ?? '',
+      ],
+    for (final metric in summary.topQuestions)
+      [
+        'ja_antwort',
+        metric.label,
+        metric.value.toStringAsFixed(metric.decimals),
+        metric.detail ?? '',
+      ],
+    for (final metric in summary.safetyFlags)
+      [
+        'sicherheit',
+        metric.label,
+        metric.value.toStringAsFixed(metric.decimals),
+        metric.detail ?? '',
+      ],
+    for (final metric in summary.pregnancyMetrics)
+      [
+        'schwangerschaft',
+        metric.label,
+        metric.value.toStringAsFixed(metric.decimals),
+        metric.detail ?? '',
+      ],
+    [
+      'entwicklung_monate',
+      'Krabbeln',
+      summary.crawlingMonths.average.toStringAsFixed(1),
+      '${summary.crawlingMonths.count} Angaben',
+    ],
+    [
+      'entwicklung_monate',
+      'Erstes Laufen',
+      summary.walkingMonths.average.toStringAsFixed(1),
+      '${summary.walkingMonths.count} Angaben',
+    ],
+  ];
+
+  await Clipboard.setData(
+    ClipboardData(
+      text: lines.map((line) => line.map(_csvCell).join(',')).join('\n'),
+    ),
+  );
+
+  if (context.mounted) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Reflexprofil-CSV kopiert.')),
+    );
+  }
+}
+
+String _csvCell(String value) {
+  final escaped = value.replaceAll('"', '""');
+  return '"$escaped"';
+}
+
+class _ReflexOverviewCard extends StatelessWidget {
+  const _ReflexOverviewCard({required this.summary});
+
+  final _ReflexAnalyticsSummary summary;
 
   @override
   Widget build(BuildContext context) {
-    final displayName =
-        application.desiredDisplayName?.trim().isNotEmpty == true
-            ? application.desiredDisplayName!.trim()
-            : application.fullName;
-    final approvedDate = application.reviewedAt?.toLocal().toString().substring(
-              0,
-              10,
-            ) ??
-        '-';
-
     return Card(
+      margin: EdgeInsets.zero,
       child: Padding(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.all(14),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                const CircleAvatar(
-                  radius: 24,
-                  child: Icon(Icons.verified_user_outlined),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        displayName,
-                        style: Theme.of(context).textTheme.titleMedium,
-                      ),
-                      Text(
-                        application.fullName,
-                        style: Theme.of(context).textTheme.bodySmall,
-                      ),
-                      Text(
-                        application.email,
-                        style: Theme.of(context).textTheme.bodySmall,
-                      ),
-                    ],
+            Text(
+              '${summary.totalAssessments} abgeschlossene Fragebögen',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w800,
                   ),
-                ),
-              ],
             ),
-            if (application.desiredBio?.trim().isNotEmpty == true) ...[
-              const SizedBox(height: 12),
-              Text(application.desiredBio!.trim()),
-            ],
-            if (application.city != null || application.phone != null) ...[
-              const SizedBox(height: 8),
-              Text(
-                [
-                  if (application.city != null) application.city,
-                  if (application.phone != null) application.phone,
-                ].join(' · '),
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
-            ],
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                const Icon(Icons.check_circle, color: AppColors.success),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text('Bestätigt am $approvedDate'),
-                ),
-              ],
-            ),
-            if (application.activationCode != null) ...[
-              const SizedBox(height: 12),
-              SelectableText(
-                'Code: ${application.activationCode}',
-                style: const TextStyle(
-                  fontFamily: 'monospace',
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 2,
-                ),
-              ),
-            ],
-            const SizedBox(height: 12),
+            const SizedBox(height: 8),
             Wrap(
               spacing: 8,
               runSpacing: 8,
               children: [
-                OutlinedButton.icon(
-                  onPressed: application.reviewChannelId == null
-                      ? null
-                      : () => context.push(
-                            Routes.dmChannel.replaceFirst(
-                              ':channelId',
-                              application.reviewChannelId!,
-                            ),
-                          ),
-                  icon: const Icon(Icons.chat_bubble_outline),
-                  label: const Text('Review-Kanal'),
-                ),
-                if (application.activationCode != null)
-                  OutlinedButton.icon(
-                    onPressed: () {
-                      Clipboard.setData(
-                        ClipboardData(text: application.activationCode!),
-                      );
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Code kopiert')),
-                      );
-                    },
-                    icon: const Icon(Icons.copy),
-                    label: const Text('Code kopieren'),
+                for (final metric in summary.ageGroups)
+                  Chip(
+                    label: Text('${metric.label}: ${metric.value.toInt()}'),
+                    side: BorderSide.none,
+                    backgroundColor: AppColors.primary.withValues(alpha: 0.08),
                   ),
               ],
             ),
           ],
         ),
       ),
+    );
+  }
+}
+
+class _MetricListCard extends StatelessWidget {
+  const _MetricListCard({
+    required this.title,
+    required this.icon,
+    required this.metrics,
+    required this.valueSuffix,
+    this.emptyText = 'Noch keine Daten.',
+  });
+
+  final String title;
+  final IconData icon;
+  final List<_AdminMetric> metrics;
+  final String valueSuffix;
+  final String emptyText;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return Card(
+      margin: EdgeInsets.zero,
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(icon, color: AppColors.primary),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    title,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w800,
+                        ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            if (metrics.isEmpty)
+              Text(
+                emptyText,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: cs.onSurfaceVariant,
+                    ),
+              )
+            else
+              for (final metric in metrics)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 10),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              metric.label,
+                              maxLines: 3,
+                              overflow: TextOverflow.ellipsis,
+                              style: Theme.of(context).textTheme.bodyMedium,
+                            ),
+                            if (metric.detail != null) ...[
+                              const SizedBox(height: 2),
+                              Text(
+                                metric.detail!,
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodySmall
+                                    ?.copyWith(
+                                      color: cs.onSurfaceVariant,
+                                    ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Text(
+                        '${metric.value.toStringAsFixed(metric.decimals)} $valueSuffix',
+                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                              fontWeight: FontWeight.w800,
+                            ),
+                      ),
+                    ],
+                  ),
+                ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _DevelopmentMonthsCard extends StatelessWidget {
+  const _DevelopmentMonthsCard({required this.summary});
+
+  final _ReflexAnalyticsSummary summary;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      margin: EdgeInsets.zero,
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.child_care_outlined, color: AppColors.primary),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'Entwicklung in Monaten',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w800,
+                        ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            _MonthRow(label: 'Krabbeln', stats: summary.crawlingMonths),
+            const SizedBox(height: 8),
+            _MonthRow(label: 'Erstes Laufen', stats: summary.walkingMonths),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _MonthRow extends StatelessWidget {
+  const _MonthRow({required this.label, required this.stats});
+
+  final String label;
+  final _MonthStats stats;
+
+  @override
+  Widget build(BuildContext context) {
+    final value = stats.count == 0
+        ? 'Keine Daten'
+        : '${stats.average.toStringAsFixed(1)} Monate Ø · ${stats.count} Angaben';
+    return Row(
+      children: [
+        Expanded(child: Text(label)),
+        Text(
+          value,
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
+        ),
+      ],
+    );
+  }
+}
+
+class _ReflexAnalyticsSummary {
+  const _ReflexAnalyticsSummary({
+    required this.totalAssessments,
+    required this.ageGroups,
+    required this.topReflexes,
+    required this.topQuestions,
+    required this.safetyFlags,
+    required this.pregnancyMetrics,
+    required this.crawlingMonths,
+    required this.walkingMonths,
+  });
+
+  final int totalAssessments;
+  final List<_AdminMetric> ageGroups;
+  final List<_AdminMetric> topReflexes;
+  final List<_AdminMetric> topQuestions;
+  final List<_AdminMetric> safetyFlags;
+  final List<_AdminMetric> pregnancyMetrics;
+  final _MonthStats crawlingMonths;
+  final _MonthStats walkingMonths;
+
+  factory _ReflexAnalyticsSummary.fromRollup(
+    List<AdminReflexProfileRollup> rows,
+  ) {
+    final questionTextById = {
+      for (final question in childParentQuestionnaireV1.questions)
+        question.id: '${question.number}. ${question.text}',
+    };
+    final safetyFlagLabelById = {
+      for (final question in childParentQuestionnaireV1.questions)
+        if (question.trainerFlagLabel != null)
+          question.id: question.trainerFlagLabel!,
+    };
+    final totalAssessments = rows.fold<int>(
+      0,
+      (sum, row) => sum + row.assessmentCount,
+    );
+    final ageGroups = rows
+        .map((row) => _AdminMetric(
+              label: _ageGroupLabel(row.ageGroup),
+              value: row.assessmentCount.toDouble(),
+            ))
+        .toList()
+      ..sort((a, b) => _ageSort(a.label).compareTo(_ageSort(b.label)));
+
+    final reflexSums = <String, double>{};
+    final reflexCounts = <String, int>{};
+    final yesCounts = <String, int>{};
+    final pregnancyCounts = <String, int>{
+      'preeclampsia': 0,
+      'bleeding': 0,
+      'hypertension': 0,
+      'other_text': 0,
+    };
+    final crawling = _MonthStatsBuilder();
+    final walking = _MonthStatsBuilder();
+
+    for (final row in rows) {
+      for (final scoreSet in row.scores) {
+        for (final entry in scoreSet.entries) {
+          final value = entry.value;
+          if (value is! Map) continue;
+          final percent = value['percent'];
+          if (percent is! num) continue;
+          reflexSums.update(
+            entry.key,
+            (current) => current + percent.toDouble(),
+            ifAbsent: () => percent.toDouble(),
+          );
+          reflexCounts.update(entry.key, (current) => current + 1,
+              ifAbsent: () => 1);
+        }
+      }
+
+      for (final answerSet in row.answers) {
+        for (final entry in answerSet.entries) {
+          final value = entry.value;
+          if (value is! Map) continue;
+          if (value['answer'] == 'yes') {
+            yesCounts.update(entry.key, (current) => current + 1,
+                ifAbsent: () => 1);
+          }
+          if (entry.key == 'q002_pregnancy_health_problem_details') {
+            final options = value['selected_options'];
+            if (options is List) {
+              for (final option in options.whereType<String>()) {
+                if (pregnancyCounts.containsKey(option)) {
+                  pregnancyCounts[option] = pregnancyCounts[option]! + 1;
+                }
+              }
+            }
+            final text = value['text'];
+            if (text is String && text.trim().isNotEmpty) {
+              pregnancyCounts['other_text'] =
+                  pregnancyCounts['other_text']! + 1;
+            }
+          }
+          final months = value['months'];
+          if (months is num && entry.key == 'q036') {
+            crawling.add(months.toDouble());
+          }
+          if (months is num && entry.key == 'q037') {
+            walking.add(months.toDouble());
+          }
+        }
+      }
+    }
+
+    final topReflexes = reflexSums.entries
+        .map((entry) => _AdminMetric(
+              label: _reflexLabel(entry.key),
+              value: entry.value / (reflexCounts[entry.key] ?? 1),
+              decimals: 1,
+              detail: '${reflexCounts[entry.key] ?? 0} Fragebögen',
+            ))
+        .toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+
+    final safetyFlags = safetyFlagLabelById.entries
+        .map((e) => _AdminMetric(
+              label: e.value,
+              value: (yesCounts[e.key] ?? 0).toDouble(),
+              decimals: 0,
+            ))
+        .toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+
+    final topQuestions = yesCounts.entries
+        .where((e) => !safetyFlagLabelById.containsKey(e.key))
+        .map((entry) => _AdminMetric(
+              label: questionTextById[entry.key] ?? entry.key,
+              value: entry.value.toDouble(),
+              decimals: 0,
+            ))
+        .toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+
+    final pregnancyMetrics = [
+      _AdminMetric(
+        label: 'Schwangerschaftsvergiftung',
+        value: pregnancyCounts['preeclampsia']!.toDouble(),
+        decimals: 0,
+      ),
+      _AdminMetric(
+        label: 'Schwangerschaftsblutung',
+        value: pregnancyCounts['bleeding']!.toDouble(),
+        decimals: 0,
+      ),
+      _AdminMetric(
+        label: 'Bluthochdruck',
+        value: pregnancyCounts['hypertension']!.toDouble(),
+        decimals: 0,
+      ),
+      _AdminMetric(
+        label: 'Freitext vorhanden',
+        value: pregnancyCounts['other_text']!.toDouble(),
+        decimals: 0,
+      ),
+    ]..removeWhere((metric) => metric.value == 0);
+
+    return _ReflexAnalyticsSummary(
+      totalAssessments: totalAssessments,
+      ageGroups: ageGroups,
+      topReflexes: topReflexes.take(8).toList(),
+      topQuestions: topQuestions.take(12).toList(),
+      safetyFlags: safetyFlags,
+      pregnancyMetrics: pregnancyMetrics,
+      crawlingMonths: crawling.build(),
+      walkingMonths: walking.build(),
+    );
+  }
+}
+
+class _AdminMetric {
+  const _AdminMetric({
+    required this.label,
+    required this.value,
+    this.detail,
+    this.decimals = 0,
+  });
+
+  final String label;
+  final double value;
+  final String? detail;
+  final int decimals;
+}
+
+class _MonthStats {
+  const _MonthStats({
+    required this.count,
+    required this.average,
+  });
+
+  final int count;
+  final double average;
+}
+
+class _MonthStatsBuilder {
+  double _sum = 0;
+  int _count = 0;
+
+  void add(double value) {
+    _sum += value;
+    _count += 1;
+  }
+
+  _MonthStats build() => _MonthStats(
+        count: _count,
+        average: _count == 0 ? 0 : _sum / _count,
+      );
+}
+
+String _ageGroupLabel(String ageGroup) {
+  if (ageGroup == 'unknown') return 'Ohne Alter';
+  return ageGroup;
+}
+
+int _ageSort(String label) {
+  const order = ['0-2', '3-4', '5-7', '8-10', '11-13', '14-17', '18+'];
+  final index = order.indexOf(label);
+  if (index == -1) return 99;
+  return index;
+}
+
+String _reflexLabel(String reflex) {
+  return switch (reflex) {
+    'delay' => 'Verzögerung',
+    'flr' => 'FLR',
+    'moro' => 'Moro',
+    'spinalGalant' => 'Spinaler Galant',
+    'tlr' => 'TLR',
+    'atnr' => 'ATNR',
+    'stnr' => 'STNR',
+    'landau' => 'Landau',
+    'babinski' => 'Babinski',
+    'babkin' => 'Babkin',
+    'plantar' => 'Plantar',
+    'palmar' => 'Palmar',
+    'righting' => 'Aufricht',
+    'rootingSucking' => 'Such-Saug',
+    _ => reflex,
+  };
+}
+
+class _SharedExperienceAdminTab extends ConsumerWidget {
+  const _SharedExperienceAdminTab();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final cs = Theme.of(context).colorScheme;
+    final sharesAsync = ref.watch(adminExperienceSharesProvider);
+    return sharesAsync.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (e, _) => Center(child: Text('Fehler: $e')),
+      data: (shares) {
+        if (shares.isEmpty) {
+          return const Center(child: Text('Keine geteilten Erfahrungen.'));
+        }
+        return ListView.separated(
+          padding: const EdgeInsets.all(16),
+          itemCount: shares.length + 1,
+          separatorBuilder: (_, __) => const SizedBox(height: 12),
+          itemBuilder: (context, index) {
+            if (index == 0) {
+              return const _AdminInfoCard(
+                icon: Icons.rate_review_outlined,
+                title: 'Geteilte Erfahrungen',
+                body:
+                    'Admin-Review bleibt moderierend: auffällige Beiträge können entfernt werden, ohne daraus einen offenen Social Feed zu machen.',
+              );
+            }
+            final share = shares[index - 1];
+            return Card(
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(Icons.forum_outlined),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            '${share.authorLabel} · ${share.packageId}',
+                            style: Theme.of(context).textTheme.titleSmall,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(share.content),
+                    const SizedBox(height: 8),
+                    Text(
+                      share.createdAt.toLocal().toString().substring(0, 16),
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: cs.onSurfaceVariant,
+                          ),
+                    ),
+                    const SizedBox(height: 8),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: OutlinedButton.icon(
+                        onPressed: () async {
+                          final confirmed = await _confirmRemoveShare(context);
+                          if (!confirmed) return;
+                          try {
+                            await ref
+                                .read(adminExperienceSharesProvider.notifier)
+                                .deleteShare(share.id);
+                          } catch (e) {
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    'Beitrag konnte nicht entfernt werden: $e',
+                                  ),
+                                ),
+                              );
+                            }
+                          }
+                        },
+                        icon: const Icon(Icons.delete_outline),
+                        label: const Text('Entfernen'),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
     );
   }
 }
@@ -295,6 +1082,7 @@ class _TrainerApplicationCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final cs = Theme.of(context).colorScheme;
     final notifier = ref.read(trainerApplicationsForReviewProvider.notifier);
 
     Future<void> markSeen() async {
@@ -433,7 +1221,7 @@ class _TrainerApplicationCard extends ConsumerWidget {
                       : Icons.radio_button_unchecked,
                   color: application.hasBackgroundCheck
                       ? AppColors.success
-                      : AppColors.textSecondary,
+                      : cs.onSurfaceVariant,
                 ),
                 const SizedBox(width: 8),
                 const Expanded(

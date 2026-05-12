@@ -156,8 +156,8 @@ class SyncService {
 
         appLogger.d('Synced ${job.tableName_}:${job.recordId}');
       } on PostgrestException catch (e, st) {
-        final recovered =
-            await _recoverFromServerConflict(job: job, error: e, client: client);
+        final recovered = await _recoverFromServerConflict(
+            job: job, error: e, client: client);
         if (recovered) {
           appLogger.w(
             'Recovered sync conflict for ${job.tableName_}:${job.recordId}',
@@ -198,7 +198,11 @@ class SyncService {
         job.action == 'upsert' &&
         error.code == '23505' &&
         (message.contains('enrollments_user_package_active_unique') ||
-            details.contains('enrollments_user_package_active_unique'));
+            details.contains('enrollments_user_package_active_unique') ||
+            message.contains('enrollments_subject_profile_active_unique') ||
+            details.contains('enrollments_subject_profile_active_unique') ||
+            message.contains('enrollments_legacy_user_package_active_unique') ||
+            details.contains('enrollments_legacy_user_package_active_unique'));
 
     final isOrphanProgressConflict = job.tableName_ == 'progress_entries' &&
         job.action == 'upsert' &&
@@ -217,7 +221,8 @@ class SyncService {
     if (userId == null || enrollmentId == null) return false;
 
     await _discardLocalEnrollmentGraph(enrollmentId);
-    await (_db.delete(_db.syncJobsTable)..where((t) => t.id.equals(job.id))).go();
+    await (_db.delete(_db.syncJobsTable)..where((t) => t.id.equals(job.id)))
+        .go();
 
     if (client.auth.currentUser?.id == userId) {
       await rehydrate(userId);
@@ -227,30 +232,31 @@ class SyncService {
 
   Future<void> _discardLocalEnrollmentGraph(String enrollmentId) async {
     final progressIds = (await (_db.select(_db.progressEntriesTable)
-          ..where((t) => t.enrollmentId.equals(enrollmentId)))
-        .get())
+              ..where((t) => t.enrollmentId.equals(enrollmentId)))
+            .get())
         .map((row) => row.id)
         .toList();
     final sessionIds = (await (_db.select(_db.trainingSessionsTable)
-          ..where((t) => t.enrollmentId.equals(enrollmentId)))
-        .get())
+              ..where((t) => t.enrollmentId.equals(enrollmentId)))
+            .get())
         .map((row) => row.id)
         .toList();
     final moodIds = (await (_db.select(_db.moodCheckinsTable)
-          ..where((t) => t.enrollmentId.equals(enrollmentId)))
-        .get())
+              ..where((t) => t.enrollmentId.equals(enrollmentId)))
+            .get())
         .map((row) => row.id)
         .toList();
     final journalIds = (await (_db.select(_db.journalEntriesTable)
-          ..where((t) => t.enrollmentId.equals(enrollmentId)))
-        .get())
+              ..where((t) => t.enrollmentId.equals(enrollmentId)))
+            .get())
         .map((row) => row.id)
         .toList();
-    final questionnaireIds = (await (_db.select(_db.completionQuestionnairesTable)
-          ..where((t) => t.enrollmentId.equals(enrollmentId)))
-        .get())
-        .map((row) => row.id)
-        .toList();
+    final questionnaireIds =
+        (await (_db.select(_db.completionQuestionnairesTable)
+                  ..where((t) => t.enrollmentId.equals(enrollmentId)))
+                .get())
+            .map((row) => row.id)
+            .toList();
 
     await _db.transaction(() async {
       await (_db.delete(_db.progressEntriesTable)
@@ -340,6 +346,7 @@ class SyncService {
               EnrollmentsTableCompanion.insert(
                 id: id,
                 userId: row['user_id'] as String,
+                subjectProfileId: Value(row['subject_profile_id'] as String?),
                 packageId: row['package_id'] as String,
                 status: Value(row['status'] as String? ?? 'active'),
                 assignedDurationWeeks:
@@ -389,6 +396,7 @@ class SyncService {
               ProgressEntriesTableCompanion.insert(
                 id: id,
                 userId: row['user_id'] as String,
+                subjectProfileId: Value(row['subject_profile_id'] as String?),
                 enrollmentId: row['enrollment_id'] as String,
                 currentDay: Value(row['current_day'] as int? ?? 1),
                 lastActivityDate: Value(
@@ -448,6 +456,7 @@ class SyncService {
               TrainingSessionsTableCompanion.insert(
                 id: id,
                 userId: row['user_id'] as String,
+                subjectProfileId: Value(row['subject_profile_id'] as String?),
                 enrollmentId: row['enrollment_id'] as String,
                 sessionDate: _parseDate(row['session_date']),
                 dayNumber: row['day_number'] as int,

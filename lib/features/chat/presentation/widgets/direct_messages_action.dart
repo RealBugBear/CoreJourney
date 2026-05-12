@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../../core/navigation/app_router.dart';
-import '../../../trainer/presentation/providers/trainer_provider.dart';
 import '../providers/chat_providers.dart';
 
 class DirectMessagesAction extends ConsumerWidget {
@@ -11,17 +11,18 @@ class DirectMessagesAction extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final trainerLinked = ref.watch(trainerLinkedProvider);
-    if (!trainerLinked) return const SizedBox.shrink();
+    if (Supabase.instance.client.auth.currentUser == null) {
+      return const SizedBox.shrink();
+    }
 
-    final unreadDm = ref.watch(unreadDmCountProvider);
+    final unread = ref.watch(totalUnreadCountProvider);
 
     return IconButton(
-      tooltip: 'Trainer-Kommunikation',
+      tooltip: 'Nachrichten',
       onPressed: () => context.push(Routes.dm),
       icon: Badge(
-        isLabelVisible: unreadDm > 0,
-        label: unreadDm > 99 ? const Text('99+') : Text('$unreadDm'),
+        isLabelVisible: unread > 0,
+        label: unread > 99 ? const Text('99+') : Text('$unread'),
         child: const Icon(Icons.chat_bubble_outline),
       ),
     );

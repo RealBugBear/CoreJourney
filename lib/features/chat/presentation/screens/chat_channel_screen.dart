@@ -476,6 +476,10 @@ class _ChatChannelScreenState extends ConsumerState<ChatChannelScreen> {
                                     reviewFlow: isApplicationReview,
                                   )
                               : null,
+                          onOpenAppointmentProposals: () {
+                            ref.invalidate(traineeProposalsProvider);
+                            context.push(Routes.appointmentProposals);
+                          },
                         );
                       },
                     ),

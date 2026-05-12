@@ -6,18 +6,25 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../bootstrap/providers.dart';
 import '../../../../core/database/app_database.dart';
 import '../../../../core/navigation/app_router.dart';
+import '../../../../core/onboarding/onboarding_hint_gate.dart';
+import '../../../../core/onboarding/onboarding_hint_provider.dart';
 import '../../../../core/notifications/notification_service.dart';
 import '../../../../core/settings/settings_provider.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/time/app_clock_provider.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../../chat/presentation/providers/chat_providers.dart';
 import '../../../chat/presentation/widgets/direct_messages_action.dart';
 import '../../../mood/presentation/providers/mood_provider.dart';
-import '../../../mood/presentation/widgets/mood_chart_widget.dart';
 import '../../../mood/presentation/widgets/mood_checkin_sheet.dart';
 import '../../../mood/presentation/widgets/training_experience_sheet.dart';
+import '../../../training/domain/models/exercise.dart';
+import '../../../training/domain/models/training_session.dart';
 import '../../../training/domain/services/experience_prompt_service.dart';
+import '../../../training/presentation/providers/training_flow_provider.dart';
+import '../../../training/presentation/screens/training_session_screen.dart';
 import '../../../consent/presentation/providers/consent_provider.dart';
+import '../../../assessment/presentation/providers/reflex_profile_provider.dart';
 import '../../../profile/presentation/providers/profile_provider.dart';
 import '../../../progress/presentation/providers/progress_provider.dart';
 import '../../../trainer/presentation/providers/trainer_provider.dart';
@@ -32,27 +39,15 @@ class DashboardScreen extends ConsumerStatefulWidget {
 class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   bool _onboardingCheckDone = false;
   bool _usernameCheckDone = false;
+  bool _subjectProfileCheckDone = false;
 
   void _maybeRedirectOnboarding() {
     if (_onboardingCheckDone) return;
 
-    // The first-run gates must happen as soon as the dashboard is reached.
-    // They do not depend on local training data or rehydration.
+    // Step 1: Consent — always first.
     final consent = ref.read(hasConsentedProvider);
     if (consent.isLoading) return;
-    // On error (e.g. table missing), treat as not consented so screen still shows.
     if (consent.hasError || consent.value != true) {
-      final placeholder = ref.read(hasSeenAnalysisPlaceholderProvider);
-      if (placeholder.isLoading) return;
-      if (placeholder.hasError || placeholder.value != true) {
-        _onboardingCheckDone = true;
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (!mounted) return;
-          context.go(Routes.analysisPlaceholder);
-        });
-        return;
-      }
-
       _onboardingCheckDone = true;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
@@ -61,46 +56,36 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       return;
     }
 
-    // Gate: do not decide while server data is being loaded into local DB.
-    // A returning user on a fresh device has an empty local DB until
-    // rehydrate() completes. Without this guard, they would incorrectly
-    // be sent to the intake assessment screen.
-    //
-    // Treat AsyncLoading (stream has never emitted) as "might be rehydrating" —
-    // safer to wait than to proceed with a potentially empty local DB.
-    // This covers the race where GoRouter builds the dashboard before the
-    // app.dart authStateProvider listener has had a chance to call rehydrate().
-    final rehydrationAsync = ref.read(rehydrationProvider);
-    if (rehydrationAsync.isLoading || (rehydrationAsync.valueOrNull ?? false)) {
-      return;
-    }
-
-    // Step 2: intake assessment if no active enrollment
-    final enrollment = ref.read(activeEnrollmentProvider);
-    if (enrollment.isLoading) return;
-    _onboardingCheckDone = true;
-    if (enrollment.value == null) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted) return;
-        final packageId = ref.read(selectedPackageIdProvider);
-        context.go(Routes.intakeAssessment, extra: packageId);
-      });
-      return;
-    }
-
-    // Step 3: username setup — checked per-account via Supabase profiles table.
-    // Profile row is created on first save/skip, so null means the user has
-    // never gone through setup on this account.
+    // Step 2: Kontaktname.
     if (!_usernameCheckDone) {
       final profileAsync = ref.read(profileProvider);
-      if (profileAsync.isLoading) return; // wait until profile is loaded
+      if (profileAsync.isLoading) return;
       _usernameCheckDone = true;
-      if (profileAsync.valueOrNull == null) {
+      final displayName = profileAsync.valueOrNull?.displayName?.trim();
+      if (displayName == null || displayName.isEmpty) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (mounted) context.push(Routes.usernameSetup);
+          if (mounted) context.go(Routes.usernameSetup);
         });
+        return;
       }
     }
+
+    // Step 3: Subject profile check — every account needs at least one profile.
+    if (!_subjectProfileCheckDone) {
+      final profilesAsync = ref.read(allReflexSubjectProfilesProvider);
+      if (profilesAsync.isLoading) return;
+      _subjectProfileCheckDone = true;
+      if (profilesAsync.valueOrNull?.isEmpty ?? true) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) context.go(Routes.onboardingForWhom);
+        });
+        return;
+      }
+    }
+
+    // Package selection is intentionally not an onboarding gate. Users start it
+    // explicitly from the dashboard when they are ready.
+    _onboardingCheckDone = true;
   }
 
   bool _isCompletedToday(ProgressEntriesTableData? progress, DateTime now) {
@@ -123,9 +108,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Training als abgeschlossen markieren'),
+        title: const Text('Einheit eintragen'),
         content: const Text(
-          'Der heutige Trainingstag wird als erledigt markiert. Du kannst danach direkt eine Stimmung und Notiz erfassen.',
+          'Die heutige Einheit wird eingetragen. Danach kannst du direkt nachspüren und eine Beobachtung festhalten.',
         ),
         actions: [
           TextButton(
@@ -134,7 +119,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Als abgeschlossen markieren'),
+            child: const Text('Heute geübt eintragen'),
           ),
         ],
       ),
@@ -159,11 +144,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         final isDE = settings.languageCode == 'de';
         await NotificationService.instance.suppressTodayAndReschedule(
           startMinutes: settings.reminderStartMinutes,
-          titleDe:
-              isDE ? 'Zeit fuer dein Training 🧘' : 'Time for your training 🧘',
+          titleDe: isDE ? 'Zeit für deine Einheit' : 'Time for your unit',
           bodyDe: isDE
-              ? 'Mach dein taegliches Reflexintegrations-Training.'
-              : 'Complete your daily reflex integration training.',
+              ? 'Nimm dir Zeit für deine heutige Einheit.'
+              : "Take time for today's unit.",
         );
       }
 
@@ -182,24 +166,149 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Der heutige Tag wurde abgeschlossen.')),
+          const SnackBar(
+            content: Text('Die heutige Einheit wurde eingetragen.'),
+          ),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Der Tag konnte nicht abgeschlossen werden: $e'),
+            content: Text('Die Einheit konnte nicht eingetragen werden: $e'),
           ),
         );
       }
     }
   }
 
+  Future<void> _beginUnit(TrainingSessionMode mode) async {
+    ref.read(settingsProvider.notifier).setTrainingMode(mode);
+    final packageId = ref.read(selectedPackageIdProvider);
+    final companionSubjectProfileIds = await _askForJointTrainingProfiles(
+      packageId: packageId,
+    );
+    if (!mounted) return;
+    context.push(
+      Routes.trainingSession,
+      extra: TrainingSessionLaunchArgs(
+        packageId: packageId,
+        companionSubjectProfileIds: companionSubjectProfileIds,
+      ),
+    );
+  }
+
+  Future<List<String>> _askForJointTrainingProfiles({
+    required String packageId,
+  }) async {
+    final activeProfile = ref.read(selectedSubjectProfileProvider);
+    if (activeProfile == null || activeProfile.profileType != 'child') {
+      return const [];
+    }
+
+    final profiles =
+        ref.read(allReflexSubjectProfilesProvider).valueOrNull ?? const [];
+    final childProfiles = profiles
+        .where((profile) =>
+            profile.profileType == 'child' && profile.id != activeProfile.id)
+        .toList();
+    if (childProfiles.isEmpty) return const [];
+
+    final db = ref.read(databaseProvider);
+    final candidates = <_JointTrainingCandidate>[];
+    for (final profile in childProfiles) {
+      final enrollment = await (db.select(db.enrollmentsTable)
+            ..where((t) => t.subjectProfileId.equals(profile.id))
+            ..where((t) => t.packageId.equals(packageId))
+            ..where((t) => t.status.equals('active'))
+            ..limit(1))
+          .getSingleOrNull();
+      if (enrollment == null) continue;
+
+      final progress = await (db.select(db.progressEntriesTable)
+            ..where((t) => t.enrollmentId.equals(enrollment.id))
+            ..limit(1))
+          .getSingleOrNull();
+      if (progress == null || _isCompletedToday(progress, DateTime.now())) {
+        continue;
+      }
+      candidates.add(_JointTrainingCandidate(profile: profile));
+    }
+
+    if (candidates.isEmpty || !mounted) return const [];
+    return await _showJointTrainingDialog(candidates) ?? const [];
+  }
+
+  Future<List<String>?> _showJointTrainingDialog(
+    List<_JointTrainingCandidate> candidates,
+  ) async {
+    var selectedIds = candidates.map((c) => c.profile.id).toSet();
+
+    return showDialog<List<String>>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) {
+          return AlertDialog(
+            title: const Text('Zusammen trainieren?'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Diese Kinder haben dasselbe aktive Paket. Soll die Einheit nach dem Training auch für sie eingetragen werden?',
+                ),
+                const SizedBox(height: 12),
+                for (final candidate in candidates)
+                  CheckboxListTile(
+                    contentPadding: EdgeInsets.zero,
+                    value: selectedIds.contains(candidate.profile.id),
+                    title: Text(candidate.profile.displayName),
+                    controlAffinity: ListTileControlAffinity.leading,
+                    onChanged: (value) {
+                      setDialogState(() {
+                        if (value == true) {
+                          selectedIds.add(candidate.profile.id);
+                        } else {
+                          selectedIds.remove(candidate.profile.id);
+                        }
+                      });
+                    },
+                  ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, const <String>[]),
+                child: const Text('Nur dieses Profil'),
+              ),
+              FilledButton(
+                onPressed: selectedIds.isEmpty
+                    ? null
+                    : () => Navigator.pop(ctx, selectedIds.toList()),
+                child: const Text('Gemeinsam eintragen'),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  void _openObservation(String? enrollmentId) {
+    if (enrollmentId == null) return;
+    showMoodCheckinSheet(
+      context,
+      enrollmentId: enrollmentId,
+      subjectProfileId: ref.read(selectedSubjectProfileProvider)?.id,
+      onSaved: () {
+        ref.invalidate(moodDailyAggregatesProvider);
+        ref.invalidate(moodNotesProvider);
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-
     // Case 1: providers already resolved before this widget built
     _maybeRedirectOnboarding();
 
@@ -210,44 +319,40 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     ref.listen<AsyncValue<bool>>(hasConsentedProvider, (_, next) {
       if (!next.isLoading) _maybeRedirectOnboarding();
     });
+    // Profile load completing after consent triggers the Kontaktname check.
+    ref.listen(profileProvider, (_, next) {
+      if (!next.isLoading) _maybeRedirectOnboarding();
+    });
+    // Subject profiles loading triggers the for-whom check.
+    ref.listen(allReflexSubjectProfilesProvider, (_, next) {
+      if (!next.isLoading) _maybeRedirectOnboarding();
+    });
     ref.listen<AsyncValue<EnrollmentsTableData?>>(activeEnrollmentProvider,
         (_, next) {
       if (!next.isLoading) _maybeRedirectOnboarding();
-    });
-
-    // Case 3: rehydration completes → re-run check with fresh DB data.
-    // Resets _onboardingCheckDone so the check fires again after rehydrate()
-    // has filled the local DB with server enrollments.
-    //
-    // Triggers on ANY transition to false — covers both:
-    //   loading → false  (rehydration was skipped: no connectivity, userId mismatch)
-    //   true   → false   (normal completion after pulling server data)
-    // Using addPostFrameCallback gives Drift one async cycle to propagate the
-    // freshly-written DB rows to activeEnrollmentProvider before we re-check.
-    ref.listen<AsyncValue<bool>>(rehydrationProvider, (prev, next) {
-      if (next.valueOrNull == false) {
-        _onboardingCheckDone = false;
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (mounted) _maybeRedirectOnboarding();
-        });
-      }
     });
 
     final progress = ref.watch(activeProgressProvider).valueOrNull;
     final enrollment = ref.watch(activeEnrollmentProvider).valueOrNull;
     final now = ref.watch(appClockProvider).now();
     final completedToday = _isCompletedToday(progress, now);
+    final packageId = ref.watch(selectedPackageIdProvider);
+    final flowState = ref.watch(trainingFlowProvider(packageId));
+    final sessionsThisWeek = ref.watch(thisWeekSessionsProvider).valueOrNull ??
+        const <TrainingSessionsTableData>[];
+    final proposals =
+        ref.watch(traineeProposalsProvider).valueOrNull ?? const [];
+    final unreadDm = ref.watch(unreadDmCountProvider);
 
-    final config = ref.watch(appConfigProvider);
     final currentEmail = Supabase.instance.client.auth.currentUser?.email ?? '';
-    // Dev tools: only for @corejourney.dev accounts in development builds.
-    final showDevTools =
-        config.isDevelopment && currentEmail.endsWith('@corejourney.dev');
+    // Dev tools are reserved for internal @corejourney.dev accounts.
+    final showDevTools = currentEmail.endsWith('@corejourney.dev');
 
     return Scaffold(
       appBar: AppBar(
-        title: const _DashboardBrandTitle(),
+        title: const _DashboardProfileTitle(),
         actions: [
+          const DirectMessagesAction(),
           if (showDevTools)
             TextButton(
               onPressed: () => context.push(Routes.devTools),
@@ -260,7 +365,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 ),
               ),
             ),
-          const DirectMessagesAction(),
           IconButton(
             icon: const Icon(Icons.settings_outlined),
             tooltip: 'Einstellungen',
@@ -268,96 +372,514 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           ),
         ],
       ),
-      floatingActionButton: enrollment == null
-          ? null
-          : FloatingActionButton.small(
-              tooltip: 'Schneller Eintrag',
-              backgroundColor: Theme.of(context)
-                  .colorScheme
-                  .surfaceContainerHighest
-                  .withValues(alpha: 0.96),
-              foregroundColor: AppColors.primary,
-              elevation: 2,
-              onPressed: () => showMoodCheckinSheet(
-                context,
-                enrollmentId: enrollment.id,
-                onSaved: () {
-                  ref.invalidate(moodDailyAggregatesProvider);
-                  ref.invalidate(moodNotesProvider);
-                },
-              ),
-              child: const Icon(Icons.edit_note_outlined),
+      body: OnboardingHintGate(
+        hint: AppOnboardingHint.dashboard,
+        child: SafeArea(
+          child: RefreshIndicator(
+            onRefresh: () async {
+              ref.invalidate(activeProgressProvider);
+              ref.invalidate(thisWeekSessionsProvider);
+              ref.invalidate(moodDailyAggregatesProvider);
+              ref.invalidate(moodNotesProvider);
+              ref.invalidate(traineeProposalsProvider);
+            },
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+              children: [
+                const _CompletionQuestionnaireBanner(),
+                const _AppointmentProposalBanner(),
+                _DailyUnitCard(
+                  packageName: _packageName(packageId),
+                  currentDay: progress?.currentDay ?? 1,
+                  totalDays:
+                      ((enrollment?.assignedDurationWeeks ?? 8) * 7).clamp(
+                    1,
+                    3650,
+                  ),
+                  movementCount: flowState.totalExercises,
+                  estimatedMinutes: _estimatedMinutes(flowState.exercises),
+                  now: now,
+                  sessionsThisWeek: sessionsThisWeek,
+                  completedToday: completedToday,
+                  hasActivePackage: enrollment != null,
+                  onBeginGuided: () => _beginUnit(TrainingSessionMode.tutorial),
+                  onBeginRoutine: () => _beginUnit(TrainingSessionMode.routine),
+                  onObservation: () => _openObservation(enrollment?.id),
+                  onManualComplete:
+                      enrollment == null || progress == null || completedToday
+                          ? null
+                          : () => _markTodayComplete(
+                                enrollment: enrollment,
+                                progress: progress,
+                              ),
+                  onStartPackage: () => context.push(Routes.intakeAssessment),
+                ),
+                const SizedBox(height: 16),
+                _DailyImpulseCard(weekday: now.weekday),
+                const SizedBox(height: 16),
+                _BegleitungNoticeCard(
+                  unreadMessages: unreadDm,
+                  proposalCount: proposals.length,
+                  onOpen: () => context.push(Routes.accompaniment),
+                ),
+              ],
             ),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              _SlimStatusBar(
-                l10n: l10n,
-                progress: progress,
-                enrollment: enrollment,
+          ),
+        ),
+      ),
+    );
+  }
+
+  static String _packageName(String packageId) {
+    switch (packageId) {
+      case 'spinal_galant':
+        return 'Spinaler Galant';
+      case 'tlr':
+        return 'TLR';
+      case 'babkin':
+        return 'Babkin';
+      case 'such_saug':
+        return 'Such-Saug';
+      case 'atnr':
+        return 'ATNR';
+      case 'stnr':
+        return 'STNR';
+      case 'babinski':
+        return 'Babinski';
+      case 'landau':
+        return 'Landau';
+      case 'moro':
+      default:
+        return 'Moro';
+    }
+  }
+
+  static int _estimatedMinutes(List<Exercise> exercises) {
+    final seconds = exercises.fold<int>(
+      0,
+      (sum, exercise) => sum + exercise.durationSeconds,
+    );
+    final transitionSeconds = exercises.length * 25;
+    return ((seconds + transitionSeconds) / 60).ceil().clamp(1, 120);
+  }
+}
+
+class _JointTrainingCandidate {
+  const _JointTrainingCandidate({required this.profile});
+
+  final ReflexSubjectProfile profile;
+}
+
+class _DailyUnitCard extends StatelessWidget {
+  const _DailyUnitCard({
+    required this.packageName,
+    required this.currentDay,
+    required this.totalDays,
+    required this.movementCount,
+    required this.estimatedMinutes,
+    required this.now,
+    required this.sessionsThisWeek,
+    required this.completedToday,
+    required this.hasActivePackage,
+    required this.onBeginGuided,
+    required this.onBeginRoutine,
+    required this.onObservation,
+    required this.onManualComplete,
+    required this.onStartPackage,
+  });
+
+  final String packageName;
+  final int currentDay;
+  final int totalDays;
+  final int movementCount;
+  final int estimatedMinutes;
+  final DateTime now;
+  final List<TrainingSessionsTableData> sessionsThisWeek;
+  final bool completedToday;
+  final bool hasActivePackage;
+  final VoidCallback onBeginGuided;
+  final VoidCallback onBeginRoutine;
+  final VoidCallback onObservation;
+  final VoidCallback? onManualComplete;
+  final VoidCallback onStartPackage;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final progress = (currentDay / totalDays).clamp(0.0, 1.0);
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(18),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Heute',
+                        style: theme.textTheme.labelLarge?.copyWith(
+                          color: AppColors.primary,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        hasActivePackage
+                            ? '$packageName Paket'
+                            : 'Noch kein aktives Paket',
+                        style: theme.textTheme.headlineSmall?.copyWith(
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                if (completedToday)
+                  const _StatusChip(
+                    icon: Icons.check_circle_outline,
+                    label: 'Heute abgeschlossen',
+                  ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            if (hasActivePackage) ...[
+              ClipRRect(
+                borderRadius: BorderRadius.circular(999),
+                child: LinearProgressIndicator(
+                  value: progress,
+                  minHeight: 7,
+                  backgroundColor: theme.colorScheme.surfaceContainerHighest,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  _InfoChip(
+                    icon: Icons.calendar_today_outlined,
+                    label: 'Tag $currentDay von $totalDays',
+                  ),
+                  _InfoChip(
+                    icon: Icons.self_improvement,
+                    label: '$movementCount Bewegungen',
+                  ),
+                  _InfoChip(
+                    icon: Icons.schedule_outlined,
+                    label: 'ca. $estimatedMinutes Min.',
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              _WeeklyRegularityStrip(
                 now: now,
-              ),
-              const SizedBox(height: 16),
-              const _CompletionQuestionnaireBanner(),
-              const SizedBox(height: 12),
-              const _AppointmentProposalBanner(),
-              Expanded(
-                child: Center(
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 620),
-                    child: const _MoodChartCard(),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              ElevatedButton.icon(
-                onPressed: () => context.push(
-                  Routes.trainingSession,
-                  extra: ref.read(selectedPackageIdProvider),
-                ),
-                icon: const Icon(Icons.play_arrow_rounded, size: 28),
-                label: Text(
-                  l10n.startTraining,
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 18),
-                  backgroundColor: AppColors.primary,
-                ),
+                sessions: sessionsThisWeek,
               ),
               const SizedBox(height: 12),
+              Text(
+                'Die Bewegungen bleiben bewusst gleich. Regelmäßigkeit ist wichtiger als Intensität.',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  height: 1.35,
+                ),
+              ),
+              const SizedBox(height: 14),
+              if (!completedToday) ...[
+                FilledButton.icon(
+                  onPressed: onBeginGuided,
+                  icon: const Icon(Icons.play_arrow_rounded),
+                  label: const Text('Einheit beginnen'),
+                ),
+                const SizedBox(height: 10),
+              ],
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: onObservation,
+                      icon: const Icon(Icons.edit_note_outlined),
+                      label: const Text('Erfahrung dokumentieren'),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: completedToday ? null : onManualComplete,
+                      icon: Icon(
+                        completedToday
+                            ? Icons.check_circle
+                            : Icons.check_circle_outline,
+                      ),
+                      label: Text(
+                        completedToday ? 'Heute erledigt' : 'Einheit eintragen',
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
               OutlinedButton.icon(
-                onPressed:
-                    enrollment == null || progress == null || completedToday
-                        ? null
-                        : () => _markTodayComplete(
-                              enrollment: enrollment,
-                              progress: progress,
-                            ),
-                icon: Icon(
-                  completedToday
-                      ? Icons.check_circle
-                      : Icons.check_circle_outline,
-                ),
-                label: Text(
-                  completedToday
-                      ? 'Heute bereits abgeschlossen'
-                      : 'Training als abgeschlossen markieren',
-                ),
-                style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
+                onPressed: onBeginRoutine,
+                icon: const Icon(Icons.timer_outlined),
+                label: const Text('Routine-Modus'),
+              ),
+            ] else ...[
+              Text(
+                'Erstelle dein Reflexprofil oder starte ein erstes Paket, um deinen Rhythmus aufzubauen.',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
               ),
+              const SizedBox(height: 16),
+              FilledButton.icon(
+                onPressed: onStartPackage,
+                icon: const Icon(Icons.playlist_add_check_outlined),
+                label: const Text('Paket starten'),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _DailyImpulseCard extends StatelessWidget {
+  const _DailyImpulseCard({required this.weekday});
+
+  final int weekday;
+
+  static const _impulses = [
+    'Heute zählt nicht Perfektion, sondern Regelmäßigkeit.',
+    'Beobachte, ohne zu bewerten.',
+    'Langsam und regelmäßig ist genug.',
+    'Hier ist dein nächster ruhiger Schritt.',
+    'Nimm wahr, was heute da ist.',
+    'Ruhiger Rhythmus gibt dem Körper Orientierung.',
+    'Eine kurze Einheit ist besser als Druck.',
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        child: Row(
+          children: [
+            const Icon(Icons.spa_outlined, color: AppColors.primary),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                _impulses[(weekday - 1).clamp(0, _impulses.length - 1)],
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _WeeklyRegularityStrip extends StatelessWidget {
+  const _WeeklyRegularityStrip({required this.now, required this.sessions});
+
+  final DateTime now;
+  final List<TrainingSessionsTableData> sessions;
+
+  @override
+  Widget build(BuildContext context) {
+    final weekStart = DateTime(now.year, now.month, now.day)
+        .subtract(Duration(days: now.weekday - 1));
+    final completedWeekdays = {
+      for (final session in sessions) session.sessionDate.weekday,
+    };
+
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Text(
+                  'Diese Woche',
+                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                        fontWeight: FontWeight.w800,
+                      ),
+                ),
+                const Spacer(),
+                Text(
+                  '${completedWeekdays.length}/7 geübt',
+                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Row(
+              children: List.generate(7, (index) {
+                final day = weekStart.add(Duration(days: index));
+                final complete = completedWeekdays.contains(day.weekday);
+                final isToday = day.year == now.year &&
+                    day.month == now.month &&
+                    day.day == now.day;
+                return Expanded(
+                  child: Column(
+                    children: [
+                      AnimatedContainer(
+                        duration: const Duration(milliseconds: 180),
+                        width: 18,
+                        height: 18,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: complete
+                              ? AppColors.primary
+                              : Theme.of(context)
+                                  .colorScheme
+                                  .surfaceContainerHighest,
+                          border: Border.all(
+                            color: isToday
+                                ? AppColors.primary
+                                : Theme.of(context).dividerColor,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        _weekdayLabel(index),
+                        style: Theme.of(context).textTheme.labelSmall,
+                      ),
+                    ],
+                  ),
+                );
+              }),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  static String _weekdayLabel(int index) {
+    const labels = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
+    return labels[index];
+  }
+}
+
+class _BegleitungNoticeCard extends StatelessWidget {
+  const _BegleitungNoticeCard({
+    required this.unreadMessages,
+    required this.proposalCount,
+    required this.onOpen,
+  });
+
+  final int unreadMessages;
+  final int proposalCount;
+  final VoidCallback onOpen;
+
+  @override
+  Widget build(BuildContext context) {
+    if (unreadMessages == 0 && proposalCount == 0) {
+      return const SizedBox.shrink();
+    }
+
+    final title = proposalCount > 0
+        ? '$proposalCount Terminvorschlag${proposalCount == 1 ? '' : 'e'} offen'
+        : '$unreadMessages neue Nachricht${unreadMessages == 1 ? '' : 'en'}';
+
+    return Material(
+      color: AppColors.primary.withValues(alpha: 0.09),
+      borderRadius: BorderRadius.circular(14),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(14),
+        onTap: onOpen,
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Row(
+            children: [
+              const Icon(Icons.handshake_outlined, color: AppColors.primary),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  title,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                ),
+              ),
+              const Icon(Icons.chevron_right),
             ],
           ),
         ),
       ),
+    );
+  }
+}
+
+class _StatusChip extends StatelessWidget {
+  const _StatusChip({required this.icon, required this.label});
+
+  final IconData icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: AppColors.primary.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 15, color: AppColors.primary),
+            const SizedBox(width: 5),
+            Text(
+              label,
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    color: AppColors.primary,
+                    fontWeight: FontWeight.w700,
+                  ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _InfoChip extends StatelessWidget {
+  const _InfoChip({required this.icon, required this.label});
+
+  final IconData icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Chip(
+      avatar: Icon(icon, size: 16),
+      label: Text(label),
+      visualDensity: VisualDensity.compact,
+      side: BorderSide(color: Theme.of(context).dividerColor),
     );
   }
 }
@@ -415,7 +937,8 @@ class _CompletionQuestionnaireBanner extends ConsumerWidget {
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: AppColors.textSecondary,
+                            color:
+                                Theme.of(context).colorScheme.onSurfaceVariant,
                             height: 1.25,
                           ),
                     ),
@@ -489,7 +1012,9 @@ class _AppointmentProposalBanner extends ConsumerWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: AppColors.textSecondary,
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onSurfaceVariant,
                             ),
                       ),
                     ],
@@ -506,143 +1031,90 @@ class _AppointmentProposalBanner extends ConsumerWidget {
   }
 }
 
-class _DashboardBrandTitle extends StatelessWidget {
-  const _DashboardBrandTitle();
+class _DashboardProfileTitle extends ConsumerWidget {
+  const _DashboardProfileTitle();
 
   @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        ClipRRect(
-          borderRadius: BorderRadius.circular(8),
-          child: Image.asset(
-            'assets/images/brand/free.png',
-            width: 28,
-            height: 28,
-            fit: BoxFit.cover,
+  Widget build(BuildContext context, WidgetRef ref) {
+    final profilesAsync = ref.watch(allReflexSubjectProfilesProvider);
+    final selected = ref.watch(selectedSubjectProfileProvider);
+    final title = selected?.displayName ?? 'Heute';
+
+    return PopupMenuButton<String>(
+      tooltip: 'Profil wechseln',
+      enabled: profilesAsync.valueOrNull?.isNotEmpty ?? false,
+      onSelected: (value) {
+        if (value == '__add_profile') {
+          context.push(Routes.onboardingForWhom);
+          return;
+        }
+        ref.read(selectedSubjectProfileIdProvider.notifier).select(value);
+      },
+      itemBuilder: (context) {
+        final profiles = profilesAsync.valueOrNull ?? const [];
+        return [
+          for (final profile in profiles)
+            PopupMenuItem<String>(
+              value: profile.id,
+              child: Row(
+                children: [
+                  Icon(
+                    selected?.id == profile.id
+                        ? Icons.radio_button_checked
+                        : Icons.radio_button_unchecked,
+                    size: 18,
+                    color: selected?.id == profile.id
+                        ? AppColors.primary
+                        : Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(child: Text(profile.displayName)),
+                  const SizedBox(width: 8),
+                  Text(
+                    profile.profileType == 'adult_self' ? 'Ich' : 'Kind',
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                  ),
+                ],
+              ),
+            ),
+          const PopupMenuDivider(),
+          const PopupMenuItem<String>(
+            value: '__add_profile',
+            child: Row(
+              children: [
+                Icon(Icons.add),
+                SizedBox(width: 10),
+                Text('Profil hinzufügen'),
+              ],
+            ),
           ),
-        ),
-        const SizedBox(width: 10),
-        const Text('CoreJourney'),
-      ],
-    );
-  }
-}
-
-class _SlimStatusBar extends StatelessWidget {
-  final AppLocalizations l10n;
-  final ProgressEntriesTableData? progress;
-  final EnrollmentsTableData? enrollment;
-  final DateTime now;
-
-  const _SlimStatusBar({
-    required this.l10n,
-    required this.progress,
-    required this.enrollment,
-    required this.now,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final currentDay = progress?.currentDay ?? 1;
-    final totalDays =
-        ((enrollment?.assignedDurationWeeks ?? 8) * 7).clamp(1, 3650);
-    final streak = progress?.dailyStreak ?? 0;
-
-    return Wrap(
-      spacing: 10,
-      runSpacing: 10,
-      children: [
-        _StatusPill(
-          icon: Icons.calendar_today_outlined,
-          title: l10n.dayNumber(currentDay),
-          subtitle: l10n.currentDay(currentDay, totalDays),
-        ),
-        _StatusPill(
-          icon: Icons.local_fire_department_outlined,
-          title: '$streak',
-          subtitle: l10n.dailyStreak,
-        ),
-      ],
-    );
-  }
-}
-
-class _StatusPill extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String subtitle;
-
-  const _StatusPill({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(16),
-      ),
+        ];
+      },
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 18, color: AppColors.primary),
-          const SizedBox(width: 10),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                title,
-                style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                subtitle,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: AppColors.textSecondary,
-                    ),
-              ),
-            ],
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: Image.asset(
+              'assets/images/brand/free.png',
+              width: 28,
+              height: 28,
+              fit: BoxFit.cover,
+            ),
           ),
+          const SizedBox(width: 10),
+          Flexible(
+            child: Text(
+              title,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          const SizedBox(width: 2),
+          const Icon(Icons.keyboard_arrow_down_rounded, size: 20),
         ],
-      ),
-    );
-  }
-}
-
-class _MoodChartCard extends StatelessWidget {
-  const _MoodChartCard();
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      clipBehavior: Clip.antiAlias,
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final availableHeight =
-                constraints.maxHeight.isFinite ? constraints.maxHeight : 320.0;
-            final chartHeight = (availableHeight - 72).clamp(150.0, 300.0);
-
-            return SizedBox.expand(
-              child: MoodChartWidget(
-                compactHeader: true,
-                showNotesList: false,
-                showLegend: false,
-                chartHeight: chartHeight,
-              ),
-            );
-          },
-        ),
       ),
     );
   }

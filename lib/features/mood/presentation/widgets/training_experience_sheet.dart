@@ -53,18 +53,21 @@ class _TrainingExperienceSheetState
   int? _energy;
   int? _stress;
   final _noteController = TextEditingController();
+  final Set<String> _unitImpressions = {};
+  final Set<String> _sinceLastUnit = {};
   bool _shareWithCommunity = false;
-  bool _anonymous = false;
+  bool _anonymous = true;
   bool _saving = false;
 
   @override
   void initState() {
     super.initState();
-    // Pre-populate anonymous default from profile.
+    // Sharing should be anonymous by default. A profile preference can still
+    // opt users into anonymous mode, but never silently opts them out here.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final isAnonDefault =
           ref.read(profileProvider).valueOrNull?.isAnonymousDefault ?? false;
-      if (mounted) setState(() => _anonymous = isAnonDefault);
+      if (mounted && isAnonDefault) setState(() => _anonymous = true);
     });
   }
 
@@ -80,6 +83,7 @@ class _TrainingExperienceSheetState
 
     try {
       final repo = ref.read(moodRepositoryProvider);
+      final note = _composedNote();
 
       // 1. Save mood checkin.
       await repo.createCheckin(
@@ -87,16 +91,15 @@ class _TrainingExperienceSheetState
         mood: _mood,
         energy: _energy,
         stress: _stress,
-        note: _noteController.text.trim().isEmpty
-            ? null
-            : _noteController.text.trim(),
+        note: note,
         source: 'training',
       );
 
       // 2. Optionally share to community feed.
       if (_shareWithCommunity) {
         final profile = ref.read(profileProvider).valueOrNull;
-        final displayName = _anonymous ? 'Anonym' : profile?.effectiveDisplayName ?? 'Anonym';
+        final displayName =
+            _anonymous ? 'Anonym' : profile?.effectiveDisplayName ?? 'Anonym';
 
         await ref.read(experienceRepositoryProvider).createShare(
               ExperienceShareInsert(
@@ -107,9 +110,7 @@ class _TrainingExperienceSheetState
                 userId: Supabase.instance.client.auth.currentUser!.id,
                 displayName: displayName,
                 isAnonymous: _anonymous,
-                content: _noteController.text.trim().isEmpty
-                    ? null
-                    : _noteController.text.trim(),
+                content: note,
                 mood: _mood,
                 energy: _energy,
                 stress: _stress,
@@ -130,6 +131,20 @@ class _TrainingExperienceSheetState
     }
   }
 
+  String? _composedNote() {
+    final parts = <String>[];
+    if (_unitImpressions.isNotEmpty) {
+      parts.add('Einheit: ${_unitImpressions.join(', ')}');
+    }
+    if (_sinceLastUnit.isNotEmpty) {
+      parts.add('Seit letzter Einheit: ${_sinceLastUnit.join(', ')}');
+    }
+    final own = _noteController.text.trim();
+    if (own.isNotEmpty) parts.add(own);
+    if (parts.isEmpty) return null;
+    return parts.join('\n\n');
+  }
+
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
@@ -144,7 +159,7 @@ class _TrainingExperienceSheetState
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Wie war dein Training heute?',
+            'Wie hat sich die Einheit angefühlt?',
             style: Theme.of(context)
                 .textTheme
                 .titleMedium
@@ -152,41 +167,86 @@ class _TrainingExperienceSheetState
           ),
           const SizedBox(height: 8),
           Text(
-            'Hast du Erlebnisse oder Eindrücke rund um das Pränatale Reflexe Training? '
-            'Wie geht es dir dabei?',
+            'Was hast du während der Einheit oder seit deiner letzten Einheit wahrgenommen?',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: AppColors.textSecondary,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
                   height: 1.4,
                 ),
           ),
           const SizedBox(height: 20),
+          _ChipQuestion(
+            options: const [
+              'ruhig',
+              'angenehm',
+              'müde',
+              'unruhig',
+              'emotional',
+              'körperlich unangenehm',
+              'schwer einzuschätzen',
+            ],
+            selected: _unitImpressions,
+            onToggle: (value) => setState(() {
+              _unitImpressions.contains(value)
+                  ? _unitImpressions.remove(value)
+                  : _unitImpressions.add(value);
+            }),
+          ),
+          const SizedBox(height: 18),
+          Text(
+            'Was ist dir seit der letzten Einheit aufgefallen?',
+            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w800,
+                ),
+          ),
+          const SizedBox(height: 10),
+          _ChipQuestion(
+            options: const [
+              'mehr Ruhe',
+              'mehr Energie',
+              'weniger Energie',
+              'Stimmung schwankte',
+              'emotionaler als sonst',
+              'reizempfindlicher',
+              'besserer Schlaf',
+              'unruhiger Schlaf',
+              'körperliche Spannung',
+              'keine Besonderheit',
+            ],
+            selected: _sinceLastUnit,
+            onToggle: (value) => setState(() {
+              _sinceLastUnit.contains(value)
+                  ? _sinceLastUnit.remove(value)
+                  : _sinceLastUnit.add(value);
+            }),
+          ),
+          const SizedBox(height: 18),
           _MetricRow(
-            label: '😊 Stimmung',
+            label: 'Stimmung',
             color: AppColors.moodRose,
             value: _mood,
             onChanged: (v) => setState(() => _mood = v),
           ),
           const SizedBox(height: 10),
           _MetricRow(
-            label: '⚡ Energie',
+            label: 'Energie',
             color: AppColors.moodTeal,
             value: _energy,
             onChanged: (v) => setState(() => _energy = v),
           ),
           const SizedBox(height: 10),
           _MetricRow(
-            label: '😤 Stress',
+            label: 'Stress',
             color: AppColors.moodGold,
             value: _stress,
             onChanged: (v) => setState(() => _stress = v),
           ),
           const SizedBox(height: 4),
           Text(
-            'Tippe auf einen Wert um ihn auszuwählen — oder lass ihn frei.',
+            'Tippe auf einen Wert, um ihn auszuwählen, oder lass ihn frei.',
             style: Theme.of(context)
                 .textTheme
                 .bodySmall
-                ?.copyWith(color: AppColors.textSecondary),
+                ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
           ),
           const SizedBox(height: 16),
           TextField(
@@ -194,7 +254,7 @@ class _TrainingExperienceSheetState
             minLines: 3,
             maxLines: 6,
             decoration: InputDecoration(
-              hintText: 'Deine Erfahrung... (optional)',
+              hintText: 'Eigene Beobachtung... (optional)',
               border:
                   OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
             ),
@@ -202,12 +262,12 @@ class _TrainingExperienceSheetState
           const SizedBox(height: 20),
           CheckboxListTile(
             contentPadding: EdgeInsets.zero,
-            title: const Text('Mit Community teilen'),
+            title: const Text('Als geteilte Erfahrung einreichen'),
             value: _shareWithCommunity,
             activeColor: AppColors.primary,
             onChanged: (v) => setState(() {
               _shareWithCommunity = v ?? false;
-              if (!_shareWithCommunity) _anonymous = false;
+              if (_shareWithCommunity) _anonymous = true;
             }),
           ),
           if (_shareWithCommunity)
@@ -215,7 +275,7 @@ class _TrainingExperienceSheetState
               padding: const EdgeInsets.only(left: 16),
               child: CheckboxListTile(
                 contentPadding: EdgeInsets.zero,
-                title: const Text('Anonym teilen'),
+                title: const Text('Anonym einreichen'),
                 value: _anonymous,
                 activeColor: AppColors.primary,
                 onChanged: (v) => setState(() => _anonymous = v ?? false),
@@ -272,7 +332,7 @@ class _MetricRow extends StatelessWidget {
               foregroundColor: WidgetStateProperty.resolveWith((states) =>
                   states.contains(WidgetState.selected)
                       ? color
-                      : AppColors.textSecondary),
+                      : Theme.of(context).colorScheme.onSurfaceVariant),
             ),
             segments: const [
               ButtonSegment(value: 1, label: Text('1')),
@@ -286,6 +346,36 @@ class _MetricRow extends StatelessWidget {
                 onChanged(sel.isEmpty ? null : sel.first),
           ),
         ),
+      ],
+    );
+  }
+}
+
+class _ChipQuestion extends StatelessWidget {
+  const _ChipQuestion({
+    required this.options,
+    required this.selected,
+    required this.onToggle,
+  });
+
+  final List<String> options;
+  final Set<String> selected;
+  final ValueChanged<String> onToggle;
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: [
+        for (final option in options)
+          FilterChip(
+            label: Text(option),
+            selected: selected.contains(option),
+            selectedColor: AppColors.primary.withValues(alpha: 0.14),
+            checkmarkColor: AppColors.primary,
+            onSelected: (_) => onToggle(option),
+          ),
       ],
     );
   }

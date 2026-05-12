@@ -59,7 +59,7 @@ class TrainerClientsScreen extends ConsumerWidget {
                         l10n.trainerNoClients,
                         textAlign: TextAlign.center,
                         style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                              color: AppColors.textSecondary,
+                              color: Theme.of(context).colorScheme.onSurfaceVariant,
                             ),
                       ),
                       const SizedBox(height: 8),
@@ -67,7 +67,7 @@ class TrainerClientsScreen extends ConsumerWidget {
                         l10n.trainerNoClientsHint,
                         textAlign: TextAlign.center,
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: AppColors.textSecondary,
+                              color: Theme.of(context).colorScheme.onSurfaceVariant,
                             ),
                       ),
                       if (kDebugMode) ...[
@@ -192,7 +192,7 @@ class _TrainerClientsDebugPanel extends ConsumerWidget {
     final debugAsync = ref.watch(trainerClientsDebugProvider);
     final textStyle = Theme.of(context).textTheme.bodySmall?.copyWith(
           fontFamily: 'monospace',
-          color: AppColors.textSecondary,
+          color: Theme.of(context).colorScheme.onSurfaceVariant,
           height: 1.35,
         );
 
@@ -308,10 +308,10 @@ class _ClientTile extends ConsumerWidget {
           const SizedBox(height: 2),
           Text(
             client.packageId != null
-                ? '$packageName · ${l10n.dayNumber(client.currentDay)} · ${client.dailyStreak} 🔥'
+                ? '$packageName · ${l10n.dayNumber(client.currentDay)} · ${client.dailyStreak} Tage regelmaessig'
                 : l10n.packageLocked,
             style:
-                const TextStyle(color: AppColors.textSecondary, fontSize: 13),
+                TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 13),
           ),
           if (daysSince != null)
             Text(
@@ -320,7 +320,7 @@ class _ClientTile extends ConsumerWidget {
                 fontSize: 12,
                 color: client.isAtRisk
                     ? AppColors.warning
-                    : AppColors.textSecondary,
+                    : Theme.of(context).colorScheme.onSurfaceVariant,
               ),
             ),
         ],
