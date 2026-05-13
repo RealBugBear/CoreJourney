@@ -49,6 +49,7 @@ import '../../features/chat/presentation/screens/dm_screen.dart';
 import '../../features/experience/presentation/screens/experience_feed_screen.dart';
 import '../../features/packages/presentation/screens/packages_screen.dart';
 import '../../features/onboarding/presentation/screens/for_whom_screen.dart';
+import '../../features/onboarding/presentation/screens/entry_points_screen.dart';
 import '../../features/profile/presentation/screens/username_setup_screen.dart';
 import 'app_shell.dart';
 
@@ -95,6 +96,7 @@ class Routes {
   static const trainerRequests = '/trainer/requests';
   static const usernameSetup = '/username-setup';
   static const onboardingForWhom = '/onboarding/for-whom';
+  static const onboardingEntryPoints = '/onboarding/entry-points';
   static const experienceFeed = '/experience/:channelId';
 }
 
@@ -334,6 +336,11 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: Routes.onboardingForWhom,
         name: 'onboarding-for-whom',
         builder: (context, state) => const ForWhomScreen(),
+      ),
+      GoRoute(
+        path: Routes.onboardingEntryPoints,
+        name: 'onboarding-entry-points',
+        builder: (context, state) => const EntryPointsScreen(),
       ),
       GoRoute(
         parentNavigatorKey: rootNavigatorKey,
