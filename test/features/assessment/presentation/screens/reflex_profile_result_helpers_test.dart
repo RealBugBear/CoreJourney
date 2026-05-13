@@ -114,6 +114,20 @@ void main() {
       expect(result.length, 1);
       expect(result.first.$2.length, 2);
     });
+
+    test('items within a module group are sorted by question number', () {
+      // q009 (number 9) and q006 (number 6) are both pregnancyBirth
+      // Insert q009 first — output should still be q006 first (lower number)
+      final result = buildRelevanteAngaben(_assessment({
+        'q009': {'text': 'Sturzgeburt'},  // question number 9
+        'q006': {'selected_options': ['vacuum']},  // question number 6
+      }));
+      expect(result.length, 1);
+      final items = result.first.$2;
+      expect(items.length, 2);
+      expect(items[0].question.number, 6);
+      expect(items[1].question.number, 9);
+    });
   });
 
   group('reflexModuleLabel', () {

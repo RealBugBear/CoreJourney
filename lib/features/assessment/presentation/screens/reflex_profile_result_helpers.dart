@@ -61,6 +61,10 @@ List<(ReflexQuestionModule, List<RelevantAnswerItem>)> buildRelevanteAngaben(
         );
   }
 
+  for (final list in byModule.values) {
+    list.sort((a, b) => a.question.number.compareTo(b.question.number));
+  }
+
   return [
     for (final module in ReflexQuestionModule.values)
       if (byModule.containsKey(module)) (module, byModule[module]!),
