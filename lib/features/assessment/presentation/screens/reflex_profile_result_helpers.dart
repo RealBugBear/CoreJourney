@@ -33,9 +33,10 @@ List<(ReflexQuestionModule, List<RelevantAnswerItem>)> buildRelevanteAngaben(
     if (question == null) continue;
 
     final selectedIds =
-        (raw['selected_options'] as List?)?.cast<String>() ?? const <String>[];
+        (raw['selected_options'] as List?)?.map((e) => e as String).toList() ??
+        const <String>[];
     final text = raw['text'] as String?;
-    final months = raw['months'] as int?;
+    final months = (raw['months'] as num?)?.toInt();
     final trimmedText = text?.trim();
     final hasFreeText = trimmedText != null && trimmedText.isNotEmpty;
 
