@@ -11,6 +11,7 @@ import '../../domain/reflex_questionnaire.dart';
 import '../providers/reflex_profile_provider.dart';
 import '../widgets/reflex_radar_chart.dart';
 import '../../../trainer/presentation/providers/trainer_provider.dart';
+import 'reflex_profile_result_helpers.dart';
 
 class ReflexProfileResultScreen extends ConsumerWidget {
   const ReflexProfileResultScreen({super.key});
@@ -184,18 +185,15 @@ class _ResultContent extends ConsumerWidget {
         const SizedBox(height: 10),
         for (final score in scores) _ScoreTile(score: score),
         const SizedBox(height: 18),
-        ExpansionTile(
-          tilePadding: EdgeInsets.zero,
-          title: Text(
-            'Antwortübersicht',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w800,
-                ),
-          ),
-          children: [
-            for (final entry in assessment.answers.entries)
-              _AnswerRow(questionId: entry.key, value: entry.value),
-          ],
+        Text(
+          'Relevante Angaben',
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w800,
+              ),
+        ),
+        const SizedBox(height: 10),
+        _RelevanteAngaben(
+          groups: buildRelevanteAngaben(assessment),
         ),
         const SizedBox(height: 14),
         OutlinedButton.icon(
@@ -454,39 +452,147 @@ class _ScoreTile extends StatelessWidget {
   }
 }
 
-class _AnswerRow extends StatelessWidget {
-  const _AnswerRow({
-    required this.questionId,
-    required this.value,
-  });
+class _RelevanteAngaben extends StatelessWidget {
+  const _RelevanteAngaben({required this.groups});
 
-  final String questionId;
-  final dynamic value;
+  final List<(ReflexQuestionModule, List<RelevantAnswerItem>)> groups;
+
+  @override
+  Widget build(BuildContext context) {
+    if (groups.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        child: Text(
+          'Keine weiteren Angaben vorhanden.',
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                fontStyle: FontStyle.italic,
+              ),
+        ),
+      );
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        for (final group in groups)
+          _ModuleGroup(module: group.$1, items: group.$2),
+      ],
+    );
+  }
+}
+
+class _ModuleGroup extends StatelessWidget {
+  const _ModuleGroup({required this.module, required this.items});
+
+  final ReflexQuestionModule module;
+  final List<RelevantAnswerItem> items;
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 54,
-            child: Text(
-              questionId,
-              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(bottom: 6),
+          child: Text(
+            reflexModuleLabel(module).toUpperCase(),
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: cs.primary,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.07 * 12,
+                ),
+          ),
+        ),
+        for (int i = 0; i < items.length; i++) ...[
+          _RelevantAnswerCard(item: items[i]),
+          if (i < items.length - 1) const SizedBox(height: 6),
+        ],
+        const SizedBox(height: 14),
+      ],
+    );
+  }
+}
+
+class _RelevantAnswerCard extends StatelessWidget {
+  const _RelevantAnswerCard({required this.item});
+
+  final RelevantAnswerItem item;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final hasChips = item.selectedOptionLabels.isNotEmpty;
+    final hasFreeText = item.freeText != null;
+    final hasMonths = item.months != null;
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Question text
+            Text(
+              item.question.text,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: cs.onSurfaceVariant,
+                    height: 1.4,
                   ),
             ),
-          ),
-          Expanded(
-            child: Text(
-              _formatAnswer(value),
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-          ),
-        ],
+            // Chips
+            if (hasChips) ...[
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 4,
+                runSpacing: 4,
+                children: [
+                  for (final label in item.selectedOptionLabels)
+                    Chip(
+                      label: Text(label),
+                      backgroundColor: cs.primaryContainer,
+                      labelStyle: TextStyle(
+                        color: cs.onPrimaryContainer,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      visualDensity: VisualDensity.compact,
+                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      padding: const EdgeInsets.symmetric(horizontal: 2),
+                    ),
+                ],
+              ),
+            ],
+            // Free text
+            if (hasFreeText) ...[
+              if (hasChips) ...[
+                const SizedBox(height: 6),
+                const Divider(height: 1, thickness: 1),
+                const SizedBox(height: 6),
+              ] else
+                const SizedBox(height: 8),
+              Text(
+                '„${item.freeText}"',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      fontStyle: FontStyle.italic,
+                      color: cs.onSurface.withValues(alpha: 0.70),
+                      height: 1.45,
+                    ),
+              ),
+            ],
+            // Months
+            if (hasMonths) ...[
+              if (hasChips) const SizedBox(height: 4) else const SizedBox(height: 8),
+              Text(
+                '${item.months} Monate',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      fontWeight: FontWeight.w700,
+                      color: cs.onSurface,
+                    ),
+              ),
+            ],
+          ],
+        ),
       ),
     );
   }
@@ -588,19 +694,3 @@ Color _bandColor(ReflexScoreBand band, {required Color secondaryColor}) =>
       ReflexScoreBand.insufficientData => secondaryColor,
     };
 
-String _formatAnswer(dynamic value) {
-  if (value is! Map) return value.toString();
-  final parts = <String>[];
-  final answer = value['answer'];
-  if (answer == 'yes') parts.add('Ja');
-  if (answer == 'no') parts.add('Nein');
-  if (answer == 'unknown') parts.add('Weiß ich nicht');
-  if (value['months'] != null) parts.add('${value['months']} Monate');
-  final selected = value['selected_options'];
-  if (selected is List && selected.isNotEmpty) {
-    parts.add(selected.join(', '));
-  }
-  final text = value['text'];
-  if (text is String && text.trim().isNotEmpty) parts.add(text.trim());
-  return parts.isEmpty ? '-' : parts.join(' · ');
-}
