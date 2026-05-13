@@ -45,6 +45,14 @@ class _EntryPointsScreenState extends ConsumerState<EntryPointsScreen> {
                       height: 1.5,
                     ),
               ),
+              const SizedBox(height: 20),
+              ..._kAreas.map(
+                (a) => _AreaCard(
+                  area: a,
+                  expanded: _expanded.contains(a.key),
+                  onToggle: () => _toggleCard(a.key),
+                ),
+              ),
               const SizedBox(height: 16),
               Text(
                 'Was klingt für dich vertraut? (optional, Mehrfachauswahl)',
@@ -73,14 +81,6 @@ class _EntryPointsScreenState extends ConsumerState<EntryPointsScreen> {
                       color: Theme.of(context).colorScheme.onSurfaceVariant,
                       fontStyle: FontStyle.italic,
                     ),
-              ),
-              const SizedBox(height: 20),
-              ..._kAreas.map(
-                (a) => _AreaCard(
-                  area: a,
-                  expanded: _expanded.contains(a.key),
-                  onToggle: () => _toggleCard(a.key),
-                ),
               ),
               const SizedBox(height: 28),
               SizedBox(

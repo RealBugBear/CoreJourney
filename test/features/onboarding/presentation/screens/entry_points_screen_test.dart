@@ -54,6 +54,7 @@ void main() {
         ),
       ),
     );
+    await tester.ensureVisible(find.text('Mein Kind').last);
     await tester.tap(find.text('Mein Kind').last);
     await tester.pump();
     expect(container.read(entryPointsProvider), contains('mein_kind'));
