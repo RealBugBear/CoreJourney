@@ -184,7 +184,7 @@ final thisWeekSessionsProvider =
 // fehl, der im SyncService als retry-fähiger Fehler behandelt wird.
 // rehydrate() wird bei sign-in aufgerufen und lädt das echte Enrollment vor
 // dem Intake-Assessment in die lokale DB, sodass der lokale Check greift.
-Future<void> createEnrollment({
+Future<String> createEnrollment({
   required AppDatabase db,
   required SyncService syncService,
   required String userId,
@@ -205,7 +205,7 @@ Future<void> createEnrollment({
             t.status.equals('active'))
         ..limit(1))
       .getSingleOrNull();
-  if (existing != null) return;
+  if (existing != null) return existing.id;
 
   final now = DateTime.now();
   final enrollmentId = _uuid.v4();
@@ -256,6 +256,52 @@ Future<void> createEnrollment({
       if (subjectProfileId != null) 'subject_profile_id': subjectProfileId,
       'enrollment_id': enrollmentId,
       'current_day': 1,
+    },
+  );
+  return enrollmentId;
+}
+
+Future<void> createIntakeAssessment({
+  required AppDatabase db,
+  required SyncService syncService,
+  required String enrollmentId,
+  required bool hadIsometricWithTrainer,
+  required int recommendedDurationWeeks,
+  required bool userAcceptedRecommendation,
+  required int finalDurationWeeks,
+  required List<String> entryPoints,
+}) async {
+  final id = _uuid.v4();
+  final now = DateTime.now();
+  final additionalAnswers = entryPoints.isEmpty
+      ? null
+      : jsonEncode({'entry_points': entryPoints});
+
+  await db.into(db.intakeAssessmentsTable).insert(
+        IntakeAssessmentsTableCompanion.insert(
+          id: id,
+          enrollmentId: enrollmentId,
+          hadIsometricWithTrainer: hadIsometricWithTrainer,
+          additionalAnswers: drift.Value(additionalAnswers),
+          recommendedDurationWeeks: recommendedDurationWeeks,
+          userAcceptedRecommendation: userAcceptedRecommendation,
+          finalDurationWeeks: finalDurationWeeks,
+          completedAt: now,
+        ),
+      );
+
+  await syncService.enqueueUpsert(
+    tableName: 'intake_assessments',
+    recordId: id,
+    payload: {
+      'id': id,
+      'enrollment_id': enrollmentId,
+      'had_isometric_with_trainer': hadIsometricWithTrainer,
+      if (additionalAnswers != null) 'additional_answers': additionalAnswers,
+      'recommended_duration_weeks': recommendedDurationWeeks,
+      'user_accepted_recommendation': userAcceptedRecommendation,
+      'final_duration_weeks': finalDurationWeeks,
+      'completed_at': now.toIso8601String(),
     },
   );
 }
