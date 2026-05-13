@@ -10,7 +10,10 @@ Widget _wrap(Widget child) => ProviderScope(
         routerConfig: GoRouter(
           routes: [
             GoRoute(path: '/', builder: (_, __) => child),
-            GoRoute(path: '/intake-assessment', builder: (_, __) => const Scaffold()),
+            GoRoute(
+              path: '/dashboard',
+              builder: (_, __) => const Scaffold(body: Text('dashboard')),
+            ),
           ],
         ),
       ),
@@ -46,9 +49,7 @@ void main() {
           routerConfig: GoRouter(
             routes: [
               GoRoute(path: '/', builder: (_, __) => const EntryPointsScreen()),
-              GoRoute(
-                  path: '/intake-assessment',
-                  builder: (_, __) => const Scaffold()),
+              GoRoute(path: '/dashboard', builder: (_, __) => const Scaffold()),
             ],
           ),
         ),
@@ -64,5 +65,13 @@ void main() {
     await tester.pumpWidget(_wrap(const EntryPointsScreen()));
     final btn = tester.widget<FilledButton>(find.byType(FilledButton));
     expect(btn.onPressed, isNotNull);
+  });
+
+  testWidgets('Weiter button navigates to dashboard', (tester) async {
+    await tester.pumpWidget(_wrap(const EntryPointsScreen()));
+    await tester.ensureVisible(find.text('Weiter'));
+    await tester.tap(find.text('Weiter'));
+    await tester.pumpAndSettle();
+    expect(find.text('dashboard'), findsOneWidget);
   });
 }

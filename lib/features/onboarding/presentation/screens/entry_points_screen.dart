@@ -86,7 +86,7 @@ class _EntryPointsScreenState extends ConsumerState<EntryPointsScreen> {
               SizedBox(
                 width: double.infinity,
                 child: FilledButton(
-                  onPressed: () => context.go(Routes.intakeAssessment),
+                  onPressed: () => context.go(Routes.dashboard),
                   child: const Text('Weiter'),
                 ),
               ),
