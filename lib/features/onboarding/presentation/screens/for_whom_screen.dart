@@ -133,15 +133,7 @@ class _ForWhomScreenState extends ConsumerState<ForWhomScreen> {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () {
-            final profiles =
-                ref.read(allReflexSubjectProfilesProvider).valueOrNull;
-            context.go(
-              profiles == null || profiles.isEmpty
-                  ? Routes.usernameSetup
-                  : Routes.dashboard,
-            );
-          },
+          onPressed: () => context.go(Routes.dashboard),
         ),
       ),
       body: SafeArea(
