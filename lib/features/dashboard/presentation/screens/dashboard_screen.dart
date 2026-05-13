@@ -77,7 +77,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       _subjectProfileCheckDone = true;
       if (profilesAsync.valueOrNull?.isEmpty ?? true) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (mounted) context.go(Routes.onboardingForWhom);
+          if (mounted) context.go(Routes.onboardingEntryPoints);
         });
         return;
       }

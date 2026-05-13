@@ -51,7 +51,7 @@ class _UsernameSetupScreenState extends ConsumerState<UsernameSetupScreen> {
       if (!mounted) return;
 
       // Check if subject profiles already exist (e.g. existing user).
-      // If none → show the for-whom screen to set up the first profile.
+      // If none → show entry points screen before intake assessment.
       // If some → go straight to the dashboard.
       final profiles = await ref.read(allReflexSubjectProfilesProvider.future);
       if (!mounted) return;
