@@ -473,7 +473,8 @@ class _PrivacyTab extends StatelessWidget {
           body:
               'Wir erheben folgende Daten: E-Mail-Adresse und Passwort (für die Registrierung), '
               'Fortschrittsdaten (Trainingseinheiten, Intake-Assessment), '
-              'Stimmungsdaten (Mood-Checkins, Journal-Einträge) sowie '
+              'Stimmungsdaten (Mood-Checkins, Journal-Einträge), '
+              'deine optionale Angabe dazu, was dich hierher geführt hat (Einstiegsbereich), sowie '
               'Geräteinformationen (Betriebssystem, App-Version).',
         ),
         _ConsentPoint(
@@ -552,7 +553,8 @@ class _PrivacyTab extends StatelessWidget {
           title: 'Data Collected',
           body: 'We collect: email address and password (for registration), '
               'progress data (training sessions, intake assessment), '
-              'mood data (mood check-ins, journal entries), and '
+              'mood data (mood check-ins, journal entries), '
+              'your optional entry point selection (what brought you here), and '
               'device information (OS, app version).',
         ),
         _ConsentPoint(
