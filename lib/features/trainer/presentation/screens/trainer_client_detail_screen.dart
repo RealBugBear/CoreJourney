@@ -476,7 +476,7 @@ class _SharedReflexProfileCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scores = _trainerScoreRows(assessment).take(6).toList();
+    final scores = _trainerScoreRows(assessment).toList();
     final safetyRows = _trainerSafetyRows(assessment);
     final warningCount = safetyRows.length;
 

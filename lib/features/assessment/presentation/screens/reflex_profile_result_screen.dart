@@ -87,7 +87,7 @@ class _ResultContent extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final cs = Theme.of(context).colorScheme;
     final scores = _scoreRows(assessment);
-    final topScores = scores.take(8).toList();
+    final topScores = scores.toList();
     final radarScores = topScores
         .map((s) => ReflexRadarScore(
               label: s.label,

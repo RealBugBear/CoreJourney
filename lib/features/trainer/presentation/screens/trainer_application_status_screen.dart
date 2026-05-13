@@ -88,7 +88,9 @@ class TrainerApplicationStatusScreen extends ConsumerWidget {
                       ref.invalidate(userRoleProvider);
                       ref.invalidate(ownTrainerApplicationProvider);
                       if (context.mounted) {
-                        context.go(Routes.trainerDashboard);
+                        WidgetsBinding.instance.addPostFrameCallback((_) {
+                          if (context.mounted) context.go(Routes.trainerDashboard);
+                        });
                       }
                     },
                     icon: const Icon(Icons.verified_outlined),
