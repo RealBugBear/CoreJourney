@@ -39,7 +39,6 @@ class DashboardScreen extends ConsumerStatefulWidget {
 class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   bool _onboardingCheckDone = false;
   bool _usernameCheckDone = false;
-  bool _subjectProfileCheckDone = false;
 
   void _maybeRedirectOnboarding() {
     if (_onboardingCheckDone) return;
@@ -65,19 +64,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       if (displayName == null || displayName.isEmpty) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (mounted) context.go(Routes.usernameSetup);
-        });
-        return;
-      }
-    }
-
-    // Step 3: Subject profile check — every account needs at least one profile.
-    if (!_subjectProfileCheckDone) {
-      final profilesAsync = ref.read(allReflexSubjectProfilesProvider);
-      if (profilesAsync.isLoading) return;
-      _subjectProfileCheckDone = true;
-      if (profilesAsync.valueOrNull?.isEmpty ?? true) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (mounted) context.go(Routes.onboardingEntryPoints);
         });
         return;
       }
@@ -323,10 +309,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     ref.listen(profileProvider, (_, next) {
       if (!next.isLoading) _maybeRedirectOnboarding();
     });
-    // Subject profiles loading triggers the for-whom check.
-    ref.listen(allReflexSubjectProfilesProvider, (_, next) {
-      if (!next.isLoading) _maybeRedirectOnboarding();
-    });
     ref.listen<AsyncValue<EnrollmentsTableData?>>(activeEnrollmentProvider,
         (_, next) {
       if (!next.isLoading) _maybeRedirectOnboarding();
@@ -334,6 +316,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
     final progress = ref.watch(activeProgressProvider).valueOrNull;
     final enrollment = ref.watch(activeEnrollmentProvider).valueOrNull;
+    final profiles =
+        ref.watch(allReflexSubjectProfilesProvider).valueOrNull ?? const [];
     final now = ref.watch(appClockProvider).now();
     final completedToday = _isCompletedToday(progress, now);
     final packageId = ref.watch(selectedPackageIdProvider);
@@ -391,17 +375,15 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 _DailyUnitCard(
                   packageName: _packageName(packageId),
                   currentDay: progress?.currentDay ?? 1,
-                  totalDays:
-                      ((enrollment?.assignedDurationWeeks ?? 8) * 7).clamp(
-                    1,
-                    3650,
-                  ),
+                  totalDays: ((enrollment?.assignedDurationWeeks ?? 8) * 7)
+                      .clamp(1, 3650),
                   movementCount: flowState.totalExercises,
                   estimatedMinutes: _estimatedMinutes(flowState.exercises),
                   now: now,
                   sessionsThisWeek: sessionsThisWeek,
                   completedToday: completedToday,
                   hasActivePackage: enrollment != null,
+                  hasProfile: profiles.isNotEmpty,
                   onBeginGuided: () => _beginUnit(TrainingSessionMode.tutorial),
                   onBeginRoutine: () => _beginUnit(TrainingSessionMode.routine),
                   onObservation: () => _openObservation(enrollment?.id),
@@ -413,6 +395,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                                 progress: progress,
                               ),
                   onStartPackage: () => context.push(Routes.intakeAssessment),
+                  onCreateProfile: () =>
+                      context.push(Routes.onboardingForWhom),
                 ),
                 const SizedBox(height: 16),
                 _DailyImpulseCard(weekday: now.weekday),
@@ -481,11 +465,13 @@ class _DailyUnitCard extends StatelessWidget {
     required this.sessionsThisWeek,
     required this.completedToday,
     required this.hasActivePackage,
+    required this.hasProfile,
     required this.onBeginGuided,
     required this.onBeginRoutine,
     required this.onObservation,
     required this.onManualComplete,
     required this.onStartPackage,
+    required this.onCreateProfile,
   });
 
   final String packageName;
@@ -497,11 +483,13 @@ class _DailyUnitCard extends StatelessWidget {
   final List<TrainingSessionsTableData> sessionsThisWeek;
   final bool completedToday;
   final bool hasActivePackage;
+  final bool hasProfile;
   final VoidCallback onBeginGuided;
   final VoidCallback onBeginRoutine;
   final VoidCallback onObservation;
   final VoidCallback? onManualComplete;
   final VoidCallback onStartPackage;
+  final VoidCallback onCreateProfile;
 
   @override
   Widget build(BuildContext context) {
@@ -628,6 +616,19 @@ class _DailyUnitCard extends StatelessWidget {
                 onPressed: onBeginRoutine,
                 icon: const Icon(Icons.timer_outlined),
                 label: const Text('Routine-Modus'),
+              ),
+            ] else if (!hasProfile) ...[
+              Text(
+                'Leg dein erstes Reflexprofil an, um loszulegen.',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: 16),
+              FilledButton.icon(
+                onPressed: onCreateProfile,
+                icon: const Icon(Icons.person_add_outlined),
+                label: const Text('Erstes Profil anlegen'),
               ),
             ] else ...[
               Text(
