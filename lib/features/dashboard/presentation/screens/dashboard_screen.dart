@@ -316,8 +316,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
     final progress = ref.watch(activeProgressProvider).valueOrNull;
     final enrollment = ref.watch(activeEnrollmentProvider).valueOrNull;
-    final profiles =
-        ref.watch(allReflexSubjectProfilesProvider).valueOrNull ?? const [];
+    final profilesAsync = ref.watch(allReflexSubjectProfilesProvider);
+    final hasProfile = profilesAsync.valueOrNull?.isNotEmpty; // null while loading
     final now = ref.watch(appClockProvider).now();
     final completedToday = _isCompletedToday(progress, now);
     final packageId = ref.watch(selectedPackageIdProvider);
@@ -383,7 +383,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   sessionsThisWeek: sessionsThisWeek,
                   completedToday: completedToday,
                   hasActivePackage: enrollment != null,
-                  hasProfile: profiles.isNotEmpty,
+                  hasProfile: hasProfile,
                   onBeginGuided: () => _beginUnit(TrainingSessionMode.tutorial),
                   onBeginRoutine: () => _beginUnit(TrainingSessionMode.routine),
                   onObservation: () => _openObservation(enrollment?.id),
@@ -483,7 +483,7 @@ class _DailyUnitCard extends StatelessWidget {
   final List<TrainingSessionsTableData> sessionsThisWeek;
   final bool completedToday;
   final bool hasActivePackage;
-  final bool hasProfile;
+  final bool? hasProfile;
   final VoidCallback onBeginGuided;
   final VoidCallback onBeginRoutine;
   final VoidCallback onObservation;
@@ -617,7 +617,10 @@ class _DailyUnitCard extends StatelessWidget {
                 icon: const Icon(Icons.timer_outlined),
                 label: const Text('Routine-Modus'),
               ),
-            ] else if (!hasProfile) ...[
+            ] else if (hasProfile == null) ...[
+              const SizedBox(height: 16),
+              const LinearProgressIndicator(),
+            ] else if (!hasProfile!) ...[
               Text(
                 'Leg dein erstes Reflexprofil an, um loszulegen.',
                 style: theme.textTheme.bodyMedium?.copyWith(
@@ -632,7 +635,7 @@ class _DailyUnitCard extends StatelessWidget {
               ),
             ] else ...[
               Text(
-                'Erstelle dein Reflexprofil oder starte ein erstes Paket, um deinen Rhythmus aufzubauen.',
+                'Du hast ein Profil angelegt. Starte jetzt ein Paket, um deinen Rhythmus aufzubauen.',
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
