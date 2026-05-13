@@ -500,7 +500,7 @@ class _ModuleGroup extends StatelessWidget {
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: cs.primary,
                   fontWeight: FontWeight.w700,
-                  letterSpacing: 0.07 * 12,
+                  letterSpacing: 0.84,
                 ),
           ),
         ),
@@ -582,7 +582,7 @@ class _RelevantAnswerCard extends StatelessWidget {
             ],
             // Months
             if (hasMonths) ...[
-              if (hasChips) const SizedBox(height: 4) else const SizedBox(height: 8),
+              SizedBox(height: (hasChips || hasFreeText) ? 4 : 8),
               Text(
                 '${item.months} Monate',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
