@@ -9,6 +9,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/error_retry_widget.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../providers/reflex_profile_provider.dart';
+import '../../../onboarding/presentation/providers/entry_points_provider.dart';
 import '../../../progress/presentation/providers/progress_provider.dart';
 
 int _computeRecommendedWeeks({required bool hadIsometricWithTrainer}) {
@@ -50,13 +51,26 @@ class _DurationRecommendationScreenState
       final userId = Supabase.instance.client.auth.currentUser?.id;
       if (userId == null) return;
 
-      await createEnrollment(
+      final enrollmentId = await createEnrollment(
         db: ref.read(databaseProvider),
         syncService: ref.read(syncServiceProvider),
         userId: userId,
         subjectProfileId: ref.read(selectedSubjectProfileProvider)?.id,
         packageId: _packageId,
         durationWeeks: _selectedWeeks,
+      );
+
+      await createIntakeAssessment(
+        db: ref.read(databaseProvider),
+        syncService: ref.read(syncServiceProvider),
+        enrollmentId: enrollmentId,
+        hadIsometricWithTrainer: _hadTrainer,
+        recommendedDurationWeeks:
+            _computeRecommendedWeeks(hadIsometricWithTrainer: _hadTrainer),
+        userAcceptedRecommendation: _selectedWeeks ==
+            _computeRecommendedWeeks(hadIsometricWithTrainer: _hadTrainer),
+        finalDurationWeeks: _selectedWeeks,
+        entryPoints: ref.read(entryPointsProvider),
       );
 
       // Update the selected package so the dashboard shows this enrollment
