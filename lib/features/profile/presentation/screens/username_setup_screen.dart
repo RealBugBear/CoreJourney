@@ -56,7 +56,7 @@ class _UsernameSetupScreenState extends ConsumerState<UsernameSetupScreen> {
       final profiles = await ref.read(allReflexSubjectProfilesProvider.future);
       if (!mounted) return;
       if (profiles.isEmpty) {
-        context.go(Routes.onboardingForWhom);
+        context.go(Routes.onboardingEntryPoints);
       } else {
         context.go(Routes.dashboard);
       }
