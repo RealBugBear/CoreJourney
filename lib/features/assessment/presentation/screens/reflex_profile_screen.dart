@@ -376,6 +376,32 @@ class _ReflexProfileScreenState extends ConsumerState<ReflexProfileScreen>
     });
   }
 
+  Future<void> _showExitConfirmation() async {
+    final leave = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Fragebogen verlassen?'),
+        content: const Text(
+          'Dein Fortschritt wird gespeichert. Du kannst jederzeit weitermachen.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Abbrechen'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Verlassen'),
+          ),
+        ],
+      ),
+    );
+    if (leave == true && mounted) {
+      _saveLocalDraft();
+      context.pop();
+    }
+  }
+
   void _scheduleDraftSave(String questionId) {
     _debounceTimers[questionId]?.cancel();
     _debounceTimers[questionId] = Timer(
@@ -510,29 +536,36 @@ class _ReflexProfileScreenState extends ConsumerState<ReflexProfileScreen>
   Widget build(BuildContext context) {
     final profilesAsync = ref.watch(reflexSubjectProfilesProvider);
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('Reflexprofil')),
-      body: SafeArea(
-        child: profilesAsync.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (error, _) => Center(
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Text('Profile konnten nicht geladen werden: $error'),
+    return PopScope(
+      canPop: !_questionnaireStarted,
+      onPopInvokedWithResult: (didPop, _) {
+        if (didPop) return;
+        _showExitConfirmation();
+      },
+      child: Scaffold(
+        appBar: AppBar(title: const Text('Reflexprofil')),
+        body: SafeArea(
+          child: profilesAsync.when(
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (error, _) => Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Text('Profile konnten nicht geladen werden: $error'),
+              ),
             ),
+            data: (profiles) {
+              if (_questionnaireFor == null) {
+                return _buildForWhom();
+              }
+              if (_questionnaireFor == 'adult') {
+                return _buildAdultComingSoon();
+              }
+              if (!_questionnaireStarted) {
+                return _buildStart(profiles);
+              }
+              return _buildQuestionnaire();
+            },
           ),
-          data: (profiles) {
-            if (_questionnaireFor == null) {
-              return _buildForWhom();
-            }
-            if (_questionnaireFor == 'adult') {
-              return _buildAdultComingSoon();
-            }
-            if (!_questionnaireStarted) {
-              return _buildStart(profiles);
-            }
-            return _buildQuestionnaire();
-          },
         ),
       ),
     );
