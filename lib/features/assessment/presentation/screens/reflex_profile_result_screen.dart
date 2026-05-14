@@ -186,7 +186,7 @@ class _ResultContent extends ConsumerWidget {
         for (final score in scores) _ScoreTile(score: score),
         const SizedBox(height: 18),
         Text(
-          'Relevante Angaben',
+          'Ergänzende Angaben',
           style: Theme.of(context).textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.w800,
               ),
@@ -522,7 +522,6 @@ class _RelevantAnswerCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final hasChips = item.selectedOptionLabels.isNotEmpty;
     final hasFreeText = item.freeText != null;
     final hasMonths = item.months != null;
 
@@ -532,7 +531,6 @@ class _RelevantAnswerCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Question text
             Text(
               item.question.text,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -540,37 +538,8 @@ class _RelevantAnswerCard extends StatelessWidget {
                     height: 1.4,
                   ),
             ),
-            // Chips
-            if (hasChips) ...[
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 4,
-                runSpacing: 4,
-                children: [
-                  for (final label in item.selectedOptionLabels)
-                    Chip(
-                      label: Text(label),
-                      backgroundColor: cs.primaryContainer,
-                      labelStyle: TextStyle(
-                        color: cs.onPrimaryContainer,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                      ),
-                      visualDensity: VisualDensity.compact,
-                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      padding: const EdgeInsets.symmetric(horizontal: 2),
-                    ),
-                ],
-              ),
-            ],
-            // Free text
             if (hasFreeText) ...[
-              if (hasChips) ...[
-                const SizedBox(height: 6),
-                const Divider(height: 1, thickness: 1),
-                const SizedBox(height: 6),
-              ] else
-                const SizedBox(height: 8),
+              const SizedBox(height: 8),
               Text(
                 '„${item.freeText}"',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -580,9 +549,8 @@ class _RelevantAnswerCard extends StatelessWidget {
                     ),
               ),
             ],
-            // Months
             if (hasMonths) ...[
-              SizedBox(height: (hasChips || hasFreeText) ? 4 : 8),
+              SizedBox(height: hasFreeText ? 4 : 8),
               Text(
                 '${item.months} Monate',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
