@@ -2,7 +2,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter/foundation.dart';
 
 /// Secure storage service for sensitive data
-/// 
+///
 /// Provides encrypted key-value storage using platform secure storage:
 /// - iOS: Keychain
 /// - Android: EncryptedSharedPreferences
@@ -39,7 +39,8 @@ class SecureStorageService {
   Future<String?> read({required String key}) async {
     try {
       final value = await _storage.read(key: key);
-      debugPrint('[SecureStorage] Read: $key (${value != null ? 'found' : 'not found'})');
+      debugPrint(
+          '[SecureStorage] Read: $key (${value != null ? 'found' : 'not found'})');
       return value;
     } catch (e) {
       debugPrint('[SecureStorage] Failed to read $key: $e');

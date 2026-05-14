@@ -2,7 +2,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 
 /// Premium glassmorphic card widget with frosted glass effect
-/// 
+///
 /// Perfect for creating modern, sleek UI elements with depth and transparency
 class PremiumGlassmorphicCard extends StatelessWidget {
   final Widget child;
@@ -27,7 +27,7 @@ class PremiumGlassmorphicCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return ClipRRect(
       borderRadius: BorderRadius.circular(borderRadius),
       child: BackdropFilter(
@@ -38,8 +38,8 @@ class PremiumGlassmorphicCard extends StatelessWidget {
             color: theme.colorScheme.surface.withOpacity(opacity),
             borderRadius: BorderRadius.circular(borderRadius),
             border: Border.all(
-              color: borderColor ?? 
-                     theme.colorScheme.onSurface.withOpacity(0.1),
+              color:
+                  borderColor ?? theme.colorScheme.onSurface.withOpacity(0.1),
               width: borderWidth,
             ),
             boxShadow: [

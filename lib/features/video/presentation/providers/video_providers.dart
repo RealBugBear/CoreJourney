@@ -2,6 +2,7 @@
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../bootstrap/providers.dart';
 import '../../data/repositories/supabase_video_repository.dart';
 import '../../domain/models/video_call.dart';
 import '../../domain/repositories/video_repository.dart';
@@ -9,7 +10,8 @@ import '../../domain/repositories/video_repository.dart';
 // ── Repository ────────────────────────────────────────────────────────────────
 
 final videoRepositoryProvider = Provider<VideoRepository>((ref) {
-  return SupabaseVideoRepository();
+  final config = ref.watch(appConfigProvider);
+  return SupabaseVideoRepository(allowEmptyDevToken: config.isDevelopment);
 });
 
 // ── Active call stream ────────────────────────────────────────────────────────
@@ -19,6 +21,12 @@ final videoRepositoryProvider = Provider<VideoRepository>((ref) {
 final activeCallProvider =
     StreamProvider.autoDispose.family<VideoCall?, String>((ref, channelId) {
   return ref.read(videoRepositoryProvider).watchActiveCall(channelId);
+});
+
+/// Streams every active call visible to the current user. Used by the app-wide
+/// incoming-call listener so it does not depend on a refreshed chat channel list.
+final activeCallsProvider = StreamProvider.autoDispose<List<VideoCall>>((ref) {
+  return ref.read(videoRepositoryProvider).watchActiveCalls();
 });
 
 // ── Start call notifier ───────────────────────────────────────────────────────

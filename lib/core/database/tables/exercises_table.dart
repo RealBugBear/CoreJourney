@@ -8,9 +8,9 @@ class ExercisesTable extends Table {
   String get tableName => 'exercises';
 
   // ── Identity ────────────────────────────────────────────────────────────────
-  TextColumn get id          => text()();
-  TextColumn get packageId   => text()();
-  IntColumn  get sequenceNumber => integer()();
+  TextColumn get id => text()();
+  TextColumn get packageId => text()();
+  IntColumn get sequenceNumber => integer()();
 
   // ── Localised content ───────────────────────────────────────────────────────
   TextColumn get titleDe => text()();
@@ -28,25 +28,26 @@ class ExercisesTable extends Table {
   TextColumn get executionGuideEn => text()();
 
   // ── Base timing ─────────────────────────────────────────────────────────────
-  IntColumn  get durationSeconds => integer()();
-  IntColumn  get repetitions     => integer()();
+  IntColumn get durationSeconds => integer()();
+  IntColumn get repetitions => integer()();
 
   // ── Assets ──────────────────────────────────────────────────────────────────
-  TextColumn get imagePath    => text()();
-  TextColumn get videoPath    => text().nullable()();
+  TextColumn get imagePath => text()();
+  TextColumn get videoPath => text().nullable()();
   TextColumn get audioCuePath => text().nullable()();
 
   // ── Timer config ────────────────────────────────────────────────────────────
   // 'phased' = counted phases; 'holdRest' = hold N s, rest M s
-  TextColumn get rhythmType    => text().withDefault(const Constant('holdRest'))();
+  TextColumn get rhythmType => text().withDefault(const Constant('holdRest'))();
   // JSON: [{"labelDe":"Hoch","labelEn":"Up","durationSeconds":3}, ...]
-  TextColumn get phasesJson    => text().withDefault(const Constant('[]'))();
-  BoolColumn get hasRepSwitch  => boolean().withDefault(const Constant(false))();
-  TextColumn get holdCueDe     => text().withDefault(const Constant('Halten'))();
-  TextColumn get holdCueEn     => text().withDefault(const Constant('Hold'))();
-  IntColumn  get holdSeconds   => integer().withDefault(const Constant(7))();
-  IntColumn  get restSeconds   => integer().withDefault(const Constant(3))();
-  BoolColumn get halfwaySwitch => boolean().withDefault(const Constant(false))();
+  TextColumn get phasesJson => text().withDefault(const Constant('[]'))();
+  BoolColumn get hasRepSwitch => boolean().withDefault(const Constant(false))();
+  TextColumn get holdCueDe => text().withDefault(const Constant('Halten'))();
+  TextColumn get holdCueEn => text().withDefault(const Constant('Hold'))();
+  IntColumn get holdSeconds => integer().withDefault(const Constant(7))();
+  IntColumn get restSeconds => integer().withDefault(const Constant(3))();
+  BoolColumn get halfwaySwitch =>
+      boolean().withDefault(const Constant(false))();
 
   @override
   Set<Column> get primaryKey => {id};

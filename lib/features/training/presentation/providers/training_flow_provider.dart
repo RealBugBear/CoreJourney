@@ -2,19 +2,20 @@ import 'package:drift/drift.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../bootstrap/providers.dart';
+import '../../../../core/settings/settings_provider.dart';
 import '../../domain/models/exercise.dart';
 import '../../domain/models/training_session.dart';
 
 // Which screen to show in the training flow
 enum TrainingFlowStep {
-  disclaimer,   // first-ever session only
-  intro,        // session title + day + mode
-  video,        // tutorial only
-  position,     // tutorial only
-  preparation,  // tutorial only
-  movement,     // all modes — the actual exercise timer
-  rest,         // brief rest between exercises
-  outro,        // completion screen
+  disclaimer, // first-ever session only
+  intro, // session title + day + mode
+  video, // tutorial only
+  position, // tutorial only
+  preparation, // tutorial only
+  movement, // all modes — the actual exercise timer
+  rest, // brief rest between exercises
+  outro, // completion screen
 }
 
 class TrainingFlowState {
@@ -156,43 +157,48 @@ final _dbExercisesProvider = FutureProvider.autoDispose
 
   if (rows.isEmpty) return null; // trigger hardcoded fallback
 
-  return rows.map((row) => Exercise.fromRow({
-    'id':                        row.id,
-    'package_id':                row.packageId,
-    'sequence_number':           row.sequenceNumber,
-    'title_de':                  row.titleDe,
-    'title_en':                  row.titleEn,
-    'position_instructions_de':  row.positionInstructionsDe,
-    'position_instructions_en':  row.positionInstructionsEn,
-    'movement_instructions_de':  row.movementInstructionsDe,
-    'movement_instructions_en':  row.movementInstructionsEn,
-    'hints_de':                  row.hintsDe,
-    'hints_en':                  row.hintsEn,
-    'execution_guide_de':        row.executionGuideDe,
-    'execution_guide_en':        row.executionGuideEn,
-    'duration_seconds':          row.durationSeconds,
-    'repetitions':               row.repetitions,
-    'image_path':                row.imagePath,
-    'video_path':                row.videoPath,
-    'audio_cue_path':            row.audioCuePath,
-    'rhythm_type':               row.rhythmType,
-    'phases_json':               row.phasesJson,
-    'has_rep_switch':            row.hasRepSwitch,
-    'hold_cue_de':               row.holdCueDe,
-    'hold_cue_en':               row.holdCueEn,
-    'hold_seconds':              row.holdSeconds,
-    'rest_seconds':              row.restSeconds,
-    'halfway_switch':            row.halfwaySwitch,
-  })).toList();
+  return rows
+      .map((row) => Exercise.fromRow({
+            'id': row.id,
+            'package_id': row.packageId,
+            'sequence_number': row.sequenceNumber,
+            'title_de': row.titleDe,
+            'title_en': row.titleEn,
+            'position_instructions_de': row.positionInstructionsDe,
+            'position_instructions_en': row.positionInstructionsEn,
+            'movement_instructions_de': row.movementInstructionsDe,
+            'movement_instructions_en': row.movementInstructionsEn,
+            'hints_de': row.hintsDe,
+            'hints_en': row.hintsEn,
+            'execution_guide_de': row.executionGuideDe,
+            'execution_guide_en': row.executionGuideEn,
+            'duration_seconds': row.durationSeconds,
+            'repetitions': row.repetitions,
+            'image_path': row.imagePath,
+            'video_path': row.videoPath,
+            'audio_cue_path': row.audioCuePath,
+            'rhythm_type': row.rhythmType,
+            'phases_json': row.phasesJson,
+            'has_rep_switch': row.hasRepSwitch,
+            'hold_cue_de': row.holdCueDe,
+            'hold_cue_en': row.holdCueEn,
+            'hold_seconds': row.holdSeconds,
+            'rest_seconds': row.restSeconds,
+            'halfway_switch': row.halfwaySwitch,
+          }))
+      .toList();
 });
 
 /// Hardcoded fallback — used only when the Drift cache is empty (offline first launch).
 List<Exercise> _hardcodedFallback(String packageId) {
   switch (packageId) {
-    case 'spinal_galant': return spinalGalantExercises;
-    case 'tlr':           return tlrExercises;
+    case 'spinal_galant':
+      return spinalGalantExercises;
+    case 'tlr':
+      return tlrExercises;
     case 'moro':
-    default:              return moroExercises;
+    default:
+      return moroExercises;
   }
 }
 
@@ -201,10 +207,11 @@ final trainingFlowProvider = StateNotifierProvider.autoDispose
   // Try DB cache first; use hardcoded fallback if not ready or empty.
   final dbAsync = ref.watch(_dbExercisesProvider(packageId));
   final exercises = dbAsync.valueOrNull ?? _hardcodedFallback(packageId);
+  final defaultMode = ref.watch(settingsProvider).trainingMode;
 
   return TrainingFlowNotifier(
     exercises: exercises,
-    mode: TrainingSessionMode.tutorial,
+    mode: defaultMode,
     requiresDisclaimer: false, // TODO: check progress entry
   );
 });

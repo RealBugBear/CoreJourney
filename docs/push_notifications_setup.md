@@ -1,11 +1,11 @@
 # Push Notification Setup Guide
 
-> [!NOTE]
-> **Important for Streak Reminders**: The streak reminder feature we just implemented uses **Local Notifications**. These are scheduled directly by the app on the user's device. **You do NOT need to perform the steps below for the streak reminders to work.** They will work out of the box!
->
-> The steps below are for enabling **Remote Push Notifications** (e.g., if you want to send marketing messages or announcements from the Firebase Console to all users).
+CoreJourney now uses two notification paths:
 
-If you decide to enable Remote Push Notifications in the future, follow these steps:
+- Local notifications for on-device training reminders.
+- Firebase Cloud Messaging remote pushes for video calls, call requests, appointment proposals, and confirmed appointments.
+
+The app-side Firebase Messaging integration is implemented. Complete the external setup below before expecting remote pushes to arrive on real devices.
 
 ## 1. Apple Developer Portal (Create APNs Key)
 
@@ -24,7 +24,7 @@ If you decide to enable Remote Push Notifications in the future, follow these st
 ## 2. Firebase Console (Upload Key)
 
 1.  Log in to the [Firebase Console](https://console.firebase.google.com/).
-2.  Open your project (**corejourney**).
+2.  Open your project (**corejourney-prod**).
 3.  Click the **Gear icon** (Project Settings) in the top left.
 4.  Go to the **Cloud Messaging** tab.
 5.  Scroll down to the **Apple app configuration** section.
@@ -48,11 +48,27 @@ If you decide to enable Remote Push Notifications in the future, follow these st
 8.  Search for **Background Modes** and add it.
 9.  In the **Background Modes** section, check the box for **Remote notifications**.
 
-## 4. Code Dependencies (Future)
+The repo already contains the required `aps-environment` entitlement and `UIBackgroundModes` entry. Verify Xcode does not remove them when signing settings change.
 
-To actually receive these remote notifications in the app, you would need to:
-1.  Add `firebase_messaging` to your `pubspec.yaml`.
-2.  Initialize Firebase Messaging in your code.
-3.  Request permission (similar to how we did for local notifications).
+## 4. Supabase Edge Function Secrets
 
-But again, for your **Streak Reminders**, you are already good to go! 🚀
+Set these secrets for the Supabase project that serves the app:
+
+```bash
+supabase secrets set FIREBASE_PROJECT_ID=corejourney-prod
+supabase secrets set FIREBASE_SERVICE_ACCOUNT_JSON='{"type":"service_account",...}'
+```
+
+`FIREBASE_SERVICE_ACCOUNT_JSON` must be the full Firebase service-account JSON for a service account allowed to send FCM v1 messages.
+
+## 5. Database Migration
+
+Apply `supabase/migrations/20260427_push_tokens.sql`. It creates the shared `device_tokens` registry plus `upsert_push_token` and `revoke_push_token`.
+
+## 6. Smoke Test
+
+1. Install the app on a physical iOS or Android device.
+2. Sign in and allow notification permission.
+3. Confirm a row appears in `device_tokens` with `enabled = true`.
+4. Trigger a direct video call, call request, appointment proposal, or appointment confirmation.
+5. Confirm the corresponding Supabase function returns `{ "sent": 1 }` or higher.

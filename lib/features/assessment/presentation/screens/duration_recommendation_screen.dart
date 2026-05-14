@@ -5,12 +5,17 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../../bootstrap/providers.dart';
 import '../../../../core/navigation/app_router.dart';
+import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/error_retry_widget.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../providers/reflex_profile_provider.dart';
+import '../../../onboarding/presentation/providers/entry_points_provider.dart';
 import '../../../progress/presentation/providers/progress_provider.dart';
 
 int _computeRecommendedWeeks({required bool hadIsometricWithTrainer}) {
-  return hadIsometricWithTrainer ? 6 : 8;
+  // Until the expert Reflexprofil questionnaire and scoring are available,
+  // skipped profiles intentionally use the default rule from the product plan.
+  return hadIsometricWithTrainer ? 4 : 8;
 }
 
 class DurationRecommendationScreen extends ConsumerStatefulWidget {
@@ -25,18 +30,19 @@ class _DurationRecommendationScreenState
     extends ConsumerState<DurationRecommendationScreen> {
   late int _selectedWeeks;
   late String _packageId;
+  bool _hadTrainer = false;
+  bool _reflexProfileSkipped = false;
   bool _saving = false;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    final extra =
-        GoRouterState.of(context).extra as Map<String, dynamic>?;
+    final extra = GoRouterState.of(context).extra as Map<String, dynamic>?;
     _packageId = extra?['packageId'] as String? ?? 'moro';
-    final hadTrainer =
-        extra?['hadIsometricWithTrainer'] as bool? ?? false;
+    _hadTrainer = extra?['hadIsometricWithTrainer'] as bool? ?? false;
+    _reflexProfileSkipped = extra?['reflexProfileStatus'] == 'skipped';
     _selectedWeeks =
-        _computeRecommendedWeeks(hadIsometricWithTrainer: hadTrainer);
+        _computeRecommendedWeeks(hadIsometricWithTrainer: _hadTrainer);
   }
 
   Future<void> _confirm() async {
@@ -45,12 +51,26 @@ class _DurationRecommendationScreenState
       final userId = Supabase.instance.client.auth.currentUser?.id;
       if (userId == null) return;
 
-      await createEnrollment(
+      final enrollmentId = await createEnrollment(
         db: ref.read(databaseProvider),
         syncService: ref.read(syncServiceProvider),
         userId: userId,
+        subjectProfileId: ref.read(selectedSubjectProfileProvider)?.id,
         packageId: _packageId,
         durationWeeks: _selectedWeeks,
+      );
+
+      await createIntakeAssessment(
+        db: ref.read(databaseProvider),
+        syncService: ref.read(syncServiceProvider),
+        enrollmentId: enrollmentId,
+        hadIsometricWithTrainer: _hadTrainer,
+        recommendedDurationWeeks:
+            _computeRecommendedWeeks(hadIsometricWithTrainer: _hadTrainer),
+        userAcceptedRecommendation: _selectedWeeks ==
+            _computeRecommendedWeeks(hadIsometricWithTrainer: _hadTrainer),
+        finalDurationWeeks: _selectedWeeks,
+        entryPoints: ref.read(entryPointsProvider),
       );
 
       // Update the selected package so the dashboard shows this enrollment
@@ -58,7 +78,9 @@ class _DurationRecommendationScreenState
 
       if (mounted) context.go(Routes.dashboard);
     } catch (_) {
-      if (mounted) showErrorSnackBar(context, AppLocalizations.of(context).errorGeneric);
+      if (mounted) {
+        showErrorSnackBar(context, AppLocalizations.of(context).errorGeneric);
+      }
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -90,21 +112,30 @@ class _DurationRecommendationScreenState
                     ),
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 32),
+              const SizedBox(height: 20),
+              _RecommendationInfo(
+                text: _reflexProfileSkipped
+                    ? 'Du hast das Reflexprofil übersprungen. Die Empfehlung nutzt deshalb die Standard-Dauerlogik und deine Angabe zur isometrischen Begleitung.'
+                    : (_hadTrainer
+                        ? l10n.durationTrainerMinimumInfo
+                        : l10n.durationWithoutTrainerInfo),
+              ),
+              const SizedBox(height: 28),
               Slider(
                 value: _selectedWeeks.toDouble(),
                 min: 4,
                 max: 8,
                 divisions: 4,
                 label: l10n.weeksCount(_selectedWeeks),
-                onChanged: (v) =>
-                    setState(() => _selectedWeeks = v.round()),
+                onChanged: (v) => setState(() => _selectedWeeks = v.round()),
               ),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(l10n.weeksCount(4), style: Theme.of(context).textTheme.bodySmall),
-                  Text(l10n.weeksCount(8), style: Theme.of(context).textTheme.bodySmall),
+                  Text(l10n.weeksCount(4),
+                      style: Theme.of(context).textTheme.bodySmall),
+                  Text(l10n.weeksCount(8),
+                      style: Theme.of(context).textTheme.bodySmall),
                 ],
               ),
               const Spacer(),
@@ -124,6 +155,45 @@ class _DurationRecommendationScreenState
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _RecommendationInfo extends StatelessWidget {
+  const _RecommendationInfo({required this.text});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.primary.withValues(alpha: 0.08),
+        border: Border.all(color: AppColors.primary.withValues(alpha: 0.18)),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(
+            Icons.info_outline,
+            color: AppColors.primary,
+            size: 20,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              text,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: cs.onSurfaceVariant,
+                    height: 1.4,
+                  ),
+            ),
+          ),
+        ],
       ),
     );
   }

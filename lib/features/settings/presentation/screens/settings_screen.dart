@@ -1,30 +1,121 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../bootstrap/providers.dart';
+import '../../../../core/navigation/app_router.dart';
+import '../../../../core/onboarding/onboarding_hint_provider.dart';
 import '../../../../core/settings/settings_provider.dart';
 import '../../../../core/sync/sync_status.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../../features/auth/presentation/providers/auth_provider.dart';
-import '../../../../features/trainer/presentation/providers/trainer_provider.dart';
+import '../../../../features/progress/presentation/providers/progress_provider.dart';
+import '../../../../features/training/domain/models/training_session.dart'
+    show TrainingSessionMode;
 import '../../../../l10n/app_localizations.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
 
+  Future<void> _confirmRestartMoro(
+    BuildContext context,
+    WidgetRef ref,
+  ) async {
+    final l10n = AppLocalizations.of(context);
+    final enrollment = ref.read(activeEnrollmentProvider).valueOrNull;
+    if (enrollment == null || enrollment.packageId == 'moro') return;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(l10n.moroRestartTitle),
+        content: Text(l10n.moroRestartBody),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(l10n.cancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(l10n.moroRestartConfirm),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !context.mounted) return;
+
+    try {
+      await restartMoroFromCurrentPackage(
+        db: ref.read(databaseProvider),
+        syncService: ref.read(syncServiceProvider),
+        currentEnrollment: enrollment,
+      );
+      ref.read(selectedPackageIdProvider.notifier).select('moro');
+      if (context.mounted) context.go(Routes.dashboard);
+    } catch (_) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.errorSaveFailed)),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final cs = Theme.of(context).colorScheme;
     final l10n = AppLocalizations.of(context);
     final settings = ref.watch(settingsProvider);
     final notifier = ref.read(settingsProvider.notifier);
+    final enrollment = ref.watch(activeEnrollmentProvider).valueOrNull;
+    final showMoroRestart = ref.watch(moroCompletedProvider) &&
+        enrollment != null &&
+        enrollment.packageId != 'moro';
 
     return Scaffold(
       appBar: AppBar(title: Text(l10n.settings)),
       body: ListView(
+        padding: const EdgeInsets.only(bottom: 32),
         children: [
-          // ── Training Feedback ──────────────────────────────────────────────
-          _SectionHeader(title: l10n.settingsFeedback),
-
+          const _SectionHeader(title: 'Training'),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Wie viel Begleitung möchtest du im Training?',
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                            fontWeight: FontWeight.w700,
+                          ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      'Tutorial ist für den Einstieg. Routine ist kompakter.',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: cs.onSurfaceVariant,
+                          ),
+                    ),
+                    const SizedBox(height: 16),
+                    _SegmentedRow<TrainingSessionMode>(
+                      options: const [
+                        TrainingSessionMode.tutorial,
+                        TrainingSessionMode.routine,
+                      ],
+                      selected: settings.trainingMode,
+                      label: (mode) => switch (mode) {
+                        TrainingSessionMode.tutorial => l10n.tutorialMode,
+                        TrainingSessionMode.routine => l10n.routineMode,
+                      },
+                      onChanged: notifier.setTrainingMode,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: _SegmentedRow<TrainingFeedbackMode>(
@@ -34,7 +125,7 @@ class SettingsScreen extends ConsumerWidget {
                 TrainingFeedbackMode.voiceCues,
               ],
               selected: settings.feedbackMode,
-              label: (m) => switch (m) {
+              label: (mode) => switch (mode) {
                 TrainingFeedbackMode.silent => l10n.silentMode,
                 TrainingFeedbackMode.haptic => l10n.hapticMode,
                 TrainingFeedbackMode.voiceCues => l10n.voiceCuesMode,
@@ -42,61 +133,13 @@ class SettingsScreen extends ConsumerWidget {
               onChanged: notifier.setFeedbackMode,
             ),
           ),
-
-          // ── Weekly Goal ────────────────────────────────────────────────────
-          _SectionHeader(title: l10n.settingsWeeklyGoal),
-
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Row(
-              children: [
-                Text(
-                  l10n.weeklyGoalSessions(settings.weeklyGoal),
-                  style: Theme.of(context)
-                      .textTheme
-                      .bodyLarge
-                      ?.copyWith(fontWeight: FontWeight.w600),
-                ),
-                const Spacer(),
-                Row(
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.remove_circle_outline),
-                      onPressed: settings.weeklyGoal <= 3
-                          ? null
-                          : () => notifier.setWeeklyGoal(settings.weeklyGoal - 1),
-                    ),
-                    Text(
-                      '${settings.weeklyGoal}',
-                      style: Theme.of(context)
-                          .textTheme
-                          .titleLarge
-                          ?.copyWith(fontWeight: FontWeight.w700),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.add_circle_outline),
-                      onPressed: settings.weeklyGoal >= 7
-                          ? null
-                          : () => notifier.setWeeklyGoal(settings.weeklyGoal + 1),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-
-          const SizedBox(height: 8),
-
-          // ── Reminders ─────────────────────────────────────────────────────
-          _SectionHeader(title: l10n.settingsReminders),
-
+          const _SectionHeader(title: 'Erinnerungen'),
           SwitchListTile(
             title: Text(l10n.reminderEnabled),
             value: settings.remindersEnabled,
-            activeColor: AppColors.primary,
+            activeThumbColor: AppColors.primary,
             onChanged: notifier.setRemindersEnabled,
           ),
-
           if (settings.remindersEnabled) ...[
             _TimePickerTile(
               label: '${l10n.reminderWindow} · ${l10n.reminderFrom}',
@@ -109,23 +152,16 @@ class SettingsScreen extends ConsumerWidget {
               onChanged: notifier.setReminderEnd,
             ),
           ],
-
-          // ── Language ──────────────────────────────────────────────────────
-          _SectionHeader(title: l10n.settingsLanguage),
-
+          const _SectionHeader(title: 'Darstellung'),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: _SegmentedRow<String>(
               options: const ['de', 'en'],
               selected: settings.languageCode,
-              label: (code) => code == 'de' ? '🇩🇪 Deutsch' : '🇬🇧 English',
+              label: (code) => code == 'de' ? 'Deutsch' : 'English',
               onChanged: notifier.setLanguage,
             ),
           ),
-
-          // ── Appearance ────────────────────────────────────────────────────
-          _SectionHeader(title: l10n.settingsTheme),
-
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: _SegmentedRow<ThemeMode>(
@@ -135,7 +171,7 @@ class SettingsScreen extends ConsumerWidget {
                 ThemeMode.dark,
               ],
               selected: settings.themeMode,
-              label: (m) => switch (m) {
+              label: (mode) => switch (mode) {
                 ThemeMode.system => l10n.themeSystem,
                 ThemeMode.light => l10n.themeLight,
                 ThemeMode.dark => l10n.themeDark,
@@ -143,49 +179,63 @@ class SettingsScreen extends ConsumerWidget {
               onChanged: notifier.setThemeMode,
             ),
           ),
-
-          // ── Data & Sync ───────────────────────────────────────────────────
-          _SectionHeader(title: l10n.settingsDataSync),
-          const _SyncStatusTile(),
-
-          // ── Connect to Trainer ────────────────────────────────────────────
-          _SectionHeader(title: l10n.settingsConnectTrainer),
-          const _ConnectTrainerTile(),
-
-          // ── Account ───────────────────────────────────────────────────────
-          _SectionHeader(title: l10n.settingsAccount),
-
+          const _SectionHeader(title: 'Erweitert'),
           ListTile(
-            leading: const Icon(Icons.logout),
-            title: Text(l10n.signOut),
-            textColor: AppColors.error,
-            iconColor: AppColors.error,
+            leading: const Icon(Icons.help_outline),
+            title: const Text('Einführungen erneut anzeigen'),
+            subtitle: const Text(
+              'Zeigt die kurzen Hinweise auf Heute, Verlauf, Begleitung und Profil wieder an.',
+            ),
             onTap: () async {
-              await ref.read(authNotifierProvider.notifier).signOut();
+              await ref
+                  .read(onboardingHintControllerProvider.notifier)
+                  .resetAll();
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Einführungen werden wieder angezeigt.'),
+                  ),
+                );
+              }
             },
           ),
-
-          const SizedBox(height: 32),
+          if (showMoroRestart)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Card(
+                child: ListTile(
+                  leading: const Icon(
+                    Icons.replay_circle_filled_outlined,
+                    color: AppColors.warning,
+                  ),
+                  title: Text(l10n.moroRestartSettingsTitle),
+                  subtitle: Text(l10n.moroRestartSettingsSubtitle),
+                  trailing: const Icon(Icons.chevron_right_rounded),
+                  onTap: () => _confirmRestartMoro(context, ref),
+                ),
+              ),
+            ),
+          const _SyncStatusTile(),
         ],
       ),
     );
   }
 }
 
-// ── Reusable widgets ──────────────────────────────────────────────────────────
-
 class _SectionHeader extends StatelessWidget {
-  final String title;
   const _SectionHeader({required this.title});
+
+  final String title;
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 24, 16, 4),
       child: Text(
         title.toUpperCase(),
         style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              color: AppColors.textSecondary,
+              color: cs.onSurfaceVariant,
               letterSpacing: 0.8,
               fontWeight: FontWeight.w600,
             ),
@@ -195,11 +245,6 @@ class _SectionHeader extends StatelessWidget {
 }
 
 class _SegmentedRow<T> extends StatelessWidget {
-  final List<T> options;
-  final T selected;
-  final String Function(T) label;
-  final ValueChanged<T> onChanged;
-
   const _SegmentedRow({
     required this.options,
     required this.selected,
@@ -207,14 +252,22 @@ class _SegmentedRow<T> extends StatelessWidget {
     required this.onChanged,
   });
 
+  final List<T> options;
+  final T selected;
+  final String Function(T) label;
+  final ValueChanged<T> onChanged;
+
   @override
   Widget build(BuildContext context) {
     return SegmentedButton<T>(
       segments: options
-          .map((o) => ButtonSegment<T>(value: o, label: Text(label(o))))
+          .map((option) => ButtonSegment<T>(
+                value: option,
+                label: Text(label(option)),
+              ))
           .toList(),
       selected: {selected},
-      onSelectionChanged: (s) => onChanged(s.first),
+      onSelectionChanged: (selection) => onChanged(selection.first),
       style: SegmentedButton.styleFrom(
         selectedBackgroundColor: AppColors.primary,
         selectedForegroundColor: Colors.white,
@@ -229,12 +282,13 @@ class _SyncStatusTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final cs = Theme.of(context).colorScheme;
     final l10n = AppLocalizations.of(context);
     final status = ref.watch(syncStatusProvider).valueOrNull;
     final syncService = ref.read(syncServiceProvider);
 
     final (icon, color, label) = switch (status) {
-      null => (Icons.sync, AppColors.textSecondary, l10n.loading),
+      null => (Icons.sync, cs.onSurfaceVariant, l10n.loading),
       SyncStatus(isSyncing: true) => (
           Icons.sync,
           AppColors.primary,
@@ -268,107 +322,22 @@ class _SyncStatusTile extends ConsumerWidget {
   }
 }
 
-class _ConnectTrainerTile extends ConsumerStatefulWidget {
-  const _ConnectTrainerTile();
-
-  @override
-  ConsumerState<_ConnectTrainerTile> createState() => _ConnectTrainerTileState();
-}
-
-class _ConnectTrainerTileState extends ConsumerState<_ConnectTrainerTile> {
-  final _codeController = TextEditingController();
-  bool _loading = false;
-
-  @override
-  void dispose() {
-    _codeController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Row(
-        children: [
-          Expanded(
-            child: TextField(
-              controller: _codeController,
-              decoration: InputDecoration(
-                hintText: l10n.enterInviteCode,
-                isDense: true,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-              ),
-              textCapitalization: TextCapitalization.characters,
-              maxLength: 6,
-              buildCounter: (_, {required currentLength, required isFocused, maxLength}) => null,
-            ),
-          ),
-          const SizedBox(width: 8),
-          _loading
-              ? const SizedBox(
-                  width: 36,
-                  height: 36,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-              : ElevatedButton(
-                  onPressed: () => _connect(context, l10n),
-                  style: ElevatedButton.styleFrom(
-                    minimumSize: const Size(0, 40),
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                  ),
-                  child: Text(l10n.connectToTrainer),
-                ),
-        ],
-      ),
-    );
-  }
-
-  Future<void> _connect(BuildContext context, AppLocalizations l10n) async {
-    final code = _codeController.text.trim();
-    if (code.length < 6) return;
-    setState(() => _loading = true);
-    try {
-      await acceptInvite(code);
-      _codeController.clear();
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(l10n.connectToTrainerSuccess)),
-        );
-      }
-    } catch (_) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(l10n.connectToTrainerError)),
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _loading = false);
-    }
-  }
-}
-
 class _TimePickerTile extends StatelessWidget {
-  final String label;
-  final TimeOfDay time;
-  final ValueChanged<TimeOfDay> onChanged;
-
   const _TimePickerTile({
     required this.label,
     required this.time,
     required this.onChanged,
   });
 
+  final String label;
+  final TimeOfDay time;
+  final ValueChanged<TimeOfDay> onChanged;
+
   @override
   Widget build(BuildContext context) {
     final formatted =
         '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
+
     return ListTile(
       title: Text(label),
       trailing: TextButton(
@@ -385,7 +354,7 @@ class _TimePickerTile extends StatelessWidget {
         },
         child: Text(
           formatted,
-          style: TextStyle(
+          style: const TextStyle(
             color: AppColors.primary,
             fontWeight: FontWeight.w600,
             fontSize: 16,

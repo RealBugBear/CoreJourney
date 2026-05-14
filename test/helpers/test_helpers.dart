@@ -87,7 +87,8 @@ Matcher isInRange(num min, num max) {
 }
 
 /// Matcher for checking if a DateTime is close to another
-Matcher isCloseTo(DateTime expected, {Duration tolerance = const Duration(seconds: 1)}) {
+Matcher isCloseTo(DateTime expected,
+    {Duration tolerance = const Duration(seconds: 1)}) {
   return predicate<DateTime>(
     (actual) {
       final difference = actual.difference(expected).abs();

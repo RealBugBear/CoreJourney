@@ -45,7 +45,6 @@ class ExercisePreparationWidget extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 24),
-
           Expanded(
             child: SingleChildScrollView(
               child: Column(
@@ -57,8 +56,7 @@ class ExercisePreparationWidget extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             const Icon(Icons.circle,
-                                size: 7,
-                                color: AppColors.primaryLight),
+                                size: 7, color: AppColors.primaryLight),
                             const SizedBox(width: 10),
                             Expanded(
                               child: Text(step,
@@ -77,7 +75,8 @@ class ExercisePreparationWidget extends StatelessWidget {
                             color: AppColors.moodGold.withValues(alpha: 0.15),
                             borderRadius: BorderRadius.circular(8),
                             border: Border.all(
-                                color: AppColors.moodGold.withValues(alpha: 0.3)),
+                                color:
+                                    AppColors.moodGold.withValues(alpha: 0.3)),
                           ),
                           child: Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -99,7 +98,6 @@ class ExercisePreparationWidget extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-
           ElevatedButton(
             onPressed: onReady,
             style: ElevatedButton.styleFrom(

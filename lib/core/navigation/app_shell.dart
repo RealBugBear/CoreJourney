@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../features/chat/presentation/providers/chat_providers.dart';
+import '../../features/trainer/presentation/providers/trainer_provider.dart';
 import 'app_router.dart';
 
 class AppShell extends ConsumerWidget {
@@ -10,60 +11,83 @@ class AppShell extends ConsumerWidget {
 
   final Widget child;
 
-  static const _tabs = [
-    Routes.dashboard,
-    Routes.packages,
-    Routes.chatInbox,
-    Routes.profile,
-  ];
+  List<String> _buildTabRoutes({
+    required bool isTrainer,
+    required bool isAdmin,
+  }) =>
+      [
+        Routes.dashboard,
+        Routes.progress,
+        Routes.accompaniment,
+        if (isTrainer) Routes.trainerDashboard,
+        if (isAdmin) Routes.adminPanel,
+        Routes.profile,
+      ];
 
-  int _currentIndex(BuildContext context) {
+  int _currentIndex(BuildContext context, List<String> tabRoutes) {
     final location = GoRouterState.of(context).matchedLocation;
-    for (int i = 0; i < _tabs.length; i++) {
-      if (location.startsWith(_tabs[i])) return i;
+    for (int i = 0; i < tabRoutes.length; i++) {
+      if (location.startsWith(tabRoutes[i])) return i;
+    }
+    if (location.startsWith(Routes.trainerDiscovery) ||
+        location.startsWith(Routes.dm) ||
+        location.startsWith(Routes.appointmentProposals) ||
+        location.startsWith(Routes.community)) {
+      return tabRoutes.indexOf(Routes.accompaniment);
     }
     return 0;
   }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final currentIndex = _currentIndex(context);
-    // totalUnreadCountProvider is a plain int Provider, not AsyncValue
-    final unread = ref.watch(totalUnreadCountProvider);
+    final role = ref.watch(userRoleProvider).valueOrNull ?? 'practitioner';
+    final isAdmin = role == 'admin';
+    final isTrainer = role == 'trainer' || isAdmin;
+    final unreadDm = ref.watch(unreadDmCountProvider);
+    final tabRoutes = _buildTabRoutes(isTrainer: isTrainer, isAdmin: isAdmin);
+    final currentIndex = _currentIndex(context, tabRoutes);
 
     return Scaffold(
       body: child,
       bottomNavigationBar: NavigationBar(
         selectedIndex: currentIndex,
-        onDestinationSelected: (index) => context.go(_tabs[index]),
+        onDestinationSelected: (index) => context.go(tabRoutes[index]),
         destinations: [
           const NavigationDestination(
             icon: Icon(Icons.home_outlined),
             selectedIcon: Icon(Icons.home),
-            label: 'Home',
+            label: 'Heute',
           ),
           const NavigationDestination(
-            icon: Icon(Icons.fitness_center_outlined),
-            selectedIcon: Icon(Icons.fitness_center),
-            label: 'Training',
+            icon: Icon(Icons.insights_outlined),
+            selectedIcon: Icon(Icons.insights),
+            label: 'Verlauf',
           ),
           NavigationDestination(
             icon: Badge(
-              isLabelVisible: unread > 0,
-              label: unread > 99
-                  ? const Text('99+')
-                  : Text('$unread'),
-              child: const Icon(Icons.chat_bubble_outline),
+              isLabelVisible: unreadDm > 0,
+              label: unreadDm > 99 ? const Text('99+') : Text('$unreadDm'),
+              child: const Icon(Icons.handshake_outlined),
             ),
             selectedIcon: Badge(
-              isLabelVisible: unread > 0,
-              label: unread > 99
-                  ? const Text('99+')
-                  : Text('$unread'),
-              child: const Icon(Icons.chat_bubble),
+              isLabelVisible: unreadDm > 0,
+              label: unreadDm > 99 ? const Text('99+') : Text('$unreadDm'),
+              child: const Icon(Icons.handshake),
             ),
-            label: 'Nachrichten',
+            label: 'Begleitung',
           ),
+          if (isTrainer)
+            const NavigationDestination(
+              icon: Icon(Icons.supervisor_account_outlined),
+              selectedIcon: Icon(Icons.supervisor_account),
+              label: 'Trainer',
+            ),
+          if (isAdmin)
+            const NavigationDestination(
+              icon: Icon(Icons.admin_panel_settings_outlined),
+              selectedIcon: Icon(Icons.admin_panel_settings),
+              label: 'Admin',
+            ),
           const NavigationDestination(
             icon: Icon(Icons.person_outline),
             selectedIcon: Icon(Icons.person),

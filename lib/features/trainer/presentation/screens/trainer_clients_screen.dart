@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/navigation/app_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../../chat/presentation/navigation/chat_navigation.dart';
 import '../../domain/models/trainer_client.dart';
 import '../providers/trainer_provider.dart';
 
@@ -35,7 +37,8 @@ class TrainerClientsScreen extends ConsumerWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
-            onPressed: () => ref.read(trainerClientsProvider.notifier).refresh(),
+            onPressed: () =>
+                ref.read(trainerClientsProvider.notifier).refresh(),
           ),
         ],
       ),
@@ -49,14 +52,14 @@ class TrainerClientsScreen extends ConsumerWidget {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.group_outlined,
+                      const Icon(Icons.group_outlined,
                           size: 64, color: AppColors.textDisabled),
                       const SizedBox(height: 16),
                       Text(
                         l10n.trainerNoClients,
                         textAlign: TextAlign.center,
                         style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                              color: AppColors.textSecondary,
+                              color: Theme.of(context).colorScheme.onSurfaceVariant,
                             ),
                       ),
                       const SizedBox(height: 8),
@@ -64,9 +67,13 @@ class TrainerClientsScreen extends ConsumerWidget {
                         l10n.trainerNoClientsHint,
                         textAlign: TextAlign.center,
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: AppColors.textSecondary,
+                              color: Theme.of(context).colorScheme.onSurfaceVariant,
                             ),
                       ),
+                      if (kDebugMode) ...[
+                        const SizedBox(height: 24),
+                        const _TrainerClientsDebugPanel(),
+                      ],
                     ],
                   ),
                 ),
@@ -79,8 +86,7 @@ class TrainerClientsScreen extends ConsumerWidget {
                   itemCount: clients.length,
                   separatorBuilder: (_, __) =>
                       const Divider(height: 1, indent: 72),
-                  itemBuilder: (context, i) =>
-                      _ClientTile(client: clients[i]),
+                  itemBuilder: (context, i) => _ClientTile(client: clients[i]),
                 ),
               ),
       ),
@@ -128,8 +134,8 @@ class TrainerClientsScreen extends ConsumerWidget {
               ),
               const SizedBox(height: 20),
               Container(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 24, vertical: 16),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
                 decoration: BoxDecoration(
                   color: AppColors.primary.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(12),
@@ -138,7 +144,7 @@ class TrainerClientsScreen extends ConsumerWidget {
                 ),
                 child: Text(
                   code,
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontSize: 32,
                     fontWeight: FontWeight.w700,
                     letterSpacing: 6,
@@ -178,21 +184,86 @@ class TrainerClientsScreen extends ConsumerWidget {
   }
 }
 
-class _ClientTile extends StatelessWidget {
+class _TrainerClientsDebugPanel extends ConsumerWidget {
+  const _TrainerClientsDebugPanel();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final debugAsync = ref.watch(trainerClientsDebugProvider);
+    final textStyle = Theme.of(context).textTheme.bodySmall?.copyWith(
+          fontFamily: 'monospace',
+          color: Theme.of(context).colorScheme.onSurfaceVariant,
+          height: 1.35,
+        );
+
+    return SizedBox(
+      width: double.infinity,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surfaceContainerHighest,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppColors.divider),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Icon(Icons.bug_report_outlined, size: 18),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Diagnose Trainer-Verknüpfung',
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                            fontWeight: FontWeight.w700,
+                          ),
+                    ),
+                  ),
+                  IconButton(
+                    tooltip: 'Diagnose aktualisieren',
+                    icon: const Icon(Icons.refresh, size: 18),
+                    onPressed: () {
+                      ref.invalidate(trainerClientsDebugProvider);
+                      ref.invalidate(trainerClientsProvider);
+                    },
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              debugAsync.when(
+                loading: () => const LinearProgressIndicator(),
+                error: (e, _) => Text('Diagnose Fehler: $e', style: textStyle),
+                data: (debug) => Text(debug, style: textStyle),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ClientTile extends ConsumerWidget {
   final TrainerClient client;
   const _ClientTile({required this.client});
 
   @override
-  Widget build(BuildContext context, ) {
+  Widget build(
+    BuildContext context,
+    WidgetRef ref,
+  ) {
     final l10n = AppLocalizations.of(context);
-    final packageName = _packageNames[client.packageId] ?? client.packageId ?? '—';
+    final packageName =
+        _packageNames[client.packageId] ?? client.packageId ?? '—';
     final daysSince = client.lastActivityDate != null
         ? DateTime.now().difference(client.lastActivityDate!).inDays
         : null;
 
     return ListTile(
-      contentPadding:
-          const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       leading: CircleAvatar(
         backgroundColor: client.isAtRisk
             ? AppColors.warning.withValues(alpha: 0.15)
@@ -215,15 +286,14 @@ class _ClientTile extends StatelessWidget {
           ),
           if (client.isAtRisk)
             Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
               decoration: BoxDecoration(
                 color: AppColors.warning.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text(
                 l10n.trainerAtRisk,
-                style: TextStyle(
+                style: const TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
                   color: AppColors.warning,
@@ -238,10 +308,10 @@ class _ClientTile extends StatelessWidget {
           const SizedBox(height: 2),
           Text(
             client.packageId != null
-                ? '$packageName · ${l10n.dayNumber(client.currentDay)} · ${client.dailyStreak} 🔥'
+                ? '$packageName · ${l10n.dayNumber(client.currentDay)} · ${client.dailyStreak} Tage regelmaessig'
                 : l10n.packageLocked,
-            style: TextStyle(
-                color: AppColors.textSecondary, fontSize: 13),
+            style:
+                TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 13),
           ),
           if (daysSince != null)
             Text(
@@ -250,17 +320,37 @@ class _ClientTile extends StatelessWidget {
                 fontSize: 12,
                 color: client.isAtRisk
                     ? AppColors.warning
-                    : AppColors.textSecondary,
+                    : Theme.of(context).colorScheme.onSurfaceVariant,
               ),
             ),
         ],
       ),
-      trailing: const Icon(Icons.chevron_right),
+      trailing: SizedBox(
+        width: 88,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            IconButton(
+              icon: const Icon(Icons.chat_bubble_outline, size: 20),
+              tooltip: 'Chat öffnen',
+              onPressed: () => _openClientChat(context, ref, client.clientId),
+            ),
+            const Icon(Icons.chevron_right),
+          ],
+        ),
+      ),
       onTap: () => context.push(
-        Routes.trainerClientDetail.replaceFirst(
-            ':clientId', client.clientId),
+        Routes.trainerClientDetail.replaceFirst(':clientId', client.clientId),
         extra: client,
       ),
     );
+  }
+
+  Future<void> _openClientChat(
+    BuildContext context,
+    WidgetRef ref,
+    String clientId,
+  ) async {
+    await openDirectChatWithUser(context, ref, clientId);
   }
 }

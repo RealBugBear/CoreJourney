@@ -48,7 +48,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get dashboard => 'Dashboard';
 
   @override
-  String get startTraining => 'Start Training';
+  String get startTraining => 'Begin Unit';
 
   @override
   String currentDay(int day, int total) {
@@ -56,7 +56,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get dailyStreak => 'Daily Streak';
+  String get dailyStreak => 'Regularity';
 
   @override
   String weeklyProgress(int count, int goal) {
@@ -72,7 +72,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get trainingMode => 'Training Mode';
+  String get trainingMode => 'Unit Mode';
 
   @override
   String get tutorialMode => 'Tutorial';
@@ -104,11 +104,10 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get sessionComplete => 'Session Complete';
+  String get sessionComplete => 'Unit Complete';
 
   @override
-  String get sessionCompleteSubtitle =>
-      'Well done! You\'ve completed your training for today.';
+  String get sessionCompleteSubtitle => 'You have completed today\'s unit.';
 
   @override
   String get moodCheckIn => 'How are you feeling?';
@@ -129,8 +128,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get moodSubmit => 'Save';
 
   @override
-  String get moodChartEmpty =>
-      'Complete a training session to start tracking your mood.';
+  String get moodChartEmpty => 'Log a unit to see your wellbeing over time.';
 
   @override
   String get intakeAssessmentTitle => 'Getting Started';
@@ -147,14 +145,14 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get intakeTrainerBody =>
-      'We recommend beginning and accompanying this program with a certified trainer. A trainer carries out isometric activation training to specifically target the relevant reflexes. This targeted activation accelerates the integration process. Without it, the body typically takes longer to engage the reflexes sufficiently.';
+      'We recommend beginning and accompanying this program with a certified trainer. A trainer guides isometric partner exercises that support clear perception of direction, movement, and resistance. Without this guidance, the body usually needs more calm repetition.';
 
   @override
   String get intakeQuestionLabel => 'One question about your start';
 
   @override
   String get questionIsometricWithTrainer =>
-      'Have you already completed isometric activation training with a trainer?';
+      'Have you already completed isometric partner exercises with a trainer?';
 
   @override
   String get yes => 'Yes';
@@ -174,14 +172,66 @@ class AppLocalizationsEn extends AppLocalizations {
   String get confirm => 'Confirm';
 
   @override
+  String get durationWithoutTrainerInfo =>
+      'Without trainer guidance, we recommend about 8 weeks so the body has more time for integration.';
+
+  @override
+  String get durationTrainerMinimumInfo =>
+      'With trainer guidance, we recommend at least 4 weeks. You can extend the duration if you want more integration time.';
+
+  @override
+  String get trainerOnboardingTitle => 'Trainer Guidance';
+
+  @override
+  String get trainerOnboardingFindTitle => 'Start with a trainer near you';
+
+  @override
+  String get trainerOnboardingFindBody =>
+      'Because you have not completed isometric activation with a trainer yet, we recommend finding a suitable trainer first. You can still continue directly if you prefer.';
+
+  @override
+  String get trainerOnboardingConnectTitle => 'Connect with your trainer';
+
+  @override
+  String get trainerOnboardingConnectBody =>
+      'If you have already worked with a trainer, you can connect now. This lets your trainer follow your progress and coordinate appointments when needed.';
+
+  @override
+  String get trainerOnboardingSearchCta => 'Find trainers nearby';
+
+  @override
+  String get trainerOnboardingInviteCta => 'Enter invite code';
+
+  @override
+  String get trainerOnboardingSkipCta => 'Do this later';
+
+  @override
+  String get trainerOnboardingInviteTitle => 'Connect with trainer';
+
+  @override
+  String get trainerOnboardingInviteBody =>
+      'Enter the 6-character invite code you received from your trainer.';
+
+  @override
+  String get trainerOnboardingInviteInvalid =>
+      'Please enter the 6-character code.';
+
+  @override
+  String get trainerOnboardingInviteFailed => 'Could not connect with trainer.';
+
+  @override
+  String get trainerOnboardingContinueAfterRequest =>
+      'Continue to duration recommendation';
+
+  @override
   String get completionQuestionnaireTitle => 'Final Reflection';
 
   @override
-  String get completionCelebrationTitle => 'Block Complete! ⭐';
+  String get completionCelebrationTitle => 'Package Complete';
 
   @override
   String get completionCelebrationSubtitle =>
-      'You\'ve completed an important step in your development. Well done.';
+      'You have followed this package for the planned time.';
 
   @override
   String get completionNextPackage => 'Continue to next package';
@@ -190,15 +240,40 @@ class AppLocalizationsEn extends AppLocalizations {
   String get completionBackToDashboard => 'Back to Dashboard';
 
   @override
+  String get completionReachedTitle => 'Package duration reached';
+
+  @override
+  String get completionReachedBody =>
+      'You have reached the planned package duration. Today now shows a short reflection so you can complete this package or repeat it for 7 more days.';
+
+  @override
+  String get completionPlaceholderQuestion =>
+      'Placeholder reflection: Does this package feel ready to complete?';
+
+  @override
+  String get completionPass => 'Complete package';
+
+  @override
+  String get completionInsufficient => 'Repeat 7 more days';
+
+  @override
+  String get completionMoroReturnSubtitle =>
+      'The repeated Moro cycle is complete. You will now return to the interrupted package and restart it at day 1.';
+
+  @override
+  String get completionBackToInterruptedPackage =>
+      'Back to interrupted package';
+
+  @override
   String get completionExtendedTitle => 'One more week';
 
   @override
   String get completionExtendedSubtitle =>
-      'No problem — you have 7 more days. Keep going.';
+      'You have 7 more days in this package.';
 
   @override
   String get completionQuestion =>
-      'Did you go through an intensified emotional or stressful time through the training, and were you able to confront these themes — learning that your emotional reaction does not always match reality — and begin to regulate yourself?';
+      'Since starting this package, have you noticed stronger emotional or stress-related reactions, and could you understand or regulate them a little more clearly?';
 
   @override
   String get completionYes => 'Yes, I\'m ready';
@@ -225,7 +300,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settings => 'Settings';
 
   @override
-  String get settingsTraining => 'Training';
+  String get settingsTraining => 'Units';
 
   @override
   String get settingsReminders => 'Reminders';
@@ -244,6 +319,23 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsConnectTrainer => 'Connect to Trainer';
+
+  @override
+  String get moroRestartSettingsTitle => 'Back to Moro';
+
+  @override
+  String get moroRestartSettingsSubtitle =>
+      'Restart Moro for 4 weeks and interrupt the current package.';
+
+  @override
+  String get moroRestartTitle => 'Return to Moro?';
+
+  @override
+  String get moroRestartBody =>
+      'Unlike many other reflexes, the Moro reflex can be reactivated by highly stressful or traumatic events, for example a car accident, the death of a loved one, or other intense shock experiences.\n\nIf you continue, your current package will be interrupted. You will restart Moro for 4 weeks. After completing Moro, you will return to the interrupted package and begin there again at day 1.';
+
+  @override
+  String get moroRestartConfirm => 'Restart Moro';
 
   @override
   String get reminderEnabled => 'Reminders enabled';
@@ -275,7 +367,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get settingsFeedback => 'Training Feedback';
+  String get settingsFeedback => 'Unit Feedback';
 
   @override
   String get settingsAccount => 'Account';
@@ -285,7 +377,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get disclaimerText =>
-      'This training does not replace medical treatment. Please consult a doctor if you have health concerns. Listen to your body and take breaks when needed.';
+      'These units do not replace medical treatment. Please consult a doctor if you have health concerns. Listen to your body and take breaks when needed.';
 
   @override
   String get disclaimerAccept => 'Understood, continue';
@@ -413,7 +505,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get journalEmptySubtitle =>
-      'Write down what you observe in your daily life — after each training or whenever you like.';
+      'Write down what you observe in daily life — after a unit or whenever you like.';
 
   @override
   String get journalEmptyHint =>
@@ -442,11 +534,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get profile => 'Profile';
 
   @override
-  String get completionBannerTitle => 'Block complete!';
+  String get completionBannerTitle => 'Package ready for assessment';
 
   @override
   String get completionBannerSubtitle =>
-      'You\'ve reached your target date. Time for your final reflection.';
+      'Answer the short questionnaire to complete this package or extend it by 7 days.';
 
   @override
   String get settingsDataSync => 'Data & Sync';
@@ -501,6 +593,32 @@ class AppLocalizationsEn extends AppLocalizations {
   String get profileChangePasswordSent => 'Password reset email sent.';
 
   @override
+  String get newPassword => 'New password';
+
+  @override
+  String get passwordConfirm => 'Confirm password';
+
+  @override
+  String get currentPassword => 'Current password';
+
+  @override
+  String get passwordChanged => 'Password changed successfully.';
+
+  @override
+  String get passwordSet => 'Password set. Please log in.';
+
+  @override
+  String get authErrorSamePassword =>
+      'New password must differ from the current one.';
+
+  @override
+  String get authErrorInvalidCurrentPassword =>
+      'Current password is incorrect.';
+
+  @override
+  String get validationPasswordMismatch => 'Passwords do not match.';
+
+  @override
   String get profileDeleteAccount => 'Delete Account';
 
   @override
@@ -524,7 +642,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get trainerDashboard => 'Trainer Dashboard';
 
   @override
-  String get trainerTabTrainees => 'Trainees';
+  String get trainerTabTrainees => 'Clients';
 
   @override
   String get trainerTabCalendar => 'Calendar';
@@ -609,4 +727,108 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get appointmentOpenInCalendar => 'Open in Calendar';
+
+  @override
+  String get trainerRequestsTitle => 'Requests';
+
+  @override
+  String get trainerRequestNoRequests => 'No pending requests.';
+
+  @override
+  String get trainerRequestAccept => 'Accept';
+
+  @override
+  String get trainerRequestDecline => 'Decline';
+
+  @override
+  String get trainerDiscoveryTitle => 'Find Trainer';
+
+  @override
+  String get trainerDiscoveryLocationDenied =>
+      'Location permission is required to find trainers nearby.';
+
+  @override
+  String trainerDiscoveryRadiusLabel(int radius) {
+    return '$radius km';
+  }
+
+  @override
+  String get trainerDiscoveryEmpty => 'No trainers found nearby.';
+
+  @override
+  String trainerDiscoveryDistanceLabel(double distance) {
+    return '$distance km away';
+  }
+
+  @override
+  String get trainerDiscoveryRequestAlreadySent => 'Request already sent.';
+
+  @override
+  String get trainerDiscoveryRequestAlreadyConnected =>
+      'You are already connected with this trainer.';
+
+  @override
+  String get trainerDiscoveryRequestSent => 'Request sent.';
+
+  @override
+  String get trainerDiscoverySendRequest => 'Send request';
+
+  @override
+  String get trainerPublicProfileTitle => 'Trainer Profile';
+
+  @override
+  String get trainerPublicProfileVerified => 'Verified trainer';
+
+  @override
+  String get trainerSetupTitle => 'Trainer Profile';
+
+  @override
+  String get trainerSetupDisplayNameLabel => 'Display name';
+
+  @override
+  String get trainerSetupBioLabel => 'Bio';
+
+  @override
+  String get trainerSetupEmailLabel => 'Email';
+
+  @override
+  String get trainerSetupPhoneLabel => 'Phone';
+
+  @override
+  String get trainerSetupLocationTitle => 'Location';
+
+  @override
+  String get trainerSetupLocationHint =>
+      'Choose your trainer location so clients can find you nearby.';
+
+  @override
+  String get trainerSetupLocationMissing => 'Please choose a location.';
+
+  @override
+  String get trainerSetupSubmit => 'Submit for review';
+
+  @override
+  String get trainerSetupPendingTitle => 'Profile under review';
+
+  @override
+  String get trainerSetupPendingBody =>
+      'We will notify you once your trainer profile is approved.';
+
+  @override
+  String get adminTrainerReviewTab => 'Trainer Review';
+
+  @override
+  String get adminTrainerNoPending => 'No trainer profiles pending review.';
+
+  @override
+  String get adminTrainerApproveSuccess => 'Trainer approved.';
+
+  @override
+  String get adminTrainerSuspendSuccess => 'Trainer suspended.';
+
+  @override
+  String get adminTrainerApprove => 'Approve';
+
+  @override
+  String get adminTrainerSuspend => 'Suspend';
 }

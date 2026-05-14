@@ -100,14 +100,14 @@ class NotificationService {
 
     await flutterLocalNotificationsPlugin.zonedSchedule(
       dailyReminderId,
-      'Zeit für dein Training!',
-      'Halte deinen Streak und trainiere jetzt.',
+      'Zeit für deine Einheit',
+      'Nimm dir Zeit für deine heutige Reflexintegrations-Einheit.',
       scheduledDate,
       const NotificationDetails(
         android: AndroidNotificationDetails(
           'daily_reminder',
           'Tägliche Erinnerung',
-          channelDescription: 'Erinnerung an das tägliche Training',
+          channelDescription: 'Erinnerung an die tägliche Einheit',
           importance: Importance.max,
           priority: Priority.high,
         ),
@@ -142,13 +142,13 @@ class NotificationService {
 
       await flutterLocalNotificationsPlugin.zonedSchedule(
         baseId,
-        'Zeit für dein Training!',
-        message ?? 'Dein bevorzugtes Trainingsfenster hat begonnen.',
+        'Zeit für deine Einheit',
+        message ?? 'Dein bevorzugtes Einheitsfenster hat begonnen.',
         scheduledDate,
         const NotificationDetails(
           android: AndroidNotificationDetails(
             'daily_reminder_window',
-            'Trainingsfenster',
+            'Einheitsfenster',
             channelDescription: 'Erinnerungen innerhalb des Wunschzeitraums',
             importance: Importance.max,
             priority: Priority.high,
@@ -188,13 +188,13 @@ class NotificationService {
 
     await flutterLocalNotificationsPlugin.zonedSchedule(
       dailyReminderId,
-      'Zeit für dein Training!',
-      message ?? 'Dein bevorzugtes Trainingsfenster hat begonnen.',
+      'Zeit für deine Einheit',
+      message ?? 'Dein bevorzugtes Einheitsfenster hat begonnen.',
       start,
       const NotificationDetails(
         android: AndroidNotificationDetails(
           'daily_reminder_window',
-          'Trainingsfenster',
+          'Einheitsfenster',
           channelDescription: 'Erinnerungen innerhalb des Wunschzeitraums',
           importance: Importance.max,
           priority: Priority.high,
@@ -229,7 +229,7 @@ class NotificationService {
     await flutterLocalNotificationsPlugin.zonedSchedule(
       200,
       'Starte deine Woche',
-      'Plane deine fünf Trainingstage und sichere dir deinen 5/7-Streak.',
+      'Plane deine Einheiten für diese Woche in einem ruhigen Rhythmus.',
       kickoff,
       const NotificationDetails(
         android: AndroidNotificationDetails(

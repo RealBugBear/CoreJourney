@@ -4,9 +4,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 /// Script to seed test accounts with different training states
-/// 
+///
 /// Usage: dart run scripts/seed_test_data.dart --env=dev
-/// 
+///
 /// Creates 6 test accounts:
 /// 1. test-new@corejourney.app - 0/28 days
 /// 2. test-week1@corejourney.app - 7/28 days
@@ -18,7 +18,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 void main(List<String> arguments) async {
   // Check environment
   final env = arguments.contains('--env=prod') ? 'prod' : 'dev';
-  
+
   if (env == 'prod') {
     print('⚠️  WARNING: Running in PRODUCTION mode!');
     print('This will create test accounts in your production Firebase.');
@@ -35,10 +35,10 @@ void main(List<String> arguments) async {
   // Initialize Firebase
   // Note: You'll need to configure this based on your Firebase setup
   // For now, this is a template
-  
+
   try {
     await Firebase.initializeApp(
-      options: env == 'prod' 
+      options: env == 'prod'
           ? null // Use production config
           : null, // Use dev config
     );
@@ -50,7 +50,7 @@ void main(List<String> arguments) async {
   final firestore = FirebaseFirestore.instance;
 
   const password = 'TestDemo2025!';
-  
+
   final accounts = [
     TestAccount(
       email: 'test-new@corejourney.app',
@@ -93,7 +93,7 @@ void main(List<String> arguments) async {
 
   for (final account in accounts) {
     print('Creating: ${account.email}');
-    
+
     try {
       // Try to create user
       UserCredential userCredential;
@@ -113,10 +113,10 @@ void main(List<String> arguments) async {
       }
 
       final user = userCredential.user!;
-      
+
       // Update display name
       await user.updateDisplayName(account.displayName);
-      
+
       // Create progress data in Firestore
       if (account.completedDays > 0) {
         // Generate list of completed days
@@ -124,23 +124,23 @@ void main(List<String> arguments) async {
           account.completedDays,
           (index) => index,
         );
-        
+
         // Create progress entries
         final batch = firestore.batch();
-        
+
         for (int day = 0; day < account.completedDays; day++) {
           // Calculate completion date (going backwards from today)
           final completedDate = DateTime.now().subtract(
             Duration(days: account.completedDays - day - 1),
           );
-          
+
           // Create progress entry
           final progressRef = firestore
               .collection('users')
               .doc(user.uid)
               .collection('progress')
               .doc('day_$day');
-          
+
           batch.set(progressRef, {
             'day': day,
             'completed': true,
@@ -148,25 +148,27 @@ void main(List<String> arguments) async {
             'exercises': _generateMockExercises(),
           });
         }
-        
+
         // Set user summary
         final userRef = firestore.collection('users').doc(user.uid);
-        batch.set(userRef, {
-          'email': account.email,
-          'displayName': account.displayName,
-          'totalDaysCompleted': account.completedDays,
-          'currentDay': account.completedDays < 28 
-              ? account.completedDays 
-              : 28,
-          'completedDays': completedDaysList,
-          'joinedAt': Timestamp.fromDate(
-            DateTime.now().subtract(Duration(days: account.completedDays)),
-          ),
-          'lastTrainingAt': Timestamp.fromDate(DateTime.now()),
-          if (account.completedQuestionnaire)
-            'questionnaireCompleted': true,
-        }, SetOptions(merge: true));
-        
+        batch.set(
+            userRef,
+            {
+              'email': account.email,
+              'displayName': account.displayName,
+              'totalDaysCompleted': account.completedDays,
+              'currentDay':
+                  account.completedDays < 28 ? account.completedDays : 28,
+              'completedDays': completedDaysList,
+              'joinedAt': Timestamp.fromDate(
+                DateTime.now().subtract(Duration(days: account.completedDays)),
+              ),
+              'lastTrainingAt': Timestamp.fromDate(DateTime.now()),
+              if (account.completedQuestionnaire)
+                'questionnaireCompleted': true,
+            },
+            SetOptions(merge: true));
+
         // Commit batch
         await batch.commit();
         print('  ✓ Progress data created (${account.completedDays} days)');
@@ -182,9 +184,8 @@ void main(List<String> arguments) async {
         });
         print('  ✓ User document created (no progress yet)');
       }
-      
+
       print('  ✓ ${account.description}\n');
-      
     } catch (e) {
       print('  ✗ Error: $e\n');
     }
@@ -195,7 +196,7 @@ void main(List<String> arguments) async {
   print('\n🔗 Firebase Console: https://console.firebase.google.com');
   print('   Go to: Authentication → Users to see all accounts');
   print('   Go to: Firestore → users collection to see data');
-  
+
   exit(0);
 }
 

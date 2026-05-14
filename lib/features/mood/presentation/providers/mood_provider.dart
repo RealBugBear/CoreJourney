@@ -73,3 +73,38 @@ final moodNotesProvider = FutureProvider.autoDispose
         to: now,
       );
 });
+
+/// Parameter for profile-scoped mood providers.
+class ProfileMoodLookup {
+  const ProfileMoodLookup({required this.days, required this.subjectProfileId});
+  final int days;
+  final String subjectProfileId;
+
+  @override
+  bool operator ==(Object other) =>
+      other is ProfileMoodLookup &&
+      other.days == days &&
+      other.subjectProfileId == subjectProfileId;
+
+  @override
+  int get hashCode => Object.hash(days, subjectProfileId);
+}
+
+final profileMoodAggregatesProvider = FutureProvider.autoDispose
+    .family<List<MoodDailyAggregate>, ProfileMoodLookup>((ref, lookup) async {
+  final enrollmentId = ref.watch(activeEnrollmentProvider).valueOrNull?.id;
+  final now = ref.watch(appClockProvider).now();
+  if (enrollmentId == null) return [];
+
+  final from = lookup.days <= 0
+      ? DateTime(1970)
+      : DateTime(now.year, now.month, now.day)
+          .subtract(Duration(days: lookup.days));
+
+  return ref.read(moodRepositoryProvider).getDailyAggregatesInRange(
+        enrollmentId: enrollmentId,
+        from: from,
+        to: now,
+        subjectProfileId: lookup.subjectProfileId,
+      );
+});

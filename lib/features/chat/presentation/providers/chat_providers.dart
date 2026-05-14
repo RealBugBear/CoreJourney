@@ -13,7 +13,8 @@ final chatRepositoryProvider = Provider<ChatRepository>((ref) {
 
 // ── Channels ──────────────────────────────────────────────────────────────────
 
-final chatChannelsProvider = FutureProvider.autoDispose<List<ChatChannel>>((ref) {
+final chatChannelsProvider =
+    FutureProvider.autoDispose<List<ChatChannel>>((ref) {
   return ref.read(chatRepositoryProvider).getChannels();
 });
 
@@ -21,9 +22,19 @@ final chatChannelsProvider = FutureProvider.autoDispose<List<ChatChannel>>((ref)
 
 final totalUnreadCountProvider = Provider.autoDispose<int>((ref) {
   return ref.watch(chatChannelsProvider).maybeWhen(
-    data: (channels) => channels.fold(0, (sum, c) => sum + c.unreadCount),
-    orElse: () => 0,
-  );
+        data: (channels) => channels.fold(0, (sum, c) => sum + c.unreadCount),
+        orElse: () => 0,
+      );
+});
+
+/// Ungelesene Nachrichten nur in Direct-Channels (für DM-Tab-Badge).
+final unreadDmCountProvider = Provider<int>((ref) {
+  return ref.watch(chatChannelsProvider).maybeWhen(
+        data: (channels) => channels
+            .where((c) => c.type == ChannelType.direct)
+            .fold(0, (sum, c) => sum + c.unreadCount),
+        orElse: () => 0,
+      );
 });
 
 // ── Messages stream ───────────────────────────────────────────────────────────
@@ -33,10 +44,14 @@ final chatMessagesProvider = StreamProvider.autoDispose
   return ref.read(chatRepositoryProvider).watchMessages(channelId);
 });
 
+final callRequestsProvider = StreamProvider.autoDispose<List<ChatMessage>>(
+  (ref) => ref.read(chatRepositoryProvider).watchCallRequests(),
+);
+
 // ── Typing users stream ───────────────────────────────────────────────────────
 
-final typingUsersProvider = StreamProvider.autoDispose
-    .family<Set<String>, String>((ref, channelId) {
+final typingUsersProvider =
+    StreamProvider.autoDispose.family<Set<String>, String>((ref, channelId) {
   return ref.read(chatRepositoryProvider).watchTypingUsers(channelId);
 });
 
@@ -51,6 +66,7 @@ class SendMessageNotifier extends AutoDisposeAsyncNotifier<void> {
     state = await AsyncValue.guard(
       () => ref.read(chatRepositoryProvider).sendMessage(channelId, content),
     );
+    ref.invalidate(chatChannelsProvider);
   }
 
   Future<void> sendCallRequest(String channelId) async {
@@ -58,6 +74,7 @@ class SendMessageNotifier extends AutoDisposeAsyncNotifier<void> {
     state = await AsyncValue.guard(
       () => ref.read(chatRepositoryProvider).sendCallRequest(channelId),
     );
+    ref.invalidate(chatChannelsProvider);
   }
 }
 

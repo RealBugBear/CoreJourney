@@ -12,6 +12,7 @@ class MessageInputBar extends StatefulWidget {
 
   final ChatChannel channel;
   final void Function(String content) onSend;
+
   /// Non-null = show call-request button (Practitioner in direct channel only).
   final VoidCallback? onCallRequest;
   final VoidCallback onTyping;
@@ -84,8 +85,8 @@ class _MessageInputBarState extends State<MessageInputBar> {
                   ),
                   filled: true,
                   fillColor: theme.colorScheme.surfaceContainerHighest,
-                  contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 16, vertical: 10),
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                   isDense: true,
                 ),
                 onSubmitted: (_) => _send(),

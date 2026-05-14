@@ -27,6 +27,15 @@ class TrainerClient {
     return daysSince >= 2;
   }
 
+  int get totalTrainingDays => 28;
+
+  int get remainingTrainingDays {
+    final remaining = totalTrainingDays - currentDay;
+    return remaining < 0 ? 0 : remaining;
+  }
+
+  bool get needsNextPackageAppointment => remainingTrainingDays <= 5;
+
   factory TrainerClient.fromJson(Map<String, dynamic> json) {
     return TrainerClient(
       relationshipId: json['relationship_id'] as String,
@@ -62,6 +71,67 @@ class ClientSession {
       sessionDate: DateTime.parse(json['session_date'] as String),
       isCompleted: json['is_completed'] as bool? ?? false,
       dayNumber: (json['day_number'] as num?)?.toInt() ?? 0,
+    );
+  }
+}
+
+class TrainerClientObservation {
+  const TrainerClientObservation({
+    required this.id,
+    required this.clientId,
+    required this.clientName,
+    required this.recordedAt,
+    required this.note,
+    this.mood,
+    this.energy,
+    this.stress,
+    this.source,
+  });
+
+  final String id;
+  final String clientId;
+  final String clientName;
+  final DateTime recordedAt;
+  final String note;
+  final int? mood;
+  final int? energy;
+  final int? stress;
+  final String? source;
+
+  factory TrainerClientObservation.fromJson(
+    Map<String, dynamic> json, {
+    required String clientName,
+  }) {
+    return TrainerClientObservation(
+      id: json['id'] as String,
+      clientId: json['user_id'] as String,
+      clientName: clientName,
+      recordedAt: DateTime.parse(json['recorded_at'] as String).toLocal(),
+      note: (json['note'] as String?)?.trim() ?? '',
+      mood: (json['mood'] as num?)?.toInt(),
+      energy: (json['energy'] as num?)?.toInt(),
+      stress: (json['stress'] as num?)?.toInt(),
+      source: json['source'] as String?,
+    );
+  }
+}
+
+class TrainerOpenInvite {
+  const TrainerOpenInvite({
+    required this.id,
+    required this.code,
+    required this.createdAt,
+  });
+
+  final String id;
+  final String code;
+  final DateTime createdAt;
+
+  factory TrainerOpenInvite.fromJson(Map<String, dynamic> json) {
+    return TrainerOpenInvite(
+      id: json['id'] as String,
+      code: json['invite_code'] as String? ?? '',
+      createdAt: DateTime.parse(json['created_at'] as String).toLocal(),
     );
   }
 }

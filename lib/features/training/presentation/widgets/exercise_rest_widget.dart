@@ -98,7 +98,8 @@ class _ExerciseRestWidgetState extends State<ExerciseRestWidget> {
               backgroundColor: AppColors.primary,
             ),
             child: Text(l10n.next,
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                style:
+                    const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
           ),
         ],
       ),

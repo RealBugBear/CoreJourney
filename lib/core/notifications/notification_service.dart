@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
@@ -15,10 +17,12 @@ class NotificationService {
   static final NotificationService instance = NotificationService._();
 
   final _plugin = FlutterLocalNotificationsPlugin();
+  final _tapController = StreamController<String>.broadcast();
   bool _enabled = true;
   bool _initialized = false;
 
   bool get isEnabled => _enabled;
+  Stream<String> get notificationTaps => _tapController.stream;
 
   void disable(String reason) {
     if (!_enabled) return;
@@ -52,6 +56,12 @@ class NotificationService {
         android: androidSettings,
         iOS: iosSettings,
       ),
+      onDidReceiveNotificationResponse: (response) {
+        final payload = response.payload;
+        if (payload != null && payload.isNotEmpty) {
+          _tapController.add(payload);
+        }
+      },
     );
 
     _initialized = true;
@@ -62,9 +72,8 @@ class NotificationService {
 
   Future<bool> requestPermission() async {
     if (!_enabled) return false;
-    final ios = _plugin
-        .resolvePlatformSpecificImplementation<
-            IOSFlutterLocalNotificationsPlugin>();
+    final ios = _plugin.resolvePlatformSpecificImplementation<
+        IOSFlutterLocalNotificationsPlugin>();
     if (ios != null) {
       final granted = await ios.requestPermissions(
         alert: true,
@@ -73,9 +82,8 @@ class NotificationService {
       );
       return granted ?? false;
     }
-    final android = _plugin
-        .resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin>();
+    final android = _plugin.resolvePlatformSpecificImplementation<
+        AndroidFlutterLocalNotificationsPlugin>();
     if (android != null) {
       final granted = await android.requestNotificationsPermission();
       return granted ?? false;

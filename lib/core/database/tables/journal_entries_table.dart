@@ -34,6 +34,7 @@ class JournalEntriesTable extends Table {
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
   DateTimeColumn get updatedAt => dateTime().withDefault(currentDateAndTime)();
 
+  TextColumn get subjectProfileId => text().nullable()();
   BoolColumn get needsSync => boolean().withDefault(const Constant(true))();
 
   @override

@@ -3,16 +3,24 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../features/auth/presentation/providers/auth_provider.dart';
+import '../settings/settings_provider.dart';
 import '../../features/auth/presentation/screens/login_screen.dart';
+import '../../features/auth/presentation/screens/reset_password_screen.dart';
+import '../../features/auth/presentation/screens/change_password_screen.dart';
 import '../../features/consent/presentation/screens/consent_screen.dart';
 import '../../features/dashboard/presentation/screens/dashboard_screen.dart';
+import '../../features/assessment/presentation/screens/analysis_placeholder_screen.dart';
+import '../../features/assessment/presentation/screens/reflex_profile_demo_screen.dart';
+import '../../features/assessment/presentation/screens/reflex_profile_screen.dart';
+import '../../features/assessment/presentation/screens/reflex_profile_result_screen.dart';
 import '../../features/assessment/presentation/screens/intake_assessment_screen.dart';
 import '../../features/assessment/presentation/screens/duration_recommendation_screen.dart';
+import '../../features/assessment/presentation/screens/trainer_onboarding_prompt_screen.dart';
 import '../../features/assessment/presentation/screens/completion_questionnaire_screen.dart';
 import '../../features/training/presentation/screens/training_session_screen.dart';
-import '../../features/mood/presentation/screens/mood_history_screen.dart';
-import '../../features/packages/presentation/screens/packages_screen.dart';
 import '../../features/settings/presentation/screens/settings_screen.dart';
+import '../../features/settings/presentation/screens/language_selection_screen.dart';
 import '../../features/profile/presentation/screens/profile_screen.dart';
 import '../../features/trainer/presentation/screens/trainer_clients_screen.dart';
 import '../../features/trainer/presentation/screens/trainer_client_detail_screen.dart';
@@ -20,25 +28,51 @@ import '../../features/trainer/presentation/screens/trainer_dashboard_screen.dar
 import '../../features/trainer/presentation/screens/appointment_scheduler_screen.dart';
 import '../../features/trainer/presentation/screens/appointment_proposal_screen.dart';
 import '../../features/trainer/domain/models/trainer_client.dart';
+import '../../features/trainer/presentation/screens/trainer_discovery_screen.dart';
+import '../../features/trainer/presentation/screens/trainer_profile_setup_screen.dart';
+import '../../features/trainer/presentation/screens/trainer_profile_pending_screen.dart';
+import '../../features/trainer/presentation/screens/trainer_application_intro_screen.dart';
+import '../../features/trainer/presentation/screens/trainer_application_form_screen.dart';
+import '../../features/trainer/presentation/screens/trainer_application_status_screen.dart';
+import '../../features/trainer/presentation/screens/trainer_public_profile_screen.dart';
+import '../../features/trainer/presentation/screens/trainer_requests_screen.dart';
+import '../../features/trainer/domain/models/trainer_profile.dart';
 import '../../features/journal/presentation/screens/journal_screen.dart';
+import '../../features/progress/presentation/screens/progress_overview_screen.dart';
 import '../../features/dev_tools/presentation/screens/dev_tools_screen.dart';
 import '../../features/chat/domain/models/chat_channel.dart';
 import '../../features/admin/presentation/screens/admin_panel_screen.dart';
-import '../../features/chat/presentation/screens/chat_inbox_screen.dart';
+import '../../features/accompaniment/presentation/screens/accompaniment_screen.dart';
 import '../../features/chat/presentation/screens/chat_channel_screen.dart';
+import '../../features/community/presentation/screens/community_screen.dart';
+import '../../features/chat/presentation/screens/dm_screen.dart';
+import '../../features/experience/presentation/screens/experience_feed_screen.dart';
+import '../../features/packages/presentation/screens/packages_screen.dart';
+import '../../features/onboarding/presentation/screens/for_whom_screen.dart';
+import '../../features/onboarding/presentation/screens/entry_points_screen.dart';
+import '../../features/profile/presentation/screens/username_setup_screen.dart';
 import 'app_shell.dart';
 
 // Route name constants
 class Routes {
   static const login = '/login';
+  static const languageSelection = '/language';
+  static const resetPassword = '/auth/reset-password';
+  static const changePassword = '/profile/change-password';
   static const devTools = '/dev-tools';
   static const consent = '/consent';
+  static const analysisPlaceholder = '/onboarding/analysis';
+  static const reflexProfileDemo = '/reflex-profile/demo';
+  static const reflexProfile = '/reflex-profile';
+  static const reflexProfileResult = '/reflex-profile/result';
   static const dashboard = '/dashboard';
+  static const progress = '/verlauf';
+  static const accompaniment = '/begleitung';
   static const intakeAssessment = '/intake-assessment';
+  static const trainerOnboardingPrompt = '/intake-assessment/trainer';
   static const durationRecommendation = '/intake-assessment/duration';
   static const completionQuestionnaire = '/completion-questionnaire';
   static const trainingSession = '/training/session';
-  static const moodHistory = '/mood/history';
   static const journal = '/journal';
   static const packages = '/packages';
   static const settings = '/settings';
@@ -48,9 +82,22 @@ class Routes {
   static const trainerDashboard = '/trainer/dashboard';
   static const appointmentScheduler = '/trainer/appointment/:clientId';
   static const appointmentProposals = '/appointments/proposals';
-  static const chatInbox = '/chat';
-  static const chatChannel = '/chat/:channelId';
+  static const community = '/community';
+  static const dm = '/dm';
+  static const dmChannel = '/dm/:channelId';
   static const adminPanel = '/admin';
+  static const trainerDiscovery = '/trainers';
+  static const trainerProfileSetup = '/trainer/profile-setup';
+  static const trainerProfilePending = '/trainer/profile-pending';
+  static const trainerApplicationIntro = '/trainer/apply';
+  static const trainerApplicationForm = '/trainer/application';
+  static const trainerApplicationStatus = '/trainer/application/status';
+  static const trainerPublicProfile = '/trainers/:trainerId';
+  static const trainerRequests = '/trainer/requests';
+  static const usernameSetup = '/username-setup';
+  static const onboardingForWhom = '/onboarding/for-whom';
+  static const onboardingEntryPoints = '/onboarding/entry-points';
+  static const experienceFeed = '/experience/:channelId';
 }
 
 /// Bridges a Stream into a [Listenable] so GoRouter can react to auth changes.
@@ -67,31 +114,103 @@ class _StreamRefreshListenable extends ChangeNotifier {
   }
 }
 
-final _rootNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'root');
+class _SimpleNotifier extends ChangeNotifier {
+  void notify() => notifyListeners();
+}
+
+/// Combines multiple [Listenable]s into one so GoRouter reacts to any of them.
+class _CombinedListenable extends ChangeNotifier {
+  _CombinedListenable(List<Listenable> listenables) {
+    for (final l in listenables) {
+      l.addListener(notifyListeners);
+    }
+    _listenables = listenables;
+  }
+  late final List<Listenable> _listenables;
+
+  @override
+  void dispose() {
+    for (final l in _listenables) {
+      l.removeListener(notifyListeners);
+    }
+    super.dispose();
+  }
+}
+
+final rootNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'root');
 
 final routerProvider = Provider<GoRouter>((ref) {
   final authRefresh = _StreamRefreshListenable(
     Supabase.instance.client.auth.onAuthStateChange,
   );
-  ref.onDispose(authRefresh.dispose);
+
+  // Notifies GoRouter whenever the password-recovery flag changes so the
+  // redirect logic re-runs immediately — without waiting for a Supabase event.
+  final recoveryRefresh = _SimpleNotifier();
+  ref.listen(
+      passwordRecoveryActiveProvider, (_, __) => recoveryRefresh.notify());
+
+  final combined = _CombinedListenable([authRefresh, recoveryRefresh]);
+
+  ref.onDispose(() {
+    authRefresh.dispose();
+    recoveryRefresh.dispose();
+    combined.dispose();
+  });
 
   return GoRouter(
-    navigatorKey: _rootNavigatorKey,
+    navigatorKey: rootNavigatorKey,
     initialLocation: Routes.login,
-    refreshListenable: authRefresh,
+    refreshListenable: combined,
     redirect: (context, state) {
       final user = Supabase.instance.client.auth.currentUser;
-      final isOnLogin = state.matchedLocation == Routes.login;
+      final isPasswordRecovery = ref.read(passwordRecoveryActiveProvider);
+      final hasSelectedLanguage = ref.read(hasSelectedLanguageProvider);
+      final loc = state.matchedLocation;
+      final isPublicRoute = loc == Routes.login ||
+          loc == Routes.resetPassword ||
+          loc == Routes.reflexProfileDemo;
 
-      if (user == null && !isOnLogin) return Routes.login;
-      if (user != null && isOnLogin) return Routes.dashboard;
+      // Password-Recovery Deep Link: Vorrang vor allem anderen
+      if (isPasswordRecovery && loc != Routes.resetPassword) {
+        return Routes.resetPassword;
+      }
+      if (!hasSelectedLanguage && loc != Routes.languageSelection) {
+        return Routes.languageSelection;
+      }
+      if (hasSelectedLanguage && loc == Routes.languageSelection) {
+        return user == null ? Routes.login : Routes.dashboard;
+      }
+      // Nicht eingeloggt → Login (außer während Recovery)
+      if (user == null && !isPublicRoute) {
+        return Routes.login;
+      }
+      // Eingeloggt und auf Login → Dashboard
+      if (user != null && !isPasswordRecovery && loc == Routes.login) {
+        return Routes.dashboard;
+      }
       return null;
     },
     routes: [
       GoRoute(
+        path: Routes.languageSelection,
+        name: 'language-selection',
+        builder: (context, state) => const LanguageSelectionScreen(),
+      ),
+      GoRoute(
         path: Routes.login,
         name: 'login',
         builder: (context, state) => const LoginScreen(),
+      ),
+      GoRoute(
+        path: Routes.resetPassword,
+        name: 'reset-password',
+        builder: (context, state) => const ResetPasswordScreen(),
+      ),
+      GoRoute(
+        path: Routes.changePassword,
+        name: 'change-password',
+        builder: (context, state) => const ChangePasswordScreen(),
       ),
       GoRoute(
         path: Routes.consent,
@@ -99,9 +218,34 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const ConsentScreen(),
       ),
       GoRoute(
+        path: Routes.analysisPlaceholder,
+        name: 'analysis-placeholder',
+        builder: (context, state) => const AnalysisPlaceholderScreen(),
+      ),
+      GoRoute(
+        path: Routes.reflexProfileDemo,
+        name: 'reflex-profile-demo',
+        builder: (context, state) => const ReflexProfileDemoScreen(),
+      ),
+      GoRoute(
+        path: Routes.reflexProfile,
+        name: 'reflex-profile',
+        builder: (context, state) => const ReflexProfileScreen(),
+      ),
+      GoRoute(
+        path: Routes.reflexProfileResult,
+        name: 'reflex-profile-result',
+        builder: (context, state) => const ReflexProfileResultScreen(),
+      ),
+      GoRoute(
         path: Routes.intakeAssessment,
         name: 'intake-assessment',
         builder: (context, state) => const IntakeAssessmentScreen(),
+      ),
+      GoRoute(
+        path: Routes.trainerOnboardingPrompt,
+        name: 'trainer-onboarding-prompt',
+        builder: (context, state) => const TrainerOnboardingPromptScreen(),
       ),
       GoRoute(
         path: Routes.durationRecommendation,
@@ -120,14 +264,16 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: Routes.trainingSession,
         name: 'training-session',
         builder: (context, state) {
-          final packageId = state.extra as String? ?? 'moro';
+          final extra = state.extra;
+          if (extra is TrainingSessionLaunchArgs) {
+            return TrainingSessionScreen(
+              packageId: extra.packageId,
+              companionSubjectProfileIds: extra.companionSubjectProfileIds,
+            );
+          }
+          final packageId = extra as String? ?? 'moro';
           return TrainingSessionScreen(packageId: packageId);
         },
-      ),
-      GoRoute(
-        path: Routes.moodHistory,
-        name: 'mood-history',
-        builder: (context, state) => const MoodHistoryScreen(),
       ),
       GoRoute(
         path: Routes.journal,
@@ -153,16 +299,20 @@ final routerProvider = Provider<GoRouter>((ref) {
         },
       ),
       GoRoute(
-        path: Routes.trainerDashboard,
-        name: 'trainer-dashboard',
-        builder: (context, state) => const TrainerDashboardScreen(),
-      ),
-      GoRoute(
         path: Routes.appointmentScheduler,
         name: 'appointment-scheduler',
         builder: (context, state) {
           final clientId = state.pathParameters['clientId']!;
-          final client = state.extra as TrainerClient?;
+          final extra = state.extra;
+          final TrainerClient? client;
+          final String? reviewChannelId;
+          if (extra is Map<String, Object?>) {
+            client = extra['client'] as TrainerClient?;
+            reviewChannelId = extra['reviewChannelId'] as String?;
+          } else {
+            client = extra as TrainerClient?;
+            reviewChannelId = null;
+          }
           // Fallback minimal client if navigated without extra
           return AppointmentSchedulerScreen(
             client: client ??
@@ -173,13 +323,33 @@ final routerProvider = Provider<GoRouter>((ref) {
                   currentDay: 1,
                   dailyStreak: 0,
                 ),
+            reviewChannelId: reviewChannelId,
           );
         },
       ),
       GoRoute(
-        path: Routes.appointmentProposals,
-        name: 'appointment-proposals',
-        builder: (context, state) => const AppointmentProposalScreen(),
+        path: Routes.usernameSetup,
+        name: 'username-setup',
+        builder: (context, state) => const UsernameSetupScreen(),
+      ),
+      GoRoute(
+        path: Routes.onboardingForWhom,
+        name: 'onboarding-for-whom',
+        builder: (context, state) => const ForWhomScreen(),
+      ),
+      GoRoute(
+        path: Routes.onboardingEntryPoints,
+        name: 'onboarding-entry-points',
+        builder: (context, state) => const EntryPointsScreen(),
+      ),
+      GoRoute(
+        parentNavigatorKey: rootNavigatorKey,
+        path: Routes.experienceFeed,
+        name: 'experience-feed',
+        builder: (context, state) {
+          final channel = state.extra as ChatChannel;
+          return ExperienceFeedScreen(channel: channel);
+        },
       ),
       GoRoute(
         path: Routes.devTools,
@@ -187,9 +357,13 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const DevToolsScreen(),
       ),
       GoRoute(
-        path: Routes.adminPanel,
-        name: 'admin-panel',
-        builder: (context, state) => const AdminPanelScreen(),
+        path: Routes.trainerDiscovery,
+        name: 'trainer-discovery',
+        builder: (context, state) => TrainerDiscoveryScreen(
+          onboardingExtra:
+              (state.extra as Map<String, Object?>?)?['onboardingExtra']
+                  as Map<String, dynamic>?,
+        ),
       ),
       // ── Shell: persists bottom navigation bar ────────────────────────────
       ShellRoute(
@@ -204,33 +378,28 @@ final routerProvider = Provider<GoRouter>((ref) {
             ),
           ),
           GoRoute(
-            path: Routes.packages,
-            name: 'packages',
+            path: Routes.progress,
+            name: 'progress',
             pageBuilder: (context, state) => NoTransitionPage(
               key: state.pageKey,
-              child: const PackagesScreen(),
+              child: const ProgressOverviewScreen(),
             ),
           ),
           GoRoute(
-            path: Routes.chatInbox,
-            name: 'chat-inbox',
+            path: Routes.accompaniment,
+            name: 'accompaniment',
             pageBuilder: (context, state) => NoTransitionPage(
               key: state.pageKey,
-              child: const ChatInboxScreen(),
+              child: const AccompanimentScreen(),
             ),
-            routes: [
-              GoRoute(
-                // Renders on root navigator → no shell nav bar
-                parentNavigatorKey: _rootNavigatorKey,
-                path: ':channelId',
-                name: 'chat-channel',
-                builder: (context, state) {
-                  final channelId = state.pathParameters['channelId']!;
-                  final channel = state.extra as ChatChannel?;
-                  return ChatChannelScreen(channelId: channelId, channel: channel);
-                },
-              ),
-            ],
+          ),
+          GoRoute(
+            path: Routes.community,
+            name: 'community',
+            pageBuilder: (context, state) => NoTransitionPage(
+              key: state.pageKey,
+              child: const CommunityScreen(),
+            ),
           ),
           GoRoute(
             path: Routes.profile,
@@ -240,7 +409,111 @@ final routerProvider = Provider<GoRouter>((ref) {
               child: const ProfileScreen(),
             ),
           ),
+          GoRoute(
+            path: Routes.trainerDashboard,
+            name: 'trainer-dashboard',
+            pageBuilder: (context, state) => NoTransitionPage(
+              key: state.pageKey,
+              child: const TrainerDashboardScreen(),
+            ),
+          ),
+          GoRoute(
+            path: Routes.adminPanel,
+            name: 'admin-panel',
+            pageBuilder: (context, state) => NoTransitionPage(
+              key: state.pageKey,
+              child: const AdminPanelScreen(),
+            ),
+          ),
+          GoRoute(
+            path: Routes.dm,
+            name: 'dm',
+            pageBuilder: (context, state) => NoTransitionPage(
+              key: state.pageKey,
+              child: const DmScreen(),
+            ),
+            routes: [
+              GoRoute(
+                path: ':channelId',
+                name: 'dm-channel',
+                builder: (context, state) {
+                  final channelId = state.pathParameters['channelId']!;
+                  final channel = state.extra as ChatChannel?;
+                  return ChatChannelScreen(
+                    channelId: channelId,
+                    channel: channel,
+                  );
+                },
+              ),
+            ],
+          ),
+          GoRoute(
+            path: Routes.appointmentProposals,
+            name: 'appointment-proposals',
+            pageBuilder: (context, state) => NoTransitionPage(
+              key: state.pageKey,
+              child: const AppointmentProposalScreen(),
+            ),
+          ),
+          GoRoute(
+            path: Routes.packages,
+            name: 'packages',
+            pageBuilder: (context, state) => NoTransitionPage(
+              key: state.pageKey,
+              child: const PackagesScreen(),
+            ),
+          ),
         ],
+      ),
+      GoRoute(
+        path: Routes.trainerProfileSetup,
+        name: 'trainer-profile-setup',
+        redirect: (context, state) => Routes.trainerApplicationForm,
+        builder: (context, state) => const TrainerProfileSetupScreen(),
+      ),
+      GoRoute(
+        path: Routes.trainerProfilePending,
+        name: 'trainer-profile-pending',
+        redirect: (context, state) => Routes.trainerApplicationStatus,
+        builder: (context, state) => const TrainerProfilePendingScreen(),
+      ),
+      GoRoute(
+        path: Routes.trainerApplicationIntro,
+        name: 'trainer-application-intro',
+        builder: (context, state) => const TrainerApplicationIntroScreen(),
+      ),
+      GoRoute(
+        path: Routes.trainerApplicationForm,
+        name: 'trainer-application-form',
+        builder: (context, state) => const TrainerApplicationFormScreen(),
+      ),
+      GoRoute(
+        path: Routes.trainerApplicationStatus,
+        name: 'trainer-application-status',
+        builder: (context, state) => const TrainerApplicationStatusScreen(),
+      ),
+      GoRoute(
+        path: Routes.trainerPublicProfile,
+        name: 'trainer-public-profile',
+        builder: (context, state) {
+          final extra = state.extra;
+          if (extra is Map<String, Object?>) {
+            final trainer = extra['trainer'] as TrainerProfile;
+            final onboardingExtra =
+                extra['onboardingExtra'] as Map<String, dynamic>?;
+            return TrainerPublicProfileScreen(
+              trainer: trainer,
+              onboardingExtra: onboardingExtra,
+            );
+          }
+          final trainer = extra as TrainerProfile;
+          return TrainerPublicProfileScreen(trainer: trainer);
+        },
+      ),
+      GoRoute(
+        path: Routes.trainerRequests,
+        name: 'trainer-requests',
+        builder: (context, state) => const TrainerRequestsScreen(),
       ),
     ],
     errorBuilder: (context, state) => Scaffold(

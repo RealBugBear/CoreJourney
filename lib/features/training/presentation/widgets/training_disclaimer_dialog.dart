@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 /// Training Disclaimer Dialog
-/// 
+///
 /// Shows safety warnings before training about physical and psychological risks.
 /// Implements scroll-to-enable pattern: user must scroll to bottom before accepting.
 class TrainingDisclaimerDialog extends StatefulWidget {
@@ -15,7 +15,8 @@ class TrainingDisclaimerDialog extends StatefulWidget {
   });
 
   @override
-  State<TrainingDisclaimerDialog> createState() => _TrainingDisclaimerDialogState();
+  State<TrainingDisclaimerDialog> createState() =>
+      _TrainingDisclaimerDialogState();
 }
 
 class _TrainingDisclaimerDialogState extends State<TrainingDisclaimerDialog> {
@@ -28,7 +29,7 @@ class _TrainingDisclaimerDialogState extends State<TrainingDisclaimerDialog> {
     super.initState();
     _scrollController = ScrollController();
     _scrollController.addListener(_onScroll);
-    
+
     // Check after first frame if content is scrollable
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _checkIfScrollable();
@@ -50,14 +51,14 @@ class _TrainingDisclaimerDialogState extends State<TrainingDisclaimerDialog> {
 
   void _onScroll() {
     if (!_scrollController.hasClients) return;
-    
+
     final maxScroll = _scrollController.position.maxScrollExtent;
     final currentScroll = _scrollController.offset;
-    
+
     // Consider "bottom" when within 20 pixels of the end
     const threshold = 20.0;
     final isAtBottom = currentScroll >= (maxScroll - threshold);
-    
+
     if (isAtBottom && !_hasScrolledToBottom) {
       setState(() {
         _hasScrolledToBottom = true;
@@ -119,9 +120,9 @@ class _TrainingDisclaimerDialogState extends State<TrainingDisclaimerDialog> {
                       ),
                     ),
                   ),
-                  
+
                   SizedBox(height: isSmallScreen ? 16 : 20),
-                  
+
                   // Physical risks
                   _buildRiskSection(
                     context: context,
@@ -135,9 +136,9 @@ class _TrainingDisclaimerDialogState extends State<TrainingDisclaimerDialog> {
                     ],
                     isSmallScreen: isSmallScreen,
                   ),
-                  
+
                   SizedBox(height: isSmallScreen ? 12 : 16),
-                  
+
                   // Psychological risks
                   _buildRiskSection(
                     context: context,
@@ -151,9 +152,9 @@ class _TrainingDisclaimerDialogState extends State<TrainingDisclaimerDialog> {
                     ],
                     isSmallScreen: isSmallScreen,
                   ),
-                  
+
                   SizedBox(height: isSmallScreen ? 12 : 16),
-                  
+
                   // Recommendations
                   _buildRiskSection(
                     context: context,
@@ -167,14 +168,15 @@ class _TrainingDisclaimerDialogState extends State<TrainingDisclaimerDialog> {
                     ],
                     isSmallScreen: isSmallScreen,
                   ),
-                  
+
                   SizedBox(height: isSmallScreen ? 16 : 20),
-                  
+
                   // Final warning with hand emoji
                   Container(
                     padding: EdgeInsets.all(isSmallScreen ? 10 : 12),
                     decoration: BoxDecoration(
-                      color: theme.colorScheme.primaryContainer.withOpacity(0.3),
+                      color:
+                          theme.colorScheme.primaryContainer.withOpacity(0.3),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Row(
@@ -196,14 +198,14 @@ class _TrainingDisclaimerDialogState extends State<TrainingDisclaimerDialog> {
                       ],
                     ),
                   ),
-                  
+
                   // Add padding at bottom for scroll indicator
                   if (_showScrollIndicator && !_hasScrolledToBottom)
                     const SizedBox(height: 60),
                 ],
               ),
             ),
-            
+
             // Scroll indicator overlay
             if (_showScrollIndicator)
               _buildScrollIndicator(theme, isSmallScreen),
@@ -337,29 +339,29 @@ class _TrainingDisclaimerDialogState extends State<TrainingDisclaimerDialog> {
         ),
         const SizedBox(height: 6),
         ...risks.map((risk) => Padding(
-          padding: const EdgeInsets.only(left: 26, bottom: 3),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                '• ',
-                style: TextStyle(
-                  color: color,
-                  fontSize: isSmallScreen ? 11 : 12,
-                ),
-              ),
-              Expanded(
-                child: Text(
-                  risk,
-                  style: TextStyle(
-                    fontSize: isSmallScreen ? 11 : 12,
-                    height: 1.3,
+              padding: const EdgeInsets.only(left: 26, bottom: 3),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '• ',
+                    style: TextStyle(
+                      color: color,
+                      fontSize: isSmallScreen ? 11 : 12,
+                    ),
                   ),
-                ),
+                  Expanded(
+                    child: Text(
+                      risk,
+                      style: TextStyle(
+                        fontSize: isSmallScreen ? 11 : 12,
+                        height: 1.3,
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            ],
-          ),
-        )),
+            )),
       ],
     );
   }

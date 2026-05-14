@@ -8,23 +8,6 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/error_retry_widget.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../progress/presentation/providers/progress_provider.dart';
-import '../../domain/completion_questions.dart';
-
-// Ordered list of package IDs for next-package navigation
-const _packageOrder = [
-  'moro',
-  'spinal_galant',
-  'tlr',
-  'babkin',
-  'such_saug',
-  'atnr',
-  'stnr',
-  'babinski',
-  'landau',
-];
-
-// Packages that are currently free/unlocked (no paywall)
-const _freePackages = {'moro', 'spinal_galant', 'tlr'};
 
 enum _ScreenState { question, celebrating, extended }
 
@@ -42,6 +25,8 @@ class _CompletionQuestionnaireScreenState
   _ScreenState _state = _ScreenState.question;
   bool _saving = false;
   String? _nextPackageId;
+  String? _resumedPackageId;
+  bool _wasMoroReactivation = false;
 
   Future<void> _onYes() async {
     setState(() => _saving = true);
@@ -49,23 +34,23 @@ class _CompletionQuestionnaireScreenState
       final enrollment = ref.read(activeEnrollmentProvider).valueOrNull;
       if (enrollment == null) return;
 
-      await completeEnrollment(
+      final result = await completeEnrollment(
         db: ref.read(databaseProvider),
         syncService: ref.read(syncServiceProvider),
         enrollment: enrollment,
       );
 
-      final currentIndex = _packageOrder.indexOf(enrollment.packageId);
-      final nextId = currentIndex >= 0 && currentIndex < _packageOrder.length - 1
-          ? _packageOrder[currentIndex + 1]
-          : null;
-
       setState(() {
-        _nextPackageId = nextId;
+        _nextPackageId = result.nextPackageId;
+        _resumedPackageId = result.resumedPackageId;
+        _wasMoroReactivation = result.wasMoroReactivation;
         _state = _ScreenState.celebrating;
       });
     } catch (_) {
-      if (mounted) showErrorSnackBar(context, AppLocalizations.of(context).errorSaveFailed);
+      if (mounted) {
+        showErrorSnackBar(
+            context, AppLocalizations.of(context).errorSaveFailed);
+      }
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -85,13 +70,25 @@ class _CompletionQuestionnaireScreenState
 
       setState(() => _state = _ScreenState.extended);
     } catch (_) {
-      if (mounted) showErrorSnackBar(context, AppLocalizations.of(context).errorSaveFailed);
+      if (mounted) {
+        showErrorSnackBar(
+            context, AppLocalizations.of(context).errorSaveFailed);
+      }
     } finally {
       if (mounted) setState(() => _saving = false);
     }
   }
 
   void _continueAfterCelebration() {
+    if (_wasMoroReactivation) {
+      final resumed = _resumedPackageId;
+      if (resumed != null) {
+        ref.read(selectedPackageIdProvider.notifier).select(resumed);
+      }
+      context.go(Routes.dashboard);
+      return;
+    }
+
     final next = _nextPackageId;
     if (next == null) {
       // Last package — back to dashboard
@@ -102,7 +99,7 @@ class _CompletionQuestionnaireScreenState
     // Update selected package and either start intake or show packages screen
     ref.read(selectedPackageIdProvider.notifier).select(next);
 
-    if (_freePackages.contains(next)) {
+    if (freePackageIds.contains(next)) {
       // Free — go straight to intake for next package
       context.go(Routes.intakeAssessment, extra: next);
     } else {
@@ -122,10 +119,6 @@ class _CompletionQuestionnaireScreenState
 
   Widget _buildQuestion(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final locale = Localizations.localeOf(context).languageCode;
-    final enrollment = ref.read(activeEnrollmentProvider).valueOrNull;
-    final packageId = enrollment?.packageId ?? 'moro';
-    final question = completionQuestionFor(packageId, locale);
 
     return Scaffold(
       appBar: AppBar(title: Text(l10n.completionQuestionnaireTitle)),
@@ -137,7 +130,7 @@ class _CompletionQuestionnaireScreenState
             children: [
               const SizedBox(height: 16),
               Text(
-                question,
+                l10n.completionPlaceholderQuestion,
                 style: Theme.of(context)
                     .textTheme
                     .titleMedium
@@ -153,12 +146,12 @@ class _CompletionQuestionnaireScreenState
                         child: CircularProgressIndicator(
                             strokeWidth: 2, color: Colors.white),
                       )
-                    : Text(l10n.completionYes),
+                    : Text(l10n.completionPass),
               ),
               const SizedBox(height: 12),
               OutlinedButton(
                 onPressed: _saving ? null : _onNotYet,
-                child: Text(l10n.completionNotYet),
+                child: Text(l10n.completionInsufficient),
               ),
               const SizedBox(height: 24),
             ],
@@ -170,7 +163,7 @@ class _CompletionQuestionnaireScreenState
 
   Widget _buildCelebration(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final hasNext = _nextPackageId != null;
+    final hasNext = _nextPackageId != null || _wasMoroReactivation;
     return Scaffold(
       body: SafeArea(
         child: Padding(
@@ -195,9 +188,11 @@ class _CompletionQuestionnaireScreenState
               ),
               const SizedBox(height: 16),
               Text(
-                l10n.completionCelebrationSubtitle,
+                _wasMoroReactivation
+                    ? l10n.completionMoroReturnSubtitle
+                    : l10n.completionCelebrationSubtitle,
                 style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      color: AppColors.textSecondary,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
                       height: 1.5,
                     ),
                 textAlign: TextAlign.center,
@@ -207,7 +202,9 @@ class _CompletionQuestionnaireScreenState
                 onPressed: _continueAfterCelebration,
                 child: Text(
                   hasNext
-                      ? l10n.completionNextPackage
+                      ? (_wasMoroReactivation
+                          ? l10n.completionBackToInterruptedPackage
+                          : l10n.completionNextPackage)
                       : l10n.completionBackToDashboard,
                 ),
               ),
@@ -245,7 +242,7 @@ class _CompletionQuestionnaireScreenState
               Text(
                 l10n.completionExtendedSubtitle,
                 style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      color: AppColors.textSecondary,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
                       height: 1.5,
                     ),
                 textAlign: TextAlign.center,

@@ -49,9 +49,17 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>remote-notification</string>
+	</array>
 	<key>NSCameraUsageDescription</key>
 	<string>CoreJourney benötigt Kamera-Zugriff für Video-Calls mit deinem Trainer.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>CoreJourney benötigt Mikrofon-Zugriff für Video-Calls mit deinem Trainer.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>CoreJourney benötigt deinen Standort, um Trainer in deiner Nähe anzuzeigen.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>CoreJourney benötigt deinen Standort, um Trainer in deiner Nähe anzuzeigen.</string>
 </dict>
 </plist>

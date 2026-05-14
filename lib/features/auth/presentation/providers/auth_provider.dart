@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -16,6 +18,11 @@ final authStateProvider = StreamProvider<AuthState>((ref) {
 final currentUserProvider = Provider<User?>((ref) {
   return Supabase.instance.client.auth.currentUser;
 });
+
+/// True while the app is processing a password-recovery deep link.
+/// Set to true in app.dart before calling getSessionFromUrl().
+/// Set back to false in ResetPasswordScreen after successful update.
+final passwordRecoveryActiveProvider = StateProvider<bool>((ref) => false);
 
 class AuthNotifier extends StateNotifier<AsyncValue<void>> {
   final AuthRepository _repo;
@@ -37,10 +44,22 @@ class AuthNotifier extends StateNotifier<AsyncValue<void>> {
     );
   }
 
-  Future<void> sendPasswordReset({required String email}) async {
+  Future<void> sendPasswordReset({
+    required String email,
+    String? redirectTo,
+  }) async {
     state = const AsyncValue.loading();
     state = await AsyncValue.guard(
-      () => _repo.sendPasswordReset(email: email),
+      () => _repo
+          .sendPasswordReset(email: email, redirectTo: redirectTo)
+          .timeout(const Duration(seconds: 15)),
+    );
+  }
+
+  Future<void> updatePassword({required String newPassword}) async {
+    state = const AsyncValue.loading();
+    state = await AsyncValue.guard(
+      () => _repo.updatePassword(newPassword: newPassword),
     );
   }
 

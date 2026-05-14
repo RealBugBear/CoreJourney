@@ -11,6 +11,7 @@ const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 interface RequestPayload {
   channel_id: string;
   agora_channel_name: string;
+  uid?: number;
 }
 
 serve(async (req: Request) => {
@@ -34,6 +35,9 @@ serve(async (req: Request) => {
 
     const payload: RequestPayload = await req.json();
     const { channel_id, agora_channel_name } = payload;
+    const uid = Number.isInteger(payload.uid) && payload.uid! > 0
+      ? payload.uid!
+      : 1;
 
     if (!channel_id || !agora_channel_name) {
       return new Response(
@@ -86,7 +90,7 @@ serve(async (req: Request) => {
       AGORA_APP_ID,
       AGORA_APP_CERTIFICATE,
       agora_channel_name,
-      0,              // uid 0 = accept any numeric uid
+      uid,
       RtcRole.PUBLISHER,
       expireTs,
       expireTs,

@@ -73,7 +73,8 @@ void main() {
       // Verify overrides are created
       final overrides = result.toOverrides();
       expect(overrides, isNotEmpty);
-      expect(overrides.length, 6); // database, sync, prefs, flags, analytics, logger
+      expect(overrides.length,
+          6); // database, sync, prefs, flags, analytics, logger
     });
 
     testWidgets('Feature flags initialize correctly', (tester) async {

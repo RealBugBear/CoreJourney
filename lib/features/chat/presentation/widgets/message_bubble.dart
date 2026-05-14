@@ -12,6 +12,7 @@ class MessageBubble extends StatelessWidget {
     this.onDeleteRequested,
     this.onAcceptCall,
     this.onProposeAppointment,
+    this.onOpenAppointmentProposals,
   });
 
   final ChatMessage message;
@@ -19,20 +20,30 @@ class MessageBubble extends StatelessWidget {
   final VoidCallback? onDeleteRequested;
   final VoidCallback? onAcceptCall;
   final VoidCallback? onProposeAppointment;
+  final VoidCallback? onOpenAppointmentProposals;
 
   @override
   Widget build(BuildContext context) {
-    final currentUserId =
-        Supabase.instance.client.auth.currentUser?.id ?? '';
+    final currentUserId = Supabase.instance.client.auth.currentUser?.id ?? '';
     final isOwn = message.isOwnMessage(currentUserId);
 
     if (message.isDeleted) return _DeletedBubble(isOwn: isOwn);
     if (message.isBotResponse) return _BotBubble(message: message);
-    if (message.isCallRequest) return _CallRequestBubble(
-      isOwn: isOwn,
-      onAccept: isModerator ? onAcceptCall : null,
-      onProposeAppointment: isModerator ? onProposeAppointment : null,
-    );
+    if (message.isCallRequest) {
+      return _CallRequestBubble(
+        isOwn: isOwn,
+        isModerator: isModerator,
+        onAccept: isModerator ? onAcceptCall : null,
+        onProposeAppointment: isModerator ? onProposeAppointment : null,
+      );
+    }
+    if (message.isAppointmentProposalNotice) {
+      return _AppointmentProposalBubble(
+        message: message,
+        isOwn: isOwn,
+        onOpenAppointmentProposals: isOwn ? null : onOpenAppointmentProposals,
+      );
+    }
 
     final theme = Theme.of(context);
     final canDelete = isOwn || isModerator;
@@ -64,9 +75,7 @@ class MessageBubble extends StatelessWidget {
               Text(
                 message.content,
                 style: theme.textTheme.bodyMedium?.copyWith(
-                  color: isOwn
-                      ? Colors.white
-                      : theme.colorScheme.onSurface,
+                  color: isOwn ? Colors.white : theme.colorScheme.onSurface,
                 ),
               ),
               const SizedBox(height: 2),
@@ -86,31 +95,127 @@ class MessageBubble extends StatelessWidget {
   }
 }
 
+extension _ChatMessagePresentation on ChatMessage {
+  bool get isAppointmentProposalNotice {
+    final normalised = content.toLowerCase();
+    return normalised.contains('terminvorschlag') ||
+        normalised.contains('terminvorschläge');
+  }
+}
+
+class _AppointmentProposalBubble extends StatelessWidget {
+  const _AppointmentProposalBubble({
+    required this.message,
+    required this.isOwn,
+    this.onOpenAppointmentProposals,
+  });
+
+  final ChatMessage message;
+  final bool isOwn;
+  final VoidCallback? onOpenAppointmentProposals;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final showAction = !isOwn && onOpenAppointmentProposals != null;
+
+    return Align(
+      alignment: isOwn ? Alignment.centerRight : Alignment.centerLeft,
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+        constraints:
+            BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.82),
+        decoration: BoxDecoration(
+          color: theme.colorScheme.tertiaryContainer,
+          borderRadius: BorderRadius.only(
+            topLeft: const Radius.circular(16),
+            topRight: const Radius.circular(16),
+            bottomLeft: Radius.circular(isOwn ? 16 : 4),
+            bottomRight: Radius.circular(isOwn ? 4 : 16),
+          ),
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  Icons.event_available_outlined,
+                  size: 18,
+                  color: theme.colorScheme.onTertiaryContainer,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Terminvorschlag',
+                    style: theme.textTheme.labelLarge?.copyWith(
+                      color: theme.colorScheme.onTertiaryContainer,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            Text(
+              message.content,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onTertiaryContainer,
+              ),
+            ),
+            if (showAction) ...[
+              const SizedBox(height: 10),
+              FilledButton.icon(
+                onPressed: onOpenAppointmentProposals,
+                icon: const Icon(Icons.arrow_forward_outlined, size: 18),
+                label: const Text('Vorschlag ansehen'),
+              ),
+            ],
+            const SizedBox(height: 4),
+            Align(
+              alignment: Alignment.centerRight,
+              child: Text(
+                DateFormat.Hm().format(message.createdAt.toLocal()),
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: theme.colorScheme.onTertiaryContainer
+                      .withValues(alpha: 0.65),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _DeletedBubble extends StatelessWidget {
   const _DeletedBubble({required this.isOwn});
   final bool isOwn;
 
   @override
   Widget build(BuildContext context) => Align(
-    alignment: isOwn ? Alignment.centerRight : Alignment.centerLeft,
-    child: Container(
-      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 3),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: Colors.grey.shade100,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade300),
-      ),
-      child: Text(
-        'Diese Nachricht wurde entfernt.',
-        style: TextStyle(
-          fontStyle: FontStyle.italic,
-          color: Colors.grey.shade500,
-          fontSize: 13,
+        alignment: isOwn ? Alignment.centerRight : Alignment.centerLeft,
+        child: Container(
+          margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 3),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            color: Colors.grey.shade100,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.grey.shade300),
+          ),
+          child: Text(
+            'Diese Nachricht wurde entfernt.',
+            style: TextStyle(
+              fontStyle: FontStyle.italic,
+              color: Colors.grey.shade500,
+              fontSize: 13,
+            ),
+          ),
         ),
-      ),
-    ),
-  );
+      );
 }
 
 class _BotBubble extends StatelessWidget {
@@ -142,8 +247,7 @@ class _BotBubble extends StatelessWidget {
           children: [
             Row(children: [
               Icon(Icons.smart_toy_outlined,
-                  size: 13,
-                  color: theme.colorScheme.onSecondaryContainer),
+                  size: 13, color: theme.colorScheme.onSecondaryContainer),
               const SizedBox(width: 4),
               Text(
                 'CoreJourney Assistent',
@@ -155,8 +259,8 @@ class _BotBubble extends StatelessWidget {
             ]),
             const SizedBox(height: 4),
             Text(message.content,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.onSecondaryContainer)),
+                style: theme.textTheme.bodyMedium
+                    ?.copyWith(color: theme.colorScheme.onSecondaryContainer)),
           ],
         ),
       ),
@@ -167,16 +271,19 @@ class _BotBubble extends StatelessWidget {
 class _CallRequestBubble extends StatelessWidget {
   const _CallRequestBubble({
     required this.isOwn,
+    required this.isModerator,
     this.onAccept,
     this.onProposeAppointment,
   });
   final bool isOwn;
+  final bool isModerator;
   final VoidCallback? onAccept;
   final VoidCallback? onProposeAppointment;
 
   @override
   Widget build(BuildContext context) {
-    final showActions = !isOwn && (onAccept != null || onProposeAppointment != null);
+    final showActions =
+        !isOwn && (onAccept != null || onProposeAppointment != null);
 
     return Align(
       alignment: isOwn ? Alignment.centerRight : Alignment.centerLeft,
@@ -198,12 +305,11 @@ class _CallRequestBubble extends StatelessWidget {
             Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.videocam_outlined, color: Colors.teal.shade700, size: 20),
+                Icon(Icons.videocam_outlined,
+                    color: Colors.teal.shade700, size: 20),
                 const SizedBox(width: 8),
                 Text(
-                  isOwn
-                      ? 'Call-Anfrage gesendet'
-                      : 'Klient möchte einen Video-Call',
+                  _title,
                   style: TextStyle(
                     color: Colors.teal.shade800,
                     fontWeight: FontWeight.w500,
@@ -223,11 +329,13 @@ class _CallRequestBubble extends StatelessWidget {
                       style: FilledButton.styleFrom(
                         backgroundColor: Colors.teal.shade100,
                         foregroundColor: Colors.teal.shade900,
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 6),
                         minimumSize: Size.zero,
                         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       ),
-                      child: const Text('Annehmen', style: TextStyle(fontSize: 12)),
+                      child: const Text('Annehmen',
+                          style: TextStyle(fontSize: 12)),
                     ),
                   if (onAccept != null && onProposeAppointment != null)
                     const SizedBox(width: 8),
@@ -237,11 +345,13 @@ class _CallRequestBubble extends StatelessWidget {
                       style: OutlinedButton.styleFrom(
                         foregroundColor: Colors.teal.shade900,
                         side: BorderSide(color: Colors.teal.shade300),
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 6),
                         minimumSize: Size.zero,
                         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       ),
-                      child: const Text('Termin', style: TextStyle(fontSize: 12)),
+                      child:
+                          const Text('Termin', style: TextStyle(fontSize: 12)),
                     ),
                 ],
               ),
@@ -250,5 +360,16 @@ class _CallRequestBubble extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  String get _title {
+    if (isOwn) {
+      return isModerator
+          ? 'Trainer-Anfrage gesendet'
+          : 'Video-Call-Anfrage gesendet';
+    }
+    return isModerator
+        ? 'Nutzer möchte einen Video-Call'
+        : 'Trainer möchte einen Video-Call';
   }
 }

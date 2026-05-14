@@ -44,16 +44,20 @@ class _TypingIndicatorState extends ConsumerState<TypingIndicator>
             builder: (_, __) {
               final phase = (_dots.value * 3).floor();
               return Row(
-                children: List.generate(3, (i) => Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 1.5),
-                  width: 5,
-                  height: 5,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Theme.of(context).colorScheme.onSurface.withValues(
-                        alpha: i == phase ? 0.7 : 0.25),
-                  ),
-                )),
+                children: List.generate(
+                    3,
+                    (i) => Container(
+                          margin: const EdgeInsets.symmetric(horizontal: 1.5),
+                          width: 5,
+                          height: 5,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Theme.of(context)
+                                .colorScheme
+                                .onSurface
+                                .withValues(alpha: i == phase ? 0.7 : 0.25),
+                          ),
+                        )),
               );
             },
           ),
@@ -61,8 +65,11 @@ class _TypingIndicatorState extends ConsumerState<TypingIndicator>
           Text(
             users.length == 1 ? 'tippt …' : '${users.length} tippen …',
             style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
-            ),
+                  color: Theme.of(context)
+                      .colorScheme
+                      .onSurface
+                      .withValues(alpha: 0.5),
+                ),
           ),
         ],
       ),

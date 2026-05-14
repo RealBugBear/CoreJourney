@@ -151,25 +151,147 @@ class SyncService {
           await client.from(job.tableName_).delete().eq('id', job.recordId);
         }
 
-        await (_db.delete(_db.syncJobsTable)
-              ..where((t) => t.id.equals(job.id)))
+        await (_db.delete(_db.syncJobsTable)..where((t) => t.id.equals(job.id)))
             .go();
 
         appLogger.d('Synced ${job.tableName_}:${job.recordId}');
+      } on PostgrestException catch (e, st) {
+        final recovered = await _recoverFromServerConflict(
+            job: job, error: e, client: client);
+        if (recovered) {
+          appLogger.w(
+            'Recovered sync conflict for ${job.tableName_}:${job.recordId}',
+          );
+          continue;
+        }
+        appLogger.e('Sync error for job ${job.id}', error: e, stackTrace: st);
+        await (_db.update(_db.syncJobsTable)..where((t) => t.id.equals(job.id)))
+            .write(SyncJobsTableCompanion(
+          retryCount: Value(job.retryCount + 1),
+          lastAttemptAt: Value(DateTime.now()),
+        ));
       } on AuthException {
         appLogger.w('Auth error during sync — pausing');
         _isSyncing = false;
         return;
       } catch (e, st) {
         appLogger.e('Sync error for job ${job.id}', error: e, stackTrace: st);
-        await (_db.update(_db.syncJobsTable)
-              ..where((t) => t.id.equals(job.id)))
+        await (_db.update(_db.syncJobsTable)..where((t) => t.id.equals(job.id)))
             .write(SyncJobsTableCompanion(
           retryCount: Value(job.retryCount + 1),
           lastAttemptAt: Value(DateTime.now()),
         ));
       }
     }
+  }
+
+  Future<bool> _recoverFromServerConflict({
+    required SyncJobsTableData job,
+    required PostgrestException error,
+    required SupabaseClient client,
+  }) async {
+    final payload = jsonDecode(job.payload) as Map<String, dynamic>;
+    final message = error.message.toString();
+    final details = error.details?.toString() ?? '';
+
+    final isEnrollmentConflict = job.tableName_ == 'enrollments' &&
+        job.action == 'upsert' &&
+        error.code == '23505' &&
+        (message.contains('enrollments_user_package_active_unique') ||
+            details.contains('enrollments_user_package_active_unique') ||
+            message.contains('enrollments_subject_profile_active_unique') ||
+            details.contains('enrollments_subject_profile_active_unique') ||
+            message.contains('enrollments_legacy_user_package_active_unique') ||
+            details.contains('enrollments_legacy_user_package_active_unique'));
+
+    final isOrphanProgressConflict = job.tableName_ == 'progress_entries' &&
+        job.action == 'upsert' &&
+        error.code == '23503' &&
+        (message.contains('progress_entries_enrollment_id_fkey') ||
+            details.contains('progress_entries_enrollment_id_fkey'));
+
+    if (!isEnrollmentConflict && !isOrphanProgressConflict) {
+      return false;
+    }
+
+    final userId = payload['user_id'] as String?;
+    final enrollmentId = isEnrollmentConflict
+        ? job.recordId
+        : payload['enrollment_id'] as String?;
+    if (userId == null || enrollmentId == null) return false;
+
+    await _discardLocalEnrollmentGraph(enrollmentId);
+    await (_db.delete(_db.syncJobsTable)..where((t) => t.id.equals(job.id)))
+        .go();
+
+    if (client.auth.currentUser?.id == userId) {
+      await rehydrate(userId);
+    }
+    return true;
+  }
+
+  Future<void> _discardLocalEnrollmentGraph(String enrollmentId) async {
+    final progressIds = (await (_db.select(_db.progressEntriesTable)
+              ..where((t) => t.enrollmentId.equals(enrollmentId)))
+            .get())
+        .map((row) => row.id)
+        .toList();
+    final sessionIds = (await (_db.select(_db.trainingSessionsTable)
+              ..where((t) => t.enrollmentId.equals(enrollmentId)))
+            .get())
+        .map((row) => row.id)
+        .toList();
+    final moodIds = (await (_db.select(_db.moodCheckinsTable)
+              ..where((t) => t.enrollmentId.equals(enrollmentId)))
+            .get())
+        .map((row) => row.id)
+        .toList();
+    final journalIds = (await (_db.select(_db.journalEntriesTable)
+              ..where((t) => t.enrollmentId.equals(enrollmentId)))
+            .get())
+        .map((row) => row.id)
+        .toList();
+    final questionnaireIds =
+        (await (_db.select(_db.completionQuestionnairesTable)
+                  ..where((t) => t.enrollmentId.equals(enrollmentId)))
+                .get())
+            .map((row) => row.id)
+            .toList();
+
+    await _db.transaction(() async {
+      await (_db.delete(_db.progressEntriesTable)
+            ..where((t) => t.enrollmentId.equals(enrollmentId)))
+          .go();
+      await (_db.delete(_db.trainingSessionsTable)
+            ..where((t) => t.enrollmentId.equals(enrollmentId)))
+          .go();
+      await (_db.delete(_db.moodCheckinsTable)
+            ..where((t) => t.enrollmentId.equals(enrollmentId)))
+          .go();
+      await (_db.delete(_db.journalEntriesTable)
+            ..where((t) => t.enrollmentId.equals(enrollmentId)))
+          .go();
+      await (_db.delete(_db.completionQuestionnairesTable)
+            ..where((t) => t.enrollmentId.equals(enrollmentId)))
+          .go();
+      await (_db.delete(_db.enrollmentsTable)
+            ..where((t) => t.id.equals(enrollmentId)))
+          .go();
+
+      final orphanRecordIds = <String>[
+        enrollmentId,
+        ...progressIds,
+        ...sessionIds,
+        ...moodIds,
+        ...journalIds,
+        ...questionnaireIds,
+      ];
+      if (orphanRecordIds.isNotEmpty) {
+        await (_db.delete(_db.syncJobsTable)
+              ..where((t) => t.recordId.isIn(orphanRecordIds)))
+            .go();
+      }
+    });
   }
 
   // ── Server → Local rehydration ──────────────────────────────────────────────
@@ -182,6 +304,13 @@ class SyncService {
   // (meaning there are local writes not yet uploaded). Local-pending records
   // are skipped so we do not overwrite unsynced progress with stale server data.
   Future<void> rehydrate(String userId) async {
+    // Signal rehydration-in-progress BEFORE the first await so the dashboard
+    // guard sees isRehydrating=true even if GoRouter builds the screen before
+    // the authStateProvider listener fires.  The broadcast stream controller
+    // delivers this event synchronously to Riverpod's StreamProvider, making
+    // rehydrationProvider = AsyncData(true) immediately.
+    _setRehydrating(true);
+
     if (!await ConnectivityService.isConnected()) {
       // No network — emit completed immediately so UI doesn't wait forever
       _setRehydrating(false);
@@ -194,7 +323,6 @@ class SyncService {
       return;
     }
 
-    _setRehydrating(true);
     appLogger.i('SyncService.rehydrate: pulling server data for user $userId');
 
     try {
@@ -218,13 +346,13 @@ class SyncService {
               EnrollmentsTableCompanion.insert(
                 id: id,
                 userId: row['user_id'] as String,
+                subjectProfileId: Value(row['subject_profile_id'] as String?),
                 packageId: row['package_id'] as String,
                 status: Value(row['status'] as String? ?? 'active'),
                 assignedDurationWeeks:
                     row['assigned_duration_weeks'] as int? ?? 8,
                 startDate: _parseDate(row['start_date']),
-                targetCompletionDate:
-                    _parseDate(row['target_completion_date']),
+                targetCompletionDate: _parseDate(row['target_completion_date']),
                 completedAt: Value(
                   row['completed_at'] != null
                       ? DateTime.parse(row['completed_at'] as String)
@@ -268,6 +396,7 @@ class SyncService {
               ProgressEntriesTableCompanion.insert(
                 id: id,
                 userId: row['user_id'] as String,
+                subjectProfileId: Value(row['subject_profile_id'] as String?),
                 enrollmentId: row['enrollment_id'] as String,
                 currentDay: Value(row['current_day'] as int? ?? 1),
                 lastActivityDate: Value(
@@ -275,12 +404,10 @@ class SyncService {
                       ? DateTime.parse(row['last_activity_date'] as String)
                       : null,
                 ),
-                consecutiveInactiveDays: Value(
-                    row['consecutive_inactive_days'] as int? ?? 0),
-                dailyStreak:
-                    Value(row['daily_streak'] as int? ?? 0),
-                weeklyStreak:
-                    Value(row['weekly_streak'] as int? ?? 0),
+                consecutiveInactiveDays:
+                    Value(row['consecutive_inactive_days'] as int? ?? 0),
+                dailyStreak: Value(row['daily_streak'] as int? ?? 0),
+                weeklyStreak: Value(row['weekly_streak'] as int? ?? 0),
                 trainingsThisWeek:
                     Value(row['trainings_this_week'] as int? ?? 0),
                 lastTrainingWeekStart: Value(
@@ -289,10 +416,9 @@ class SyncService {
                           row['last_training_week_start'] as String)
                       : null,
                 ),
-                weeklyGoal:
-                    Value(row['weekly_goal'] as int? ?? 5),
-                totalSessionsSinceDisclaimer: Value(
-                    row['total_sessions_since_disclaimer'] as int? ?? 0),
+                weeklyGoal: Value(row['weekly_goal'] as int? ?? 5),
+                totalSessionsSinceDisclaimer:
+                    Value(row['total_sessions_since_disclaimer'] as int? ?? 0),
                 needsSync: const Value(false),
                 updatedAt: Value(
                   row['updated_at'] != null
@@ -330,12 +456,12 @@ class SyncService {
               TrainingSessionsTableCompanion.insert(
                 id: id,
                 userId: row['user_id'] as String,
+                subjectProfileId: Value(row['subject_profile_id'] as String?),
                 enrollmentId: row['enrollment_id'] as String,
                 sessionDate: _parseDate(row['session_date']),
                 dayNumber: row['day_number'] as int,
                 completedExerciseIds: exerciseIdsStr,
-                isCompleted:
-                    Value(row['is_completed'] as bool? ?? false),
+                isCompleted: Value(row['is_completed'] as bool? ?? false),
                 completedAt: Value(
                   row['completed_at'] != null
                       ? DateTime.parse(row['completed_at'] as String)

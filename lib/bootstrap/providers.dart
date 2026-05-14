@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../config/app_config.dart';
 import '../core/database/app_database.dart';
 import '../core/notifications/notification_service.dart';
+import '../core/push/push_notification_service.dart';
 import '../core/settings/settings_provider.dart';
 import '../core/sync/exercises_sync_service.dart';
 import '../core/sync/sync_service.dart';
@@ -35,6 +36,19 @@ final rehydrationProvider = StreamProvider<bool>((ref) {
 
 final notificationServiceProvider = Provider<NotificationService>((ref) {
   return NotificationService.instance;
+});
+
+final pushNotificationServiceProvider =
+    Provider<PushNotificationService>((ref) {
+  return PushNotificationService.instance;
+});
+
+final pushNotificationOpenProvider = StreamProvider<Map<String, String>>((ref) {
+  return ref.watch(pushNotificationServiceProvider).openedPayloads;
+});
+
+final localNotificationTapProvider = StreamProvider<String>((ref) {
+  return ref.watch(notificationServiceProvider).notificationTaps;
 });
 
 /// Lazily-constructed exercises sync service.

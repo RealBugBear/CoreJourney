@@ -7,4 +7,3 @@ final appClockProvider = Provider<AppClock>((ref) {
   final prefs = ref.watch(sharedPreferencesProvider);
   return AppClock(prefs);
 });
-

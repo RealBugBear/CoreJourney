@@ -36,7 +36,6 @@ class ExercisePositionWidget extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 24),
-
           Expanded(
             flex: 2,
             child: ClipRRect(
@@ -45,7 +44,6 @@ class ExercisePositionWidget extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 24),
-
           Expanded(
             flex: 1,
             child: ListView.separated(
@@ -79,7 +77,8 @@ class ExercisePositionWidget extends StatelessWidget {
                     Expanded(
                       child: Text(
                         instructions[i],
-                        style: const TextStyle(color: Colors.white, fontSize: 15),
+                        style:
+                            const TextStyle(color: Colors.white, fontSize: 15),
                       ),
                     ),
                   ],
@@ -88,7 +87,6 @@ class ExercisePositionWidget extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-
           ElevatedButton(
             onPressed: onReady,
             style: ElevatedButton.styleFrom(

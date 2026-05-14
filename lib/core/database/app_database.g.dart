@@ -19,6 +19,12 @@ class $EnrollmentsTableTable extends EnrollmentsTable
   late final GeneratedColumn<String> userId = GeneratedColumn<String>(
       'user_id', aliasedName, false,
       type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _subjectProfileIdMeta =
+      const VerificationMeta('subjectProfileId');
+  @override
+  late final GeneratedColumn<String> subjectProfileId = GeneratedColumn<String>(
+      'subject_profile_id', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
   static const VerificationMeta _packageIdMeta =
       const VerificationMeta('packageId');
   @override
@@ -98,6 +104,7 @@ class $EnrollmentsTableTable extends EnrollmentsTable
   List<GeneratedColumn> get $columns => [
         id,
         userId,
+        subjectProfileId,
         packageId,
         status,
         assignedDurationWeeks,
@@ -131,6 +138,12 @@ class $EnrollmentsTableTable extends EnrollmentsTable
           userId.isAcceptableOrUnknown(data['user_id']!, _userIdMeta));
     } else if (isInserting) {
       context.missing(_userIdMeta);
+    }
+    if (data.containsKey('subject_profile_id')) {
+      context.handle(
+          _subjectProfileIdMeta,
+          subjectProfileId.isAcceptableOrUnknown(
+              data['subject_profile_id']!, _subjectProfileIdMeta));
     }
     if (data.containsKey('package_id')) {
       context.handle(_packageIdMeta,
@@ -205,6 +218,8 @@ class $EnrollmentsTableTable extends EnrollmentsTable
           .read(DriftSqlType.string, data['${effectivePrefix}id'])!,
       userId: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}user_id'])!,
+      subjectProfileId: attachedDatabase.typeMapping.read(
+          DriftSqlType.string, data['${effectivePrefix}subject_profile_id']),
       packageId: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}package_id'])!,
       status: attachedDatabase.typeMapping
@@ -242,6 +257,7 @@ class EnrollmentsTableData extends DataClass
     implements Insertable<EnrollmentsTableData> {
   final String id;
   final String userId;
+  final String? subjectProfileId;
   final String packageId;
   final String status;
   final int assignedDurationWeeks;
@@ -256,6 +272,7 @@ class EnrollmentsTableData extends DataClass
   const EnrollmentsTableData(
       {required this.id,
       required this.userId,
+      this.subjectProfileId,
       required this.packageId,
       required this.status,
       required this.assignedDurationWeeks,
@@ -272,6 +289,9 @@ class EnrollmentsTableData extends DataClass
     final map = <String, Expression>{};
     map['id'] = Variable<String>(id);
     map['user_id'] = Variable<String>(userId);
+    if (!nullToAbsent || subjectProfileId != null) {
+      map['subject_profile_id'] = Variable<String>(subjectProfileId);
+    }
     map['package_id'] = Variable<String>(packageId);
     map['status'] = Variable<String>(status);
     map['assigned_duration_weeks'] = Variable<int>(assignedDurationWeeks);
@@ -296,6 +316,9 @@ class EnrollmentsTableData extends DataClass
     return EnrollmentsTableCompanion(
       id: Value(id),
       userId: Value(userId),
+      subjectProfileId: subjectProfileId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(subjectProfileId),
       packageId: Value(packageId),
       status: Value(status),
       assignedDurationWeeks: Value(assignedDurationWeeks),
@@ -322,6 +345,7 @@ class EnrollmentsTableData extends DataClass
     return EnrollmentsTableData(
       id: serializer.fromJson<String>(json['id']),
       userId: serializer.fromJson<String>(json['userId']),
+      subjectProfileId: serializer.fromJson<String?>(json['subjectProfileId']),
       packageId: serializer.fromJson<String>(json['packageId']),
       status: serializer.fromJson<String>(json['status']),
       assignedDurationWeeks:
@@ -344,6 +368,7 @@ class EnrollmentsTableData extends DataClass
     return <String, dynamic>{
       'id': serializer.toJson<String>(id),
       'userId': serializer.toJson<String>(userId),
+      'subjectProfileId': serializer.toJson<String?>(subjectProfileId),
       'packageId': serializer.toJson<String>(packageId),
       'status': serializer.toJson<String>(status),
       'assignedDurationWeeks': serializer.toJson<int>(assignedDurationWeeks),
@@ -362,6 +387,7 @@ class EnrollmentsTableData extends DataClass
   EnrollmentsTableData copyWith(
           {String? id,
           String? userId,
+          Value<String?> subjectProfileId = const Value.absent(),
           String? packageId,
           String? status,
           int? assignedDurationWeeks,
@@ -376,6 +402,9 @@ class EnrollmentsTableData extends DataClass
       EnrollmentsTableData(
         id: id ?? this.id,
         userId: userId ?? this.userId,
+        subjectProfileId: subjectProfileId.present
+            ? subjectProfileId.value
+            : this.subjectProfileId,
         packageId: packageId ?? this.packageId,
         status: status ?? this.status,
         assignedDurationWeeks:
@@ -395,6 +424,9 @@ class EnrollmentsTableData extends DataClass
     return EnrollmentsTableData(
       id: data.id.present ? data.id.value : this.id,
       userId: data.userId.present ? data.userId.value : this.userId,
+      subjectProfileId: data.subjectProfileId.present
+          ? data.subjectProfileId.value
+          : this.subjectProfileId,
       packageId: data.packageId.present ? data.packageId.value : this.packageId,
       status: data.status.present ? data.status.value : this.status,
       assignedDurationWeeks: data.assignedDurationWeeks.present
@@ -421,6 +453,7 @@ class EnrollmentsTableData extends DataClass
     return (StringBuffer('EnrollmentsTableData(')
           ..write('id: $id, ')
           ..write('userId: $userId, ')
+          ..write('subjectProfileId: $subjectProfileId, ')
           ..write('packageId: $packageId, ')
           ..write('status: $status, ')
           ..write('assignedDurationWeeks: $assignedDurationWeeks, ')
@@ -440,6 +473,7 @@ class EnrollmentsTableData extends DataClass
   int get hashCode => Object.hash(
       id,
       userId,
+      subjectProfileId,
       packageId,
       status,
       assignedDurationWeeks,
@@ -457,6 +491,7 @@ class EnrollmentsTableData extends DataClass
       (other is EnrollmentsTableData &&
           other.id == this.id &&
           other.userId == this.userId &&
+          other.subjectProfileId == this.subjectProfileId &&
           other.packageId == this.packageId &&
           other.status == this.status &&
           other.assignedDurationWeeks == this.assignedDurationWeeks &&
@@ -473,6 +508,7 @@ class EnrollmentsTableData extends DataClass
 class EnrollmentsTableCompanion extends UpdateCompanion<EnrollmentsTableData> {
   final Value<String> id;
   final Value<String> userId;
+  final Value<String?> subjectProfileId;
   final Value<String> packageId;
   final Value<String> status;
   final Value<int> assignedDurationWeeks;
@@ -488,6 +524,7 @@ class EnrollmentsTableCompanion extends UpdateCompanion<EnrollmentsTableData> {
   const EnrollmentsTableCompanion({
     this.id = const Value.absent(),
     this.userId = const Value.absent(),
+    this.subjectProfileId = const Value.absent(),
     this.packageId = const Value.absent(),
     this.status = const Value.absent(),
     this.assignedDurationWeeks = const Value.absent(),
@@ -504,6 +541,7 @@ class EnrollmentsTableCompanion extends UpdateCompanion<EnrollmentsTableData> {
   EnrollmentsTableCompanion.insert({
     required String id,
     required String userId,
+    this.subjectProfileId = const Value.absent(),
     required String packageId,
     this.status = const Value.absent(),
     required int assignedDurationWeeks,
@@ -525,6 +563,7 @@ class EnrollmentsTableCompanion extends UpdateCompanion<EnrollmentsTableData> {
   static Insertable<EnrollmentsTableData> custom({
     Expression<String>? id,
     Expression<String>? userId,
+    Expression<String>? subjectProfileId,
     Expression<String>? packageId,
     Expression<String>? status,
     Expression<int>? assignedDurationWeeks,
@@ -541,6 +580,7 @@ class EnrollmentsTableCompanion extends UpdateCompanion<EnrollmentsTableData> {
     return RawValuesInsertable({
       if (id != null) 'id': id,
       if (userId != null) 'user_id': userId,
+      if (subjectProfileId != null) 'subject_profile_id': subjectProfileId,
       if (packageId != null) 'package_id': packageId,
       if (status != null) 'status': status,
       if (assignedDurationWeeks != null)
@@ -562,6 +602,7 @@ class EnrollmentsTableCompanion extends UpdateCompanion<EnrollmentsTableData> {
   EnrollmentsTableCompanion copyWith(
       {Value<String>? id,
       Value<String>? userId,
+      Value<String?>? subjectProfileId,
       Value<String>? packageId,
       Value<String>? status,
       Value<int>? assignedDurationWeeks,
@@ -577,6 +618,7 @@ class EnrollmentsTableCompanion extends UpdateCompanion<EnrollmentsTableData> {
     return EnrollmentsTableCompanion(
       id: id ?? this.id,
       userId: userId ?? this.userId,
+      subjectProfileId: subjectProfileId ?? this.subjectProfileId,
       packageId: packageId ?? this.packageId,
       status: status ?? this.status,
       assignedDurationWeeks:
@@ -602,6 +644,9 @@ class EnrollmentsTableCompanion extends UpdateCompanion<EnrollmentsTableData> {
     }
     if (userId.present) {
       map['user_id'] = Variable<String>(userId.value);
+    }
+    if (subjectProfileId.present) {
+      map['subject_profile_id'] = Variable<String>(subjectProfileId.value);
     }
     if (packageId.present) {
       map['package_id'] = Variable<String>(packageId.value);
@@ -650,6 +695,7 @@ class EnrollmentsTableCompanion extends UpdateCompanion<EnrollmentsTableData> {
     return (StringBuffer('EnrollmentsTableCompanion(')
           ..write('id: $id, ')
           ..write('userId: $userId, ')
+          ..write('subjectProfileId: $subjectProfileId, ')
           ..write('packageId: $packageId, ')
           ..write('status: $status, ')
           ..write('assignedDurationWeeks: $assignedDurationWeeks, ')
@@ -1915,6 +1961,12 @@ class $TrainingSessionsTableTable extends TrainingSessionsTable
   late final GeneratedColumn<String> userId = GeneratedColumn<String>(
       'user_id', aliasedName, false,
       type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _subjectProfileIdMeta =
+      const VerificationMeta('subjectProfileId');
+  @override
+  late final GeneratedColumn<String> subjectProfileId = GeneratedColumn<String>(
+      'subject_profile_id', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
   static const VerificationMeta _enrollmentIdMeta =
       const VerificationMeta('enrollmentId');
   @override
@@ -1977,6 +2029,7 @@ class $TrainingSessionsTableTable extends TrainingSessionsTable
   List<GeneratedColumn> get $columns => [
         id,
         userId,
+        subjectProfileId,
         enrollmentId,
         sessionDate,
         dayNumber,
@@ -2007,6 +2060,12 @@ class $TrainingSessionsTableTable extends TrainingSessionsTable
           userId.isAcceptableOrUnknown(data['user_id']!, _userIdMeta));
     } else if (isInserting) {
       context.missing(_userIdMeta);
+    }
+    if (data.containsKey('subject_profile_id')) {
+      context.handle(
+          _subjectProfileIdMeta,
+          subjectProfileId.isAcceptableOrUnknown(
+              data['subject_profile_id']!, _subjectProfileIdMeta));
     }
     if (data.containsKey('enrollment_id')) {
       context.handle(
@@ -2072,6 +2131,8 @@ class $TrainingSessionsTableTable extends TrainingSessionsTable
           .read(DriftSqlType.string, data['${effectivePrefix}id'])!,
       userId: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}user_id'])!,
+      subjectProfileId: attachedDatabase.typeMapping.read(
+          DriftSqlType.string, data['${effectivePrefix}subject_profile_id']),
       enrollmentId: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}enrollment_id'])!,
       sessionDate: attachedDatabase.typeMapping
@@ -2102,6 +2163,7 @@ class TrainingSessionsTableData extends DataClass
     implements Insertable<TrainingSessionsTableData> {
   final String id;
   final String userId;
+  final String? subjectProfileId;
   final String enrollmentId;
   final DateTime sessionDate;
   final int dayNumber;
@@ -2113,6 +2175,7 @@ class TrainingSessionsTableData extends DataClass
   const TrainingSessionsTableData(
       {required this.id,
       required this.userId,
+      this.subjectProfileId,
       required this.enrollmentId,
       required this.sessionDate,
       required this.dayNumber,
@@ -2126,6 +2189,9 @@ class TrainingSessionsTableData extends DataClass
     final map = <String, Expression>{};
     map['id'] = Variable<String>(id);
     map['user_id'] = Variable<String>(userId);
+    if (!nullToAbsent || subjectProfileId != null) {
+      map['subject_profile_id'] = Variable<String>(subjectProfileId);
+    }
     map['enrollment_id'] = Variable<String>(enrollmentId);
     map['session_date'] = Variable<DateTime>(sessionDate);
     map['day_number'] = Variable<int>(dayNumber);
@@ -2143,6 +2209,9 @@ class TrainingSessionsTableData extends DataClass
     return TrainingSessionsTableCompanion(
       id: Value(id),
       userId: Value(userId),
+      subjectProfileId: subjectProfileId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(subjectProfileId),
       enrollmentId: Value(enrollmentId),
       sessionDate: Value(sessionDate),
       dayNumber: Value(dayNumber),
@@ -2162,6 +2231,7 @@ class TrainingSessionsTableData extends DataClass
     return TrainingSessionsTableData(
       id: serializer.fromJson<String>(json['id']),
       userId: serializer.fromJson<String>(json['userId']),
+      subjectProfileId: serializer.fromJson<String?>(json['subjectProfileId']),
       enrollmentId: serializer.fromJson<String>(json['enrollmentId']),
       sessionDate: serializer.fromJson<DateTime>(json['sessionDate']),
       dayNumber: serializer.fromJson<int>(json['dayNumber']),
@@ -2179,6 +2249,7 @@ class TrainingSessionsTableData extends DataClass
     return <String, dynamic>{
       'id': serializer.toJson<String>(id),
       'userId': serializer.toJson<String>(userId),
+      'subjectProfileId': serializer.toJson<String?>(subjectProfileId),
       'enrollmentId': serializer.toJson<String>(enrollmentId),
       'sessionDate': serializer.toJson<DateTime>(sessionDate),
       'dayNumber': serializer.toJson<int>(dayNumber),
@@ -2193,6 +2264,7 @@ class TrainingSessionsTableData extends DataClass
   TrainingSessionsTableData copyWith(
           {String? id,
           String? userId,
+          Value<String?> subjectProfileId = const Value.absent(),
           String? enrollmentId,
           DateTime? sessionDate,
           int? dayNumber,
@@ -2204,6 +2276,9 @@ class TrainingSessionsTableData extends DataClass
       TrainingSessionsTableData(
         id: id ?? this.id,
         userId: userId ?? this.userId,
+        subjectProfileId: subjectProfileId.present
+            ? subjectProfileId.value
+            : this.subjectProfileId,
         enrollmentId: enrollmentId ?? this.enrollmentId,
         sessionDate: sessionDate ?? this.sessionDate,
         dayNumber: dayNumber ?? this.dayNumber,
@@ -2218,6 +2293,9 @@ class TrainingSessionsTableData extends DataClass
     return TrainingSessionsTableData(
       id: data.id.present ? data.id.value : this.id,
       userId: data.userId.present ? data.userId.value : this.userId,
+      subjectProfileId: data.subjectProfileId.present
+          ? data.subjectProfileId.value
+          : this.subjectProfileId,
       enrollmentId: data.enrollmentId.present
           ? data.enrollmentId.value
           : this.enrollmentId,
@@ -2241,6 +2319,7 @@ class TrainingSessionsTableData extends DataClass
     return (StringBuffer('TrainingSessionsTableData(')
           ..write('id: $id, ')
           ..write('userId: $userId, ')
+          ..write('subjectProfileId: $subjectProfileId, ')
           ..write('enrollmentId: $enrollmentId, ')
           ..write('sessionDate: $sessionDate, ')
           ..write('dayNumber: $dayNumber, ')
@@ -2257,6 +2336,7 @@ class TrainingSessionsTableData extends DataClass
   int get hashCode => Object.hash(
       id,
       userId,
+      subjectProfileId,
       enrollmentId,
       sessionDate,
       dayNumber,
@@ -2271,6 +2351,7 @@ class TrainingSessionsTableData extends DataClass
       (other is TrainingSessionsTableData &&
           other.id == this.id &&
           other.userId == this.userId &&
+          other.subjectProfileId == this.subjectProfileId &&
           other.enrollmentId == this.enrollmentId &&
           other.sessionDate == this.sessionDate &&
           other.dayNumber == this.dayNumber &&
@@ -2285,6 +2366,7 @@ class TrainingSessionsTableCompanion
     extends UpdateCompanion<TrainingSessionsTableData> {
   final Value<String> id;
   final Value<String> userId;
+  final Value<String?> subjectProfileId;
   final Value<String> enrollmentId;
   final Value<DateTime> sessionDate;
   final Value<int> dayNumber;
@@ -2297,6 +2379,7 @@ class TrainingSessionsTableCompanion
   const TrainingSessionsTableCompanion({
     this.id = const Value.absent(),
     this.userId = const Value.absent(),
+    this.subjectProfileId = const Value.absent(),
     this.enrollmentId = const Value.absent(),
     this.sessionDate = const Value.absent(),
     this.dayNumber = const Value.absent(),
@@ -2310,6 +2393,7 @@ class TrainingSessionsTableCompanion
   TrainingSessionsTableCompanion.insert({
     required String id,
     required String userId,
+    this.subjectProfileId = const Value.absent(),
     required String enrollmentId,
     required DateTime sessionDate,
     required int dayNumber,
@@ -2328,6 +2412,7 @@ class TrainingSessionsTableCompanion
   static Insertable<TrainingSessionsTableData> custom({
     Expression<String>? id,
     Expression<String>? userId,
+    Expression<String>? subjectProfileId,
     Expression<String>? enrollmentId,
     Expression<DateTime>? sessionDate,
     Expression<int>? dayNumber,
@@ -2341,6 +2426,7 @@ class TrainingSessionsTableCompanion
     return RawValuesInsertable({
       if (id != null) 'id': id,
       if (userId != null) 'user_id': userId,
+      if (subjectProfileId != null) 'subject_profile_id': subjectProfileId,
       if (enrollmentId != null) 'enrollment_id': enrollmentId,
       if (sessionDate != null) 'session_date': sessionDate,
       if (dayNumber != null) 'day_number': dayNumber,
@@ -2357,6 +2443,7 @@ class TrainingSessionsTableCompanion
   TrainingSessionsTableCompanion copyWith(
       {Value<String>? id,
       Value<String>? userId,
+      Value<String?>? subjectProfileId,
       Value<String>? enrollmentId,
       Value<DateTime>? sessionDate,
       Value<int>? dayNumber,
@@ -2369,6 +2456,7 @@ class TrainingSessionsTableCompanion
     return TrainingSessionsTableCompanion(
       id: id ?? this.id,
       userId: userId ?? this.userId,
+      subjectProfileId: subjectProfileId ?? this.subjectProfileId,
       enrollmentId: enrollmentId ?? this.enrollmentId,
       sessionDate: sessionDate ?? this.sessionDate,
       dayNumber: dayNumber ?? this.dayNumber,
@@ -2389,6 +2477,9 @@ class TrainingSessionsTableCompanion
     }
     if (userId.present) {
       map['user_id'] = Variable<String>(userId.value);
+    }
+    if (subjectProfileId.present) {
+      map['subject_profile_id'] = Variable<String>(subjectProfileId.value);
     }
     if (enrollmentId.present) {
       map['enrollment_id'] = Variable<String>(enrollmentId.value);
@@ -2426,6 +2517,7 @@ class TrainingSessionsTableCompanion
     return (StringBuffer('TrainingSessionsTableCompanion(')
           ..write('id: $id, ')
           ..write('userId: $userId, ')
+          ..write('subjectProfileId: $subjectProfileId, ')
           ..write('enrollmentId: $enrollmentId, ')
           ..write('sessionDate: $sessionDate, ')
           ..write('dayNumber: $dayNumber, ')
@@ -2456,6 +2548,12 @@ class $ProgressEntriesTableTable extends ProgressEntriesTable
   late final GeneratedColumn<String> userId = GeneratedColumn<String>(
       'user_id', aliasedName, false,
       type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _subjectProfileIdMeta =
+      const VerificationMeta('subjectProfileId');
+  @override
+  late final GeneratedColumn<String> subjectProfileId = GeneratedColumn<String>(
+      'subject_profile_id', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
   static const VerificationMeta _enrollmentIdMeta =
       const VerificationMeta('enrollmentId');
   @override
@@ -2560,6 +2658,7 @@ class $ProgressEntriesTableTable extends ProgressEntriesTable
   List<GeneratedColumn> get $columns => [
         id,
         userId,
+        subjectProfileId,
         enrollmentId,
         currentDay,
         lastActivityDate,
@@ -2595,6 +2694,12 @@ class $ProgressEntriesTableTable extends ProgressEntriesTable
           userId.isAcceptableOrUnknown(data['user_id']!, _userIdMeta));
     } else if (isInserting) {
       context.missing(_userIdMeta);
+    }
+    if (data.containsKey('subject_profile_id')) {
+      context.handle(
+          _subjectProfileIdMeta,
+          subjectProfileId.isAcceptableOrUnknown(
+              data['subject_profile_id']!, _subjectProfileIdMeta));
     }
     if (data.containsKey('enrollment_id')) {
       context.handle(
@@ -2689,6 +2794,8 @@ class $ProgressEntriesTableTable extends ProgressEntriesTable
           .read(DriftSqlType.string, data['${effectivePrefix}id'])!,
       userId: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}user_id'])!,
+      subjectProfileId: attachedDatabase.typeMapping.read(
+          DriftSqlType.string, data['${effectivePrefix}subject_profile_id']),
       enrollmentId: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}enrollment_id'])!,
       currentDay: attachedDatabase.typeMapping
@@ -2732,6 +2839,7 @@ class ProgressEntriesTableData extends DataClass
     implements Insertable<ProgressEntriesTableData> {
   final String id;
   final String userId;
+  final String? subjectProfileId;
   final String enrollmentId;
   final int currentDay;
   final DateTime? lastActivityDate;
@@ -2748,6 +2856,7 @@ class ProgressEntriesTableData extends DataClass
   const ProgressEntriesTableData(
       {required this.id,
       required this.userId,
+      this.subjectProfileId,
       required this.enrollmentId,
       required this.currentDay,
       this.lastActivityDate,
@@ -2766,6 +2875,9 @@ class ProgressEntriesTableData extends DataClass
     final map = <String, Expression>{};
     map['id'] = Variable<String>(id);
     map['user_id'] = Variable<String>(userId);
+    if (!nullToAbsent || subjectProfileId != null) {
+      map['subject_profile_id'] = Variable<String>(subjectProfileId);
+    }
     map['enrollment_id'] = Variable<String>(enrollmentId);
     map['current_day'] = Variable<int>(currentDay);
     if (!nullToAbsent || lastActivityDate != null) {
@@ -2795,6 +2907,9 @@ class ProgressEntriesTableData extends DataClass
     return ProgressEntriesTableCompanion(
       id: Value(id),
       userId: Value(userId),
+      subjectProfileId: subjectProfileId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(subjectProfileId),
       enrollmentId: Value(enrollmentId),
       currentDay: Value(currentDay),
       lastActivityDate: lastActivityDate == null && nullToAbsent
@@ -2823,6 +2938,7 @@ class ProgressEntriesTableData extends DataClass
     return ProgressEntriesTableData(
       id: serializer.fromJson<String>(json['id']),
       userId: serializer.fromJson<String>(json['userId']),
+      subjectProfileId: serializer.fromJson<String?>(json['subjectProfileId']),
       enrollmentId: serializer.fromJson<String>(json['enrollmentId']),
       currentDay: serializer.fromJson<int>(json['currentDay']),
       lastActivityDate:
@@ -2849,6 +2965,7 @@ class ProgressEntriesTableData extends DataClass
     return <String, dynamic>{
       'id': serializer.toJson<String>(id),
       'userId': serializer.toJson<String>(userId),
+      'subjectProfileId': serializer.toJson<String?>(subjectProfileId),
       'enrollmentId': serializer.toJson<String>(enrollmentId),
       'currentDay': serializer.toJson<int>(currentDay),
       'lastActivityDate': serializer.toJson<DateTime?>(lastActivityDate),
@@ -2872,6 +2989,7 @@ class ProgressEntriesTableData extends DataClass
   ProgressEntriesTableData copyWith(
           {String? id,
           String? userId,
+          Value<String?> subjectProfileId = const Value.absent(),
           String? enrollmentId,
           int? currentDay,
           Value<DateTime?> lastActivityDate = const Value.absent(),
@@ -2888,6 +3006,9 @@ class ProgressEntriesTableData extends DataClass
       ProgressEntriesTableData(
         id: id ?? this.id,
         userId: userId ?? this.userId,
+        subjectProfileId: subjectProfileId.present
+            ? subjectProfileId.value
+            : this.subjectProfileId,
         enrollmentId: enrollmentId ?? this.enrollmentId,
         currentDay: currentDay ?? this.currentDay,
         lastActivityDate: lastActivityDate.present
@@ -2915,6 +3036,9 @@ class ProgressEntriesTableData extends DataClass
     return ProgressEntriesTableData(
       id: data.id.present ? data.id.value : this.id,
       userId: data.userId.present ? data.userId.value : this.userId,
+      subjectProfileId: data.subjectProfileId.present
+          ? data.subjectProfileId.value
+          : this.subjectProfileId,
       enrollmentId: data.enrollmentId.present
           ? data.enrollmentId.value
           : this.enrollmentId,
@@ -2955,6 +3079,7 @@ class ProgressEntriesTableData extends DataClass
     return (StringBuffer('ProgressEntriesTableData(')
           ..write('id: $id, ')
           ..write('userId: $userId, ')
+          ..write('subjectProfileId: $subjectProfileId, ')
           ..write('enrollmentId: $enrollmentId, ')
           ..write('currentDay: $currentDay, ')
           ..write('lastActivityDate: $lastActivityDate, ')
@@ -2977,6 +3102,7 @@ class ProgressEntriesTableData extends DataClass
   int get hashCode => Object.hash(
       id,
       userId,
+      subjectProfileId,
       enrollmentId,
       currentDay,
       lastActivityDate,
@@ -2996,6 +3122,7 @@ class ProgressEntriesTableData extends DataClass
       (other is ProgressEntriesTableData &&
           other.id == this.id &&
           other.userId == this.userId &&
+          other.subjectProfileId == this.subjectProfileId &&
           other.enrollmentId == this.enrollmentId &&
           other.currentDay == this.currentDay &&
           other.lastActivityDate == this.lastActivityDate &&
@@ -3016,6 +3143,7 @@ class ProgressEntriesTableCompanion
     extends UpdateCompanion<ProgressEntriesTableData> {
   final Value<String> id;
   final Value<String> userId;
+  final Value<String?> subjectProfileId;
   final Value<String> enrollmentId;
   final Value<int> currentDay;
   final Value<DateTime?> lastActivityDate;
@@ -3033,6 +3161,7 @@ class ProgressEntriesTableCompanion
   const ProgressEntriesTableCompanion({
     this.id = const Value.absent(),
     this.userId = const Value.absent(),
+    this.subjectProfileId = const Value.absent(),
     this.enrollmentId = const Value.absent(),
     this.currentDay = const Value.absent(),
     this.lastActivityDate = const Value.absent(),
@@ -3051,6 +3180,7 @@ class ProgressEntriesTableCompanion
   ProgressEntriesTableCompanion.insert({
     required String id,
     required String userId,
+    this.subjectProfileId = const Value.absent(),
     required String enrollmentId,
     this.currentDay = const Value.absent(),
     this.lastActivityDate = const Value.absent(),
@@ -3071,6 +3201,7 @@ class ProgressEntriesTableCompanion
   static Insertable<ProgressEntriesTableData> custom({
     Expression<String>? id,
     Expression<String>? userId,
+    Expression<String>? subjectProfileId,
     Expression<String>? enrollmentId,
     Expression<int>? currentDay,
     Expression<DateTime>? lastActivityDate,
@@ -3089,6 +3220,7 @@ class ProgressEntriesTableCompanion
     return RawValuesInsertable({
       if (id != null) 'id': id,
       if (userId != null) 'user_id': userId,
+      if (subjectProfileId != null) 'subject_profile_id': subjectProfileId,
       if (enrollmentId != null) 'enrollment_id': enrollmentId,
       if (currentDay != null) 'current_day': currentDay,
       if (lastActivityDate != null) 'last_activity_date': lastActivityDate,
@@ -3113,6 +3245,7 @@ class ProgressEntriesTableCompanion
   ProgressEntriesTableCompanion copyWith(
       {Value<String>? id,
       Value<String>? userId,
+      Value<String?>? subjectProfileId,
       Value<String>? enrollmentId,
       Value<int>? currentDay,
       Value<DateTime?>? lastActivityDate,
@@ -3130,6 +3263,7 @@ class ProgressEntriesTableCompanion
     return ProgressEntriesTableCompanion(
       id: id ?? this.id,
       userId: userId ?? this.userId,
+      subjectProfileId: subjectProfileId ?? this.subjectProfileId,
       enrollmentId: enrollmentId ?? this.enrollmentId,
       currentDay: currentDay ?? this.currentDay,
       lastActivityDate: lastActivityDate ?? this.lastActivityDate,
@@ -3159,6 +3293,9 @@ class ProgressEntriesTableCompanion
     }
     if (userId.present) {
       map['user_id'] = Variable<String>(userId.value);
+    }
+    if (subjectProfileId.present) {
+      map['subject_profile_id'] = Variable<String>(subjectProfileId.value);
     }
     if (enrollmentId.present) {
       map['enrollment_id'] = Variable<String>(enrollmentId.value);
@@ -3214,6 +3351,7 @@ class ProgressEntriesTableCompanion
     return (StringBuffer('ProgressEntriesTableCompanion(')
           ..write('id: $id, ')
           ..write('userId: $userId, ')
+          ..write('subjectProfileId: $subjectProfileId, ')
           ..write('enrollmentId: $enrollmentId, ')
           ..write('currentDay: $currentDay, ')
           ..write('lastActivityDate: $lastActivityDate, ')
@@ -3298,6 +3436,12 @@ class $MoodCheckinsTableTable extends MoodCheckinsTable
   late final GeneratedColumn<String> source = GeneratedColumn<String>(
       'source', aliasedName, false,
       type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _subjectProfileIdMeta =
+      const VerificationMeta('subjectProfileId');
+  @override
+  late final GeneratedColumn<String> subjectProfileId = GeneratedColumn<String>(
+      'subject_profile_id', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
   static const VerificationMeta _needsSyncMeta =
       const VerificationMeta('needsSync');
   @override
@@ -3329,6 +3473,7 @@ class $MoodCheckinsTableTable extends MoodCheckinsTable
         stress,
         note,
         source,
+        subjectProfileId,
         needsSync,
         createdAt
       ];
@@ -3402,6 +3547,12 @@ class $MoodCheckinsTableTable extends MoodCheckinsTable
     } else if (isInserting) {
       context.missing(_sourceMeta);
     }
+    if (data.containsKey('subject_profile_id')) {
+      context.handle(
+          _subjectProfileIdMeta,
+          subjectProfileId.isAcceptableOrUnknown(
+              data['subject_profile_id']!, _subjectProfileIdMeta));
+    }
     if (data.containsKey('needs_sync')) {
       context.handle(_needsSyncMeta,
           needsSync.isAcceptableOrUnknown(data['needs_sync']!, _needsSyncMeta));
@@ -3441,6 +3592,8 @@ class $MoodCheckinsTableTable extends MoodCheckinsTable
           .read(DriftSqlType.string, data['${effectivePrefix}note']),
       source: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}source'])!,
+      subjectProfileId: attachedDatabase.typeMapping.read(
+          DriftSqlType.string, data['${effectivePrefix}subject_profile_id']),
       needsSync: attachedDatabase.typeMapping
           .read(DriftSqlType.bool, data['${effectivePrefix}needs_sync'])!,
       createdAt: attachedDatabase.typeMapping
@@ -3467,6 +3620,7 @@ class MoodCheckinsTableData extends DataClass
   final int? stress;
   final String? note;
   final String source;
+  final String? subjectProfileId;
   final bool needsSync;
   final DateTime createdAt;
   const MoodCheckinsTableData(
@@ -3481,6 +3635,7 @@ class MoodCheckinsTableData extends DataClass
       this.stress,
       this.note,
       required this.source,
+      this.subjectProfileId,
       required this.needsSync,
       required this.createdAt});
   @override
@@ -3507,6 +3662,9 @@ class MoodCheckinsTableData extends DataClass
       map['note'] = Variable<String>(note);
     }
     map['source'] = Variable<String>(source);
+    if (!nullToAbsent || subjectProfileId != null) {
+      map['subject_profile_id'] = Variable<String>(subjectProfileId);
+    }
     map['needs_sync'] = Variable<bool>(needsSync);
     map['created_at'] = Variable<DateTime>(createdAt);
     return map;
@@ -3529,6 +3687,9 @@ class MoodCheckinsTableData extends DataClass
           stress == null && nullToAbsent ? const Value.absent() : Value(stress),
       note: note == null && nullToAbsent ? const Value.absent() : Value(note),
       source: Value(source),
+      subjectProfileId: subjectProfileId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(subjectProfileId),
       needsSync: Value(needsSync),
       createdAt: Value(createdAt),
     );
@@ -3549,6 +3710,7 @@ class MoodCheckinsTableData extends DataClass
       stress: serializer.fromJson<int?>(json['stress']),
       note: serializer.fromJson<String?>(json['note']),
       source: serializer.fromJson<String>(json['source']),
+      subjectProfileId: serializer.fromJson<String?>(json['subjectProfileId']),
       needsSync: serializer.fromJson<bool>(json['needsSync']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
     );
@@ -3568,6 +3730,7 @@ class MoodCheckinsTableData extends DataClass
       'stress': serializer.toJson<int?>(stress),
       'note': serializer.toJson<String?>(note),
       'source': serializer.toJson<String>(source),
+      'subjectProfileId': serializer.toJson<String?>(subjectProfileId),
       'needsSync': serializer.toJson<bool>(needsSync),
       'createdAt': serializer.toJson<DateTime>(createdAt),
     };
@@ -3585,6 +3748,7 @@ class MoodCheckinsTableData extends DataClass
           Value<int?> stress = const Value.absent(),
           Value<String?> note = const Value.absent(),
           String? source,
+          Value<String?> subjectProfileId = const Value.absent(),
           bool? needsSync,
           DateTime? createdAt}) =>
       MoodCheckinsTableData(
@@ -3599,6 +3763,9 @@ class MoodCheckinsTableData extends DataClass
         stress: stress.present ? stress.value : this.stress,
         note: note.present ? note.value : this.note,
         source: source ?? this.source,
+        subjectProfileId: subjectProfileId.present
+            ? subjectProfileId.value
+            : this.subjectProfileId,
         needsSync: needsSync ?? this.needsSync,
         createdAt: createdAt ?? this.createdAt,
       );
@@ -3618,6 +3785,9 @@ class MoodCheckinsTableData extends DataClass
       stress: data.stress.present ? data.stress.value : this.stress,
       note: data.note.present ? data.note.value : this.note,
       source: data.source.present ? data.source.value : this.source,
+      subjectProfileId: data.subjectProfileId.present
+          ? data.subjectProfileId.value
+          : this.subjectProfileId,
       needsSync: data.needsSync.present ? data.needsSync.value : this.needsSync,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
     );
@@ -3637,6 +3807,7 @@ class MoodCheckinsTableData extends DataClass
           ..write('stress: $stress, ')
           ..write('note: $note, ')
           ..write('source: $source, ')
+          ..write('subjectProfileId: $subjectProfileId, ')
           ..write('needsSync: $needsSync, ')
           ..write('createdAt: $createdAt')
           ..write(')'))
@@ -3656,6 +3827,7 @@ class MoodCheckinsTableData extends DataClass
       stress,
       note,
       source,
+      subjectProfileId,
       needsSync,
       createdAt);
   @override
@@ -3673,6 +3845,7 @@ class MoodCheckinsTableData extends DataClass
           other.stress == this.stress &&
           other.note == this.note &&
           other.source == this.source &&
+          other.subjectProfileId == this.subjectProfileId &&
           other.needsSync == this.needsSync &&
           other.createdAt == this.createdAt);
 }
@@ -3690,6 +3863,7 @@ class MoodCheckinsTableCompanion
   final Value<int?> stress;
   final Value<String?> note;
   final Value<String> source;
+  final Value<String?> subjectProfileId;
   final Value<bool> needsSync;
   final Value<DateTime> createdAt;
   final Value<int> rowid;
@@ -3705,6 +3879,7 @@ class MoodCheckinsTableCompanion
     this.stress = const Value.absent(),
     this.note = const Value.absent(),
     this.source = const Value.absent(),
+    this.subjectProfileId = const Value.absent(),
     this.needsSync = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -3721,6 +3896,7 @@ class MoodCheckinsTableCompanion
     this.stress = const Value.absent(),
     this.note = const Value.absent(),
     required String source,
+    this.subjectProfileId = const Value.absent(),
     this.needsSync = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -3742,6 +3918,7 @@ class MoodCheckinsTableCompanion
     Expression<int>? stress,
     Expression<String>? note,
     Expression<String>? source,
+    Expression<String>? subjectProfileId,
     Expression<bool>? needsSync,
     Expression<DateTime>? createdAt,
     Expression<int>? rowid,
@@ -3758,6 +3935,7 @@ class MoodCheckinsTableCompanion
       if (stress != null) 'stress': stress,
       if (note != null) 'note': note,
       if (source != null) 'source': source,
+      if (subjectProfileId != null) 'subject_profile_id': subjectProfileId,
       if (needsSync != null) 'needs_sync': needsSync,
       if (createdAt != null) 'created_at': createdAt,
       if (rowid != null) 'rowid': rowid,
@@ -3776,6 +3954,7 @@ class MoodCheckinsTableCompanion
       Value<int?>? stress,
       Value<String?>? note,
       Value<String>? source,
+      Value<String?>? subjectProfileId,
       Value<bool>? needsSync,
       Value<DateTime>? createdAt,
       Value<int>? rowid}) {
@@ -3791,6 +3970,7 @@ class MoodCheckinsTableCompanion
       stress: stress ?? this.stress,
       note: note ?? this.note,
       source: source ?? this.source,
+      subjectProfileId: subjectProfileId ?? this.subjectProfileId,
       needsSync: needsSync ?? this.needsSync,
       createdAt: createdAt ?? this.createdAt,
       rowid: rowid ?? this.rowid,
@@ -3833,6 +4013,9 @@ class MoodCheckinsTableCompanion
     if (source.present) {
       map['source'] = Variable<String>(source.value);
     }
+    if (subjectProfileId.present) {
+      map['subject_profile_id'] = Variable<String>(subjectProfileId.value);
+    }
     if (needsSync.present) {
       map['needs_sync'] = Variable<bool>(needsSync.value);
     }
@@ -3859,6 +4042,7 @@ class MoodCheckinsTableCompanion
           ..write('stress: $stress, ')
           ..write('note: $note, ')
           ..write('source: $source, ')
+          ..write('subjectProfileId: $subjectProfileId, ')
           ..write('needsSync: $needsSync, ')
           ..write('createdAt: $createdAt, ')
           ..write('rowid: $rowid')
@@ -4911,6 +5095,12 @@ class $CompletionQuestionnairesTableTable extends CompletionQuestionnairesTable
       defaultConstraints:
           GeneratedColumn.constraintIsAlways('CHECK ("needs_sync" IN (0, 1))'),
       defaultValue: const Constant(true));
+  static const VerificationMeta _subjectProfileIdMeta =
+      const VerificationMeta('subjectProfileId');
+  @override
+  late final GeneratedColumn<String> subjectProfileId = GeneratedColumn<String>(
+      'subject_profile_id', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
   static const VerificationMeta _submittedAtMeta =
       const VerificationMeta('submittedAt');
   @override
@@ -4926,6 +5116,7 @@ class $CompletionQuestionnairesTableTable extends CompletionQuestionnairesTable
         result,
         nextEnrollmentCreated,
         needsSync,
+        subjectProfileId,
         submittedAt
       ];
   @override
@@ -4980,6 +5171,12 @@ class $CompletionQuestionnairesTableTable extends CompletionQuestionnairesTable
       context.handle(_needsSyncMeta,
           needsSync.isAcceptableOrUnknown(data['needs_sync']!, _needsSyncMeta));
     }
+    if (data.containsKey('subject_profile_id')) {
+      context.handle(
+          _subjectProfileIdMeta,
+          subjectProfileId.isAcceptableOrUnknown(
+              data['subject_profile_id']!, _subjectProfileIdMeta));
+    }
     if (data.containsKey('submitted_at')) {
       context.handle(
           _submittedAtMeta,
@@ -5013,6 +5210,8 @@ class $CompletionQuestionnairesTableTable extends CompletionQuestionnairesTable
           data['${effectivePrefix}next_enrollment_created'])!,
       needsSync: attachedDatabase.typeMapping
           .read(DriftSqlType.bool, data['${effectivePrefix}needs_sync'])!,
+      subjectProfileId: attachedDatabase.typeMapping.read(
+          DriftSqlType.string, data['${effectivePrefix}subject_profile_id']),
       submittedAt: attachedDatabase.typeMapping
           .read(DriftSqlType.dateTime, data['${effectivePrefix}submitted_at'])!,
     );
@@ -5033,6 +5232,7 @@ class CompletionQuestionnairesTableData extends DataClass
   final String result;
   final bool nextEnrollmentCreated;
   final bool needsSync;
+  final String? subjectProfileId;
   final DateTime submittedAt;
   const CompletionQuestionnairesTableData(
       {required this.id,
@@ -5042,6 +5242,7 @@ class CompletionQuestionnairesTableData extends DataClass
       required this.result,
       required this.nextEnrollmentCreated,
       required this.needsSync,
+      this.subjectProfileId,
       required this.submittedAt});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -5053,6 +5254,9 @@ class CompletionQuestionnairesTableData extends DataClass
     map['result'] = Variable<String>(result);
     map['next_enrollment_created'] = Variable<bool>(nextEnrollmentCreated);
     map['needs_sync'] = Variable<bool>(needsSync);
+    if (!nullToAbsent || subjectProfileId != null) {
+      map['subject_profile_id'] = Variable<String>(subjectProfileId);
+    }
     map['submitted_at'] = Variable<DateTime>(submittedAt);
     return map;
   }
@@ -5066,6 +5270,9 @@ class CompletionQuestionnairesTableData extends DataClass
       result: Value(result),
       nextEnrollmentCreated: Value(nextEnrollmentCreated),
       needsSync: Value(needsSync),
+      subjectProfileId: subjectProfileId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(subjectProfileId),
       submittedAt: Value(submittedAt),
     );
   }
@@ -5082,6 +5289,7 @@ class CompletionQuestionnairesTableData extends DataClass
       nextEnrollmentCreated:
           serializer.fromJson<bool>(json['nextEnrollmentCreated']),
       needsSync: serializer.fromJson<bool>(json['needsSync']),
+      subjectProfileId: serializer.fromJson<String?>(json['subjectProfileId']),
       submittedAt: serializer.fromJson<DateTime>(json['submittedAt']),
     );
   }
@@ -5096,6 +5304,7 @@ class CompletionQuestionnairesTableData extends DataClass
       'result': serializer.toJson<String>(result),
       'nextEnrollmentCreated': serializer.toJson<bool>(nextEnrollmentCreated),
       'needsSync': serializer.toJson<bool>(needsSync),
+      'subjectProfileId': serializer.toJson<String?>(subjectProfileId),
       'submittedAt': serializer.toJson<DateTime>(submittedAt),
     };
   }
@@ -5108,6 +5317,7 @@ class CompletionQuestionnairesTableData extends DataClass
           String? result,
           bool? nextEnrollmentCreated,
           bool? needsSync,
+          Value<String?> subjectProfileId = const Value.absent(),
           DateTime? submittedAt}) =>
       CompletionQuestionnairesTableData(
         id: id ?? this.id,
@@ -5118,6 +5328,9 @@ class CompletionQuestionnairesTableData extends DataClass
         nextEnrollmentCreated:
             nextEnrollmentCreated ?? this.nextEnrollmentCreated,
         needsSync: needsSync ?? this.needsSync,
+        subjectProfileId: subjectProfileId.present
+            ? subjectProfileId.value
+            : this.subjectProfileId,
         submittedAt: submittedAt ?? this.submittedAt,
       );
   CompletionQuestionnairesTableData copyWithCompanion(
@@ -5136,6 +5349,9 @@ class CompletionQuestionnairesTableData extends DataClass
           ? data.nextEnrollmentCreated.value
           : this.nextEnrollmentCreated,
       needsSync: data.needsSync.present ? data.needsSync.value : this.needsSync,
+      subjectProfileId: data.subjectProfileId.present
+          ? data.subjectProfileId.value
+          : this.subjectProfileId,
       submittedAt:
           data.submittedAt.present ? data.submittedAt.value : this.submittedAt,
     );
@@ -5151,6 +5367,7 @@ class CompletionQuestionnairesTableData extends DataClass
           ..write('result: $result, ')
           ..write('nextEnrollmentCreated: $nextEnrollmentCreated, ')
           ..write('needsSync: $needsSync, ')
+          ..write('subjectProfileId: $subjectProfileId, ')
           ..write('submittedAt: $submittedAt')
           ..write(')'))
         .toString();
@@ -5158,7 +5375,7 @@ class CompletionQuestionnairesTableData extends DataClass
 
   @override
   int get hashCode => Object.hash(id, enrollmentId, attemptNumber, response,
-      result, nextEnrollmentCreated, needsSync, submittedAt);
+      result, nextEnrollmentCreated, needsSync, subjectProfileId, submittedAt);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -5170,6 +5387,7 @@ class CompletionQuestionnairesTableData extends DataClass
           other.result == this.result &&
           other.nextEnrollmentCreated == this.nextEnrollmentCreated &&
           other.needsSync == this.needsSync &&
+          other.subjectProfileId == this.subjectProfileId &&
           other.submittedAt == this.submittedAt);
 }
 
@@ -5182,6 +5400,7 @@ class CompletionQuestionnairesTableCompanion
   final Value<String> result;
   final Value<bool> nextEnrollmentCreated;
   final Value<bool> needsSync;
+  final Value<String?> subjectProfileId;
   final Value<DateTime> submittedAt;
   final Value<int> rowid;
   const CompletionQuestionnairesTableCompanion({
@@ -5192,6 +5411,7 @@ class CompletionQuestionnairesTableCompanion
     this.result = const Value.absent(),
     this.nextEnrollmentCreated = const Value.absent(),
     this.needsSync = const Value.absent(),
+    this.subjectProfileId = const Value.absent(),
     this.submittedAt = const Value.absent(),
     this.rowid = const Value.absent(),
   });
@@ -5203,6 +5423,7 @@ class CompletionQuestionnairesTableCompanion
     required String result,
     this.nextEnrollmentCreated = const Value.absent(),
     this.needsSync = const Value.absent(),
+    this.subjectProfileId = const Value.absent(),
     required DateTime submittedAt,
     this.rowid = const Value.absent(),
   })  : id = Value(id),
@@ -5218,6 +5439,7 @@ class CompletionQuestionnairesTableCompanion
     Expression<String>? result,
     Expression<bool>? nextEnrollmentCreated,
     Expression<bool>? needsSync,
+    Expression<String>? subjectProfileId,
     Expression<DateTime>? submittedAt,
     Expression<int>? rowid,
   }) {
@@ -5230,6 +5452,7 @@ class CompletionQuestionnairesTableCompanion
       if (nextEnrollmentCreated != null)
         'next_enrollment_created': nextEnrollmentCreated,
       if (needsSync != null) 'needs_sync': needsSync,
+      if (subjectProfileId != null) 'subject_profile_id': subjectProfileId,
       if (submittedAt != null) 'submitted_at': submittedAt,
       if (rowid != null) 'rowid': rowid,
     });
@@ -5243,6 +5466,7 @@ class CompletionQuestionnairesTableCompanion
       Value<String>? result,
       Value<bool>? nextEnrollmentCreated,
       Value<bool>? needsSync,
+      Value<String?>? subjectProfileId,
       Value<DateTime>? submittedAt,
       Value<int>? rowid}) {
     return CompletionQuestionnairesTableCompanion(
@@ -5254,6 +5478,7 @@ class CompletionQuestionnairesTableCompanion
       nextEnrollmentCreated:
           nextEnrollmentCreated ?? this.nextEnrollmentCreated,
       needsSync: needsSync ?? this.needsSync,
+      subjectProfileId: subjectProfileId ?? this.subjectProfileId,
       submittedAt: submittedAt ?? this.submittedAt,
       rowid: rowid ?? this.rowid,
     );
@@ -5284,6 +5509,9 @@ class CompletionQuestionnairesTableCompanion
     if (needsSync.present) {
       map['needs_sync'] = Variable<bool>(needsSync.value);
     }
+    if (subjectProfileId.present) {
+      map['subject_profile_id'] = Variable<String>(subjectProfileId.value);
+    }
     if (submittedAt.present) {
       map['submitted_at'] = Variable<DateTime>(submittedAt.value);
     }
@@ -5303,6 +5531,7 @@ class CompletionQuestionnairesTableCompanion
           ..write('result: $result, ')
           ..write('nextEnrollmentCreated: $nextEnrollmentCreated, ')
           ..write('needsSync: $needsSync, ')
+          ..write('subjectProfileId: $subjectProfileId, ')
           ..write('submittedAt: $submittedAt, ')
           ..write('rowid: $rowid')
           ..write(')'))
@@ -5380,6 +5609,12 @@ class $JournalEntriesTableTable extends JournalEntriesTable
       type: DriftSqlType.dateTime,
       requiredDuringInsert: false,
       defaultValue: currentDateAndTime);
+  static const VerificationMeta _subjectProfileIdMeta =
+      const VerificationMeta('subjectProfileId');
+  @override
+  late final GeneratedColumn<String> subjectProfileId = GeneratedColumn<String>(
+      'subject_profile_id', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
   static const VerificationMeta _needsSyncMeta =
       const VerificationMeta('needsSync');
   @override
@@ -5403,6 +5638,7 @@ class $JournalEntriesTableTable extends JournalEntriesTable
         dayKey,
         createdAt,
         updatedAt,
+        subjectProfileId,
         needsSync
       ];
   @override
@@ -5469,6 +5705,12 @@ class $JournalEntriesTableTable extends JournalEntriesTable
       context.handle(_updatedAtMeta,
           updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta));
     }
+    if (data.containsKey('subject_profile_id')) {
+      context.handle(
+          _subjectProfileIdMeta,
+          subjectProfileId.isAcceptableOrUnknown(
+              data['subject_profile_id']!, _subjectProfileIdMeta));
+    }
     if (data.containsKey('needs_sync')) {
       context.handle(_needsSyncMeta,
           needsSync.isAcceptableOrUnknown(data['needs_sync']!, _needsSyncMeta));
@@ -5505,6 +5747,8 @@ class $JournalEntriesTableTable extends JournalEntriesTable
           .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
       updatedAt: attachedDatabase.typeMapping
           .read(DriftSqlType.dateTime, data['${effectivePrefix}updated_at'])!,
+      subjectProfileId: attachedDatabase.typeMapping.read(
+          DriftSqlType.string, data['${effectivePrefix}subject_profile_id']),
       needsSync: attachedDatabase.typeMapping
           .read(DriftSqlType.bool, data['${effectivePrefix}needs_sync'])!,
     );
@@ -5536,6 +5780,7 @@ class JournalEntriesTableData extends DataClass
   final int dayKey;
   final DateTime createdAt;
   final DateTime updatedAt;
+  final String? subjectProfileId;
   final bool needsSync;
   const JournalEntriesTableData(
       {required this.id,
@@ -5549,6 +5794,7 @@ class JournalEntriesTableData extends DataClass
       required this.dayKey,
       required this.createdAt,
       required this.updatedAt,
+      this.subjectProfileId,
       required this.needsSync});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -5574,6 +5820,9 @@ class JournalEntriesTableData extends DataClass
     map['day_key'] = Variable<int>(dayKey);
     map['created_at'] = Variable<DateTime>(createdAt);
     map['updated_at'] = Variable<DateTime>(updatedAt);
+    if (!nullToAbsent || subjectProfileId != null) {
+      map['subject_profile_id'] = Variable<String>(subjectProfileId);
+    }
     map['needs_sync'] = Variable<bool>(needsSync);
     return map;
   }
@@ -5597,6 +5846,9 @@ class JournalEntriesTableData extends DataClass
       dayKey: Value(dayKey),
       createdAt: Value(createdAt),
       updatedAt: Value(updatedAt),
+      subjectProfileId: subjectProfileId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(subjectProfileId),
       needsSync: Value(needsSync),
     );
   }
@@ -5616,6 +5868,7 @@ class JournalEntriesTableData extends DataClass
       dayKey: serializer.fromJson<int>(json['dayKey']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+      subjectProfileId: serializer.fromJson<String?>(json['subjectProfileId']),
       needsSync: serializer.fromJson<bool>(json['needsSync']),
     );
   }
@@ -5634,6 +5887,7 @@ class JournalEntriesTableData extends DataClass
       'dayKey': serializer.toJson<int>(dayKey),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
+      'subjectProfileId': serializer.toJson<String?>(subjectProfileId),
       'needsSync': serializer.toJson<bool>(needsSync),
     };
   }
@@ -5650,6 +5904,7 @@ class JournalEntriesTableData extends DataClass
           int? dayKey,
           DateTime? createdAt,
           DateTime? updatedAt,
+          Value<String?> subjectProfileId = const Value.absent(),
           bool? needsSync}) =>
       JournalEntriesTableData(
         id: id ?? this.id,
@@ -5664,6 +5919,9 @@ class JournalEntriesTableData extends DataClass
         dayKey: dayKey ?? this.dayKey,
         createdAt: createdAt ?? this.createdAt,
         updatedAt: updatedAt ?? this.updatedAt,
+        subjectProfileId: subjectProfileId.present
+            ? subjectProfileId.value
+            : this.subjectProfileId,
         needsSync: needsSync ?? this.needsSync,
       );
   JournalEntriesTableData copyWithCompanion(JournalEntriesTableCompanion data) {
@@ -5681,6 +5939,9 @@ class JournalEntriesTableData extends DataClass
       dayKey: data.dayKey.present ? data.dayKey.value : this.dayKey,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      subjectProfileId: data.subjectProfileId.present
+          ? data.subjectProfileId.value
+          : this.subjectProfileId,
       needsSync: data.needsSync.present ? data.needsSync.value : this.needsSync,
     );
   }
@@ -5699,14 +5960,27 @@ class JournalEntriesTableData extends DataClass
           ..write('dayKey: $dayKey, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
+          ..write('subjectProfileId: $subjectProfileId, ')
           ..write('needsSync: $needsSync')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, userId, enrollmentId, checkinId, content,
-      mood, energy, stress, dayKey, createdAt, updatedAt, needsSync);
+  int get hashCode => Object.hash(
+      id,
+      userId,
+      enrollmentId,
+      checkinId,
+      content,
+      mood,
+      energy,
+      stress,
+      dayKey,
+      createdAt,
+      updatedAt,
+      subjectProfileId,
+      needsSync);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -5722,6 +5996,7 @@ class JournalEntriesTableData extends DataClass
           other.dayKey == this.dayKey &&
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt &&
+          other.subjectProfileId == this.subjectProfileId &&
           other.needsSync == this.needsSync);
 }
 
@@ -5738,6 +6013,7 @@ class JournalEntriesTableCompanion
   final Value<int> dayKey;
   final Value<DateTime> createdAt;
   final Value<DateTime> updatedAt;
+  final Value<String?> subjectProfileId;
   final Value<bool> needsSync;
   final Value<int> rowid;
   const JournalEntriesTableCompanion({
@@ -5752,6 +6028,7 @@ class JournalEntriesTableCompanion
     this.dayKey = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
+    this.subjectProfileId = const Value.absent(),
     this.needsSync = const Value.absent(),
     this.rowid = const Value.absent(),
   });
@@ -5767,6 +6044,7 @@ class JournalEntriesTableCompanion
     required int dayKey,
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
+    this.subjectProfileId = const Value.absent(),
     this.needsSync = const Value.absent(),
     this.rowid = const Value.absent(),
   })  : id = Value(id),
@@ -5785,6 +6063,7 @@ class JournalEntriesTableCompanion
     Expression<int>? dayKey,
     Expression<DateTime>? createdAt,
     Expression<DateTime>? updatedAt,
+    Expression<String>? subjectProfileId,
     Expression<bool>? needsSync,
     Expression<int>? rowid,
   }) {
@@ -5800,6 +6079,7 @@ class JournalEntriesTableCompanion
       if (dayKey != null) 'day_key': dayKey,
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
+      if (subjectProfileId != null) 'subject_profile_id': subjectProfileId,
       if (needsSync != null) 'needs_sync': needsSync,
       if (rowid != null) 'rowid': rowid,
     });
@@ -5817,6 +6097,7 @@ class JournalEntriesTableCompanion
       Value<int>? dayKey,
       Value<DateTime>? createdAt,
       Value<DateTime>? updatedAt,
+      Value<String?>? subjectProfileId,
       Value<bool>? needsSync,
       Value<int>? rowid}) {
     return JournalEntriesTableCompanion(
@@ -5831,6 +6112,7 @@ class JournalEntriesTableCompanion
       dayKey: dayKey ?? this.dayKey,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      subjectProfileId: subjectProfileId ?? this.subjectProfileId,
       needsSync: needsSync ?? this.needsSync,
       rowid: rowid ?? this.rowid,
     );
@@ -5872,6 +6154,9 @@ class JournalEntriesTableCompanion
     if (updatedAt.present) {
       map['updated_at'] = Variable<DateTime>(updatedAt.value);
     }
+    if (subjectProfileId.present) {
+      map['subject_profile_id'] = Variable<String>(subjectProfileId.value);
+    }
     if (needsSync.present) {
       map['needs_sync'] = Variable<bool>(needsSync.value);
     }
@@ -5895,6 +6180,7 @@ class JournalEntriesTableCompanion
           ..write('dayKey: $dayKey, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
+          ..write('subjectProfileId: $subjectProfileId, ')
           ..write('needsSync: $needsSync, ')
           ..write('rowid: $rowid')
           ..write(')'))
@@ -5942,6 +6228,7 @@ typedef $$EnrollmentsTableTableCreateCompanionBuilder
     = EnrollmentsTableCompanion Function({
   required String id,
   required String userId,
+  Value<String?> subjectProfileId,
   required String packageId,
   Value<String> status,
   required int assignedDurationWeeks,
@@ -5959,6 +6246,7 @@ typedef $$EnrollmentsTableTableUpdateCompanionBuilder
     = EnrollmentsTableCompanion Function({
   Value<String> id,
   Value<String> userId,
+  Value<String?> subjectProfileId,
   Value<String> packageId,
   Value<String> status,
   Value<int> assignedDurationWeeks,
@@ -5987,6 +6275,10 @@ class $$EnrollmentsTableTableFilterComposer
 
   ColumnFilters<String> get userId => $composableBuilder(
       column: $table.userId, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get subjectProfileId => $composableBuilder(
+      column: $table.subjectProfileId,
+      builder: (column) => ColumnFilters(column));
 
   ColumnFilters<String> get packageId => $composableBuilder(
       column: $table.packageId, builder: (column) => ColumnFilters(column));
@@ -6040,6 +6332,10 @@ class $$EnrollmentsTableTableOrderingComposer
   ColumnOrderings<String> get userId => $composableBuilder(
       column: $table.userId, builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<String> get subjectProfileId => $composableBuilder(
+      column: $table.subjectProfileId,
+      builder: (column) => ColumnOrderings(column));
+
   ColumnOrderings<String> get packageId => $composableBuilder(
       column: $table.packageId, builder: (column) => ColumnOrderings(column));
 
@@ -6091,6 +6387,9 @@ class $$EnrollmentsTableTableAnnotationComposer
 
   GeneratedColumn<String> get userId =>
       $composableBuilder(column: $table.userId, builder: (column) => column);
+
+  GeneratedColumn<String> get subjectProfileId => $composableBuilder(
+      column: $table.subjectProfileId, builder: (column) => column);
 
   GeneratedColumn<String> get packageId =>
       $composableBuilder(column: $table.packageId, builder: (column) => column);
@@ -6156,6 +6455,7 @@ class $$EnrollmentsTableTableTableManager extends RootTableManager<
           updateCompanionCallback: ({
             Value<String> id = const Value.absent(),
             Value<String> userId = const Value.absent(),
+            Value<String?> subjectProfileId = const Value.absent(),
             Value<String> packageId = const Value.absent(),
             Value<String> status = const Value.absent(),
             Value<int> assignedDurationWeeks = const Value.absent(),
@@ -6172,6 +6472,7 @@ class $$EnrollmentsTableTableTableManager extends RootTableManager<
               EnrollmentsTableCompanion(
             id: id,
             userId: userId,
+            subjectProfileId: subjectProfileId,
             packageId: packageId,
             status: status,
             assignedDurationWeeks: assignedDurationWeeks,
@@ -6188,6 +6489,7 @@ class $$EnrollmentsTableTableTableManager extends RootTableManager<
           createCompanionCallback: ({
             required String id,
             required String userId,
+            Value<String?> subjectProfileId = const Value.absent(),
             required String packageId,
             Value<String> status = const Value.absent(),
             required int assignedDurationWeeks,
@@ -6204,6 +6506,7 @@ class $$EnrollmentsTableTableTableManager extends RootTableManager<
               EnrollmentsTableCompanion.insert(
             id: id,
             userId: userId,
+            subjectProfileId: subjectProfileId,
             packageId: packageId,
             status: status,
             assignedDurationWeeks: assignedDurationWeeks,
@@ -6752,6 +7055,7 @@ typedef $$TrainingSessionsTableTableCreateCompanionBuilder
     = TrainingSessionsTableCompanion Function({
   required String id,
   required String userId,
+  Value<String?> subjectProfileId,
   required String enrollmentId,
   required DateTime sessionDate,
   required int dayNumber,
@@ -6766,6 +7070,7 @@ typedef $$TrainingSessionsTableTableUpdateCompanionBuilder
     = TrainingSessionsTableCompanion Function({
   Value<String> id,
   Value<String> userId,
+  Value<String?> subjectProfileId,
   Value<String> enrollmentId,
   Value<DateTime> sessionDate,
   Value<int> dayNumber,
@@ -6791,6 +7096,10 @@ class $$TrainingSessionsTableTableFilterComposer
 
   ColumnFilters<String> get userId => $composableBuilder(
       column: $table.userId, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get subjectProfileId => $composableBuilder(
+      column: $table.subjectProfileId,
+      builder: (column) => ColumnFilters(column));
 
   ColumnFilters<String> get enrollmentId => $composableBuilder(
       column: $table.enrollmentId, builder: (column) => ColumnFilters(column));
@@ -6833,6 +7142,10 @@ class $$TrainingSessionsTableTableOrderingComposer
   ColumnOrderings<String> get userId => $composableBuilder(
       column: $table.userId, builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<String> get subjectProfileId => $composableBuilder(
+      column: $table.subjectProfileId,
+      builder: (column) => ColumnOrderings(column));
+
   ColumnOrderings<String> get enrollmentId => $composableBuilder(
       column: $table.enrollmentId,
       builder: (column) => ColumnOrderings(column));
@@ -6874,6 +7187,9 @@ class $$TrainingSessionsTableTableAnnotationComposer
 
   GeneratedColumn<String> get userId =>
       $composableBuilder(column: $table.userId, builder: (column) => column);
+
+  GeneratedColumn<String> get subjectProfileId => $composableBuilder(
+      column: $table.subjectProfileId, builder: (column) => column);
 
   GeneratedColumn<String> get enrollmentId => $composableBuilder(
       column: $table.enrollmentId, builder: (column) => column);
@@ -6933,6 +7249,7 @@ class $$TrainingSessionsTableTableTableManager extends RootTableManager<
           updateCompanionCallback: ({
             Value<String> id = const Value.absent(),
             Value<String> userId = const Value.absent(),
+            Value<String?> subjectProfileId = const Value.absent(),
             Value<String> enrollmentId = const Value.absent(),
             Value<DateTime> sessionDate = const Value.absent(),
             Value<int> dayNumber = const Value.absent(),
@@ -6946,6 +7263,7 @@ class $$TrainingSessionsTableTableTableManager extends RootTableManager<
               TrainingSessionsTableCompanion(
             id: id,
             userId: userId,
+            subjectProfileId: subjectProfileId,
             enrollmentId: enrollmentId,
             sessionDate: sessionDate,
             dayNumber: dayNumber,
@@ -6959,6 +7277,7 @@ class $$TrainingSessionsTableTableTableManager extends RootTableManager<
           createCompanionCallback: ({
             required String id,
             required String userId,
+            Value<String?> subjectProfileId = const Value.absent(),
             required String enrollmentId,
             required DateTime sessionDate,
             required int dayNumber,
@@ -6972,6 +7291,7 @@ class $$TrainingSessionsTableTableTableManager extends RootTableManager<
               TrainingSessionsTableCompanion.insert(
             id: id,
             userId: userId,
+            subjectProfileId: subjectProfileId,
             enrollmentId: enrollmentId,
             sessionDate: sessionDate,
             dayNumber: dayNumber,
@@ -7010,6 +7330,7 @@ typedef $$ProgressEntriesTableTableCreateCompanionBuilder
     = ProgressEntriesTableCompanion Function({
   required String id,
   required String userId,
+  Value<String?> subjectProfileId,
   required String enrollmentId,
   Value<int> currentDay,
   Value<DateTime?> lastActivityDate,
@@ -7029,6 +7350,7 @@ typedef $$ProgressEntriesTableTableUpdateCompanionBuilder
     = ProgressEntriesTableCompanion Function({
   Value<String> id,
   Value<String> userId,
+  Value<String?> subjectProfileId,
   Value<String> enrollmentId,
   Value<int> currentDay,
   Value<DateTime?> lastActivityDate,
@@ -7059,6 +7381,10 @@ class $$ProgressEntriesTableTableFilterComposer
 
   ColumnFilters<String> get userId => $composableBuilder(
       column: $table.userId, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get subjectProfileId => $composableBuilder(
+      column: $table.subjectProfileId,
+      builder: (column) => ColumnFilters(column));
 
   ColumnFilters<String> get enrollmentId => $composableBuilder(
       column: $table.enrollmentId, builder: (column) => ColumnFilters(column));
@@ -7120,6 +7446,10 @@ class $$ProgressEntriesTableTableOrderingComposer
 
   ColumnOrderings<String> get userId => $composableBuilder(
       column: $table.userId, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get subjectProfileId => $composableBuilder(
+      column: $table.subjectProfileId,
+      builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<String> get enrollmentId => $composableBuilder(
       column: $table.enrollmentId,
@@ -7183,6 +7513,9 @@ class $$ProgressEntriesTableTableAnnotationComposer
 
   GeneratedColumn<String> get userId =>
       $composableBuilder(column: $table.userId, builder: (column) => column);
+
+  GeneratedColumn<String> get subjectProfileId => $composableBuilder(
+      column: $table.subjectProfileId, builder: (column) => column);
 
   GeneratedColumn<String> get enrollmentId => $composableBuilder(
       column: $table.enrollmentId, builder: (column) => column);
@@ -7256,6 +7589,7 @@ class $$ProgressEntriesTableTableTableManager extends RootTableManager<
           updateCompanionCallback: ({
             Value<String> id = const Value.absent(),
             Value<String> userId = const Value.absent(),
+            Value<String?> subjectProfileId = const Value.absent(),
             Value<String> enrollmentId = const Value.absent(),
             Value<int> currentDay = const Value.absent(),
             Value<DateTime?> lastActivityDate = const Value.absent(),
@@ -7274,6 +7608,7 @@ class $$ProgressEntriesTableTableTableManager extends RootTableManager<
               ProgressEntriesTableCompanion(
             id: id,
             userId: userId,
+            subjectProfileId: subjectProfileId,
             enrollmentId: enrollmentId,
             currentDay: currentDay,
             lastActivityDate: lastActivityDate,
@@ -7292,6 +7627,7 @@ class $$ProgressEntriesTableTableTableManager extends RootTableManager<
           createCompanionCallback: ({
             required String id,
             required String userId,
+            Value<String?> subjectProfileId = const Value.absent(),
             required String enrollmentId,
             Value<int> currentDay = const Value.absent(),
             Value<DateTime?> lastActivityDate = const Value.absent(),
@@ -7310,6 +7646,7 @@ class $$ProgressEntriesTableTableTableManager extends RootTableManager<
               ProgressEntriesTableCompanion.insert(
             id: id,
             userId: userId,
+            subjectProfileId: subjectProfileId,
             enrollmentId: enrollmentId,
             currentDay: currentDay,
             lastActivityDate: lastActivityDate,
@@ -7362,6 +7699,7 @@ typedef $$MoodCheckinsTableTableCreateCompanionBuilder
   Value<int?> stress,
   Value<String?> note,
   required String source,
+  Value<String?> subjectProfileId,
   Value<bool> needsSync,
   Value<DateTime> createdAt,
   Value<int> rowid,
@@ -7379,6 +7717,7 @@ typedef $$MoodCheckinsTableTableUpdateCompanionBuilder
   Value<int?> stress,
   Value<String?> note,
   Value<String> source,
+  Value<String?> subjectProfileId,
   Value<bool> needsSync,
   Value<DateTime> createdAt,
   Value<int> rowid,
@@ -7425,6 +7764,10 @@ class $$MoodCheckinsTableTableFilterComposer
 
   ColumnFilters<String> get source => $composableBuilder(
       column: $table.source, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get subjectProfileId => $composableBuilder(
+      column: $table.subjectProfileId,
+      builder: (column) => ColumnFilters(column));
 
   ColumnFilters<bool> get needsSync => $composableBuilder(
       column: $table.needsSync, builder: (column) => ColumnFilters(column));
@@ -7476,6 +7819,10 @@ class $$MoodCheckinsTableTableOrderingComposer
   ColumnOrderings<String> get source => $composableBuilder(
       column: $table.source, builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<String> get subjectProfileId => $composableBuilder(
+      column: $table.subjectProfileId,
+      builder: (column) => ColumnOrderings(column));
+
   ColumnOrderings<bool> get needsSync => $composableBuilder(
       column: $table.needsSync, builder: (column) => ColumnOrderings(column));
 
@@ -7525,6 +7872,9 @@ class $$MoodCheckinsTableTableAnnotationComposer
   GeneratedColumn<String> get source =>
       $composableBuilder(column: $table.source, builder: (column) => column);
 
+  GeneratedColumn<String> get subjectProfileId => $composableBuilder(
+      column: $table.subjectProfileId, builder: (column) => column);
+
   GeneratedColumn<bool> get needsSync =>
       $composableBuilder(column: $table.needsSync, builder: (column) => column);
 
@@ -7572,6 +7922,7 @@ class $$MoodCheckinsTableTableTableManager extends RootTableManager<
             Value<int?> stress = const Value.absent(),
             Value<String?> note = const Value.absent(),
             Value<String> source = const Value.absent(),
+            Value<String?> subjectProfileId = const Value.absent(),
             Value<bool> needsSync = const Value.absent(),
             Value<DateTime> createdAt = const Value.absent(),
             Value<int> rowid = const Value.absent(),
@@ -7588,6 +7939,7 @@ class $$MoodCheckinsTableTableTableManager extends RootTableManager<
             stress: stress,
             note: note,
             source: source,
+            subjectProfileId: subjectProfileId,
             needsSync: needsSync,
             createdAt: createdAt,
             rowid: rowid,
@@ -7604,6 +7956,7 @@ class $$MoodCheckinsTableTableTableManager extends RootTableManager<
             Value<int?> stress = const Value.absent(),
             Value<String?> note = const Value.absent(),
             required String source,
+            Value<String?> subjectProfileId = const Value.absent(),
             Value<bool> needsSync = const Value.absent(),
             Value<DateTime> createdAt = const Value.absent(),
             Value<int> rowid = const Value.absent(),
@@ -7620,6 +7973,7 @@ class $$MoodCheckinsTableTableTableManager extends RootTableManager<
             stress: stress,
             note: note,
             source: source,
+            subjectProfileId: subjectProfileId,
             needsSync: needsSync,
             createdAt: createdAt,
             rowid: rowid,
@@ -8126,6 +8480,7 @@ typedef $$CompletionQuestionnairesTableTableCreateCompanionBuilder
   required String result,
   Value<bool> nextEnrollmentCreated,
   Value<bool> needsSync,
+  Value<String?> subjectProfileId,
   required DateTime submittedAt,
   Value<int> rowid,
 });
@@ -8138,6 +8493,7 @@ typedef $$CompletionQuestionnairesTableTableUpdateCompanionBuilder
   Value<String> result,
   Value<bool> nextEnrollmentCreated,
   Value<bool> needsSync,
+  Value<String?> subjectProfileId,
   Value<DateTime> submittedAt,
   Value<int> rowid,
 });
@@ -8172,6 +8528,10 @@ class $$CompletionQuestionnairesTableTableFilterComposer
 
   ColumnFilters<bool> get needsSync => $composableBuilder(
       column: $table.needsSync, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get subjectProfileId => $composableBuilder(
+      column: $table.subjectProfileId,
+      builder: (column) => ColumnFilters(column));
 
   ColumnFilters<DateTime> get submittedAt => $composableBuilder(
       column: $table.submittedAt, builder: (column) => ColumnFilters(column));
@@ -8210,6 +8570,10 @@ class $$CompletionQuestionnairesTableTableOrderingComposer
   ColumnOrderings<bool> get needsSync => $composableBuilder(
       column: $table.needsSync, builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<String> get subjectProfileId => $composableBuilder(
+      column: $table.subjectProfileId,
+      builder: (column) => ColumnOrderings(column));
+
   ColumnOrderings<DateTime> get submittedAt => $composableBuilder(
       column: $table.submittedAt, builder: (column) => ColumnOrderings(column));
 }
@@ -8243,6 +8607,9 @@ class $$CompletionQuestionnairesTableTableAnnotationComposer
 
   GeneratedColumn<bool> get needsSync =>
       $composableBuilder(column: $table.needsSync, builder: (column) => column);
+
+  GeneratedColumn<String> get subjectProfileId => $composableBuilder(
+      column: $table.subjectProfileId, builder: (column) => column);
 
   GeneratedColumn<DateTime> get submittedAt => $composableBuilder(
       column: $table.submittedAt, builder: (column) => column);
@@ -8286,6 +8653,7 @@ class $$CompletionQuestionnairesTableTableTableManager extends RootTableManager<
             Value<String> result = const Value.absent(),
             Value<bool> nextEnrollmentCreated = const Value.absent(),
             Value<bool> needsSync = const Value.absent(),
+            Value<String?> subjectProfileId = const Value.absent(),
             Value<DateTime> submittedAt = const Value.absent(),
             Value<int> rowid = const Value.absent(),
           }) =>
@@ -8297,6 +8665,7 @@ class $$CompletionQuestionnairesTableTableTableManager extends RootTableManager<
             result: result,
             nextEnrollmentCreated: nextEnrollmentCreated,
             needsSync: needsSync,
+            subjectProfileId: subjectProfileId,
             submittedAt: submittedAt,
             rowid: rowid,
           ),
@@ -8308,6 +8677,7 @@ class $$CompletionQuestionnairesTableTableTableManager extends RootTableManager<
             required String result,
             Value<bool> nextEnrollmentCreated = const Value.absent(),
             Value<bool> needsSync = const Value.absent(),
+            Value<String?> subjectProfileId = const Value.absent(),
             required DateTime submittedAt,
             Value<int> rowid = const Value.absent(),
           }) =>
@@ -8319,6 +8689,7 @@ class $$CompletionQuestionnairesTableTableTableManager extends RootTableManager<
             result: result,
             nextEnrollmentCreated: nextEnrollmentCreated,
             needsSync: needsSync,
+            subjectProfileId: subjectProfileId,
             submittedAt: submittedAt,
             rowid: rowid,
           ),
@@ -8359,6 +8730,7 @@ typedef $$JournalEntriesTableTableCreateCompanionBuilder
   required int dayKey,
   Value<DateTime> createdAt,
   Value<DateTime> updatedAt,
+  Value<String?> subjectProfileId,
   Value<bool> needsSync,
   Value<int> rowid,
 });
@@ -8375,6 +8747,7 @@ typedef $$JournalEntriesTableTableUpdateCompanionBuilder
   Value<int> dayKey,
   Value<DateTime> createdAt,
   Value<DateTime> updatedAt,
+  Value<String?> subjectProfileId,
   Value<bool> needsSync,
   Value<int> rowid,
 });
@@ -8420,6 +8793,10 @@ class $$JournalEntriesTableTableFilterComposer
 
   ColumnFilters<DateTime> get updatedAt => $composableBuilder(
       column: $table.updatedAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get subjectProfileId => $composableBuilder(
+      column: $table.subjectProfileId,
+      builder: (column) => ColumnFilters(column));
 
   ColumnFilters<bool> get needsSync => $composableBuilder(
       column: $table.needsSync, builder: (column) => ColumnFilters(column));
@@ -8468,6 +8845,10 @@ class $$JournalEntriesTableTableOrderingComposer
   ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
       column: $table.updatedAt, builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<String> get subjectProfileId => $composableBuilder(
+      column: $table.subjectProfileId,
+      builder: (column) => ColumnOrderings(column));
+
   ColumnOrderings<bool> get needsSync => $composableBuilder(
       column: $table.needsSync, builder: (column) => ColumnOrderings(column));
 }
@@ -8514,6 +8895,9 @@ class $$JournalEntriesTableTableAnnotationComposer
   GeneratedColumn<DateTime> get updatedAt =>
       $composableBuilder(column: $table.updatedAt, builder: (column) => column);
 
+  GeneratedColumn<String> get subjectProfileId => $composableBuilder(
+      column: $table.subjectProfileId, builder: (column) => column);
+
   GeneratedColumn<bool> get needsSync =>
       $composableBuilder(column: $table.needsSync, builder: (column) => column);
 }
@@ -8559,6 +8943,7 @@ class $$JournalEntriesTableTableTableManager extends RootTableManager<
             Value<int> dayKey = const Value.absent(),
             Value<DateTime> createdAt = const Value.absent(),
             Value<DateTime> updatedAt = const Value.absent(),
+            Value<String?> subjectProfileId = const Value.absent(),
             Value<bool> needsSync = const Value.absent(),
             Value<int> rowid = const Value.absent(),
           }) =>
@@ -8574,6 +8959,7 @@ class $$JournalEntriesTableTableTableManager extends RootTableManager<
             dayKey: dayKey,
             createdAt: createdAt,
             updatedAt: updatedAt,
+            subjectProfileId: subjectProfileId,
             needsSync: needsSync,
             rowid: rowid,
           ),
@@ -8589,6 +8975,7 @@ class $$JournalEntriesTableTableTableManager extends RootTableManager<
             required int dayKey,
             Value<DateTime> createdAt = const Value.absent(),
             Value<DateTime> updatedAt = const Value.absent(),
+            Value<String?> subjectProfileId = const Value.absent(),
             Value<bool> needsSync = const Value.absent(),
             Value<int> rowid = const Value.absent(),
           }) =>
@@ -8604,6 +8991,7 @@ class $$JournalEntriesTableTableTableManager extends RootTableManager<
             dayKey: dayKey,
             createdAt: createdAt,
             updatedAt: updatedAt,
+            subjectProfileId: subjectProfileId,
             needsSync: needsSync,
             rowid: rowid,
           ),

@@ -18,7 +18,7 @@
   "authErrorWeakPassword": "Das Passwort muss mindestens 8 Zeichen lang sein.",
 
   "dashboard": "Dashboard",
-  "startTraining": "Training starten",
+  "startTraining": "Einheit beginnen",
   "currentDay": "Tag {day} von {total}",
   "@currentDay": {
     "placeholders": {
@@ -26,7 +26,7 @@
       "total": { "type": "int" }
     }
   },
-  "dailyStreak": "Tages-Streak",
+  "dailyStreak": "Regelmäßigkeit",
   "weeklyProgress": "{count} von {goal} diese Woche",
   "@weeklyProgress": {
     "placeholders": {
@@ -42,7 +42,7 @@
     }
   },
 
-  "trainingMode": "Trainingsmodus",
+  "trainingMode": "Einheitsmodus",
   "tutorialMode": "Tutorial",
   "routineMode": "Routine",
   "silentMode": "Silent",
@@ -58,8 +58,8 @@
       "count": { "type": "int" }
     }
   },
-  "sessionComplete": "Training abgeschlossen",
-  "sessionCompleteSubtitle": "Gut gemacht! Du hast dein Training für heute abgeschlossen.",
+  "sessionComplete": "Einheit abgeschlossen",
+  "sessionCompleteSubtitle": "Du hast deine heutige Einheit abgeschlossen.",
 
   "moodCheckIn": "Wie geht es dir?",
   "moodLabel": "Stimmung",
@@ -67,15 +67,15 @@
   "stressLabel": "Stress",
   "moodSkip": "Überspringen",
   "moodSubmit": "Speichern",
-  "moodChartEmpty": "Schließe eine Trainingseinheit ab, um deine Stimmung zu verfolgen.",
+  "moodChartEmpty": "Trage eine Einheit ein, um dein Befinden im Verlauf zu sehen.",
 
   "intakeAssessmentTitle": "Programmstart",
   "intakeWelcomeTitle": "Willkommen in deinem Reflexintegrations-Programm",
   "intakeWelcomeBody": "CoreJourney begleitet dich bei der Integration pränataler Reflexe — ein Prozess, der dabei helfen kann, tief verwurzelte körperliche und emotionale Muster zu transformieren.",
   "intakeTrainerTitle": "Empfehlung: Mit Trainer starten",
-  "intakeTrainerBody": "Wir empfehlen, das Programm mit einem zertifizierten Trainer zu beginnen und begleiten zu lassen. Ein Trainer führt isometrisches Aktivierungstraining durch, das die betreffenden Reflexe gezielt anspricht. Diese gezielte Aktivierung beschleunigt den Integrationsprozess. Ohne sie braucht der Körper in der Regel länger, bis die Reflexe ausreichend angesprochen werden.",
+  "intakeTrainerBody": "Wir empfehlen, das Programm mit einem zertifizierten Trainer zu beginnen und begleiten zu lassen. Ein Trainer führt isometrische Partnerübungen durch, die klares Spüren von Richtung, Bewegung und Widerstand unterstützen. Ohne diese Begleitung braucht der Körper in der Regel mehr ruhige Wiederholung.",
   "intakeQuestionLabel": "Eine Frage zu deinem Start",
-  "questionIsometricWithTrainer": "Hast du bereits isometrisches Aktivierungstraining mit einem Trainer durchgeführt?",
+  "questionIsometricWithTrainer": "Hast du bereits isometrische Partnerübungen mit einem Trainer durchgeführt?",
   "yes": "Ja",
   "no": "Nein",
   "durationRecommendation": "Empfohlene Dauer: {weeks} Wochen",
@@ -86,15 +86,37 @@
   },
   "adjustDuration": "Dauer anpassen",
   "confirm": "Bestätigen",
+  "durationWithoutTrainerInfo": "Ohne begleitenden Trainer empfehlen wir etwa 8 Wochen, damit der Körper mehr Zeit für die Integration hat.",
+  "durationTrainerMinimumInfo": "Mit begleitendem Trainer empfehlen wir mindestens 4 Wochen. Du kannst die Dauer verlängern, wenn du mehr Integrationszeit möchtest.",
+  "trainerOnboardingTitle": "Trainer-Begleitung",
+  "trainerOnboardingFindTitle": "Starte mit einem Trainer in deiner Nähe",
+  "trainerOnboardingFindBody": "Da du die isometrische Aktivierung noch nicht mit einem Trainer gemacht hast, empfehlen wir dir, zuerst einen passenden Trainer zu finden. Du kannst trotzdem direkt starten, wenn du das möchtest.",
+  "trainerOnboardingConnectTitle": "Verknüpfe dich mit deinem Trainer",
+  "trainerOnboardingConnectBody": "Wenn du bereits mit einem Trainer gearbeitet hast, kannst du dich jetzt verbinden. So kann dein Trainer deinen Fortschritt begleiten und bei Bedarf Termine abstimmen.",
+  "trainerOnboardingSearchCta": "Trainer in meiner Nähe suchen",
+  "trainerOnboardingInviteCta": "Einladungscode eingeben",
+  "trainerOnboardingSkipCta": "Später machen",
+  "trainerOnboardingInviteTitle": "Mit Trainer verbinden",
+  "trainerOnboardingInviteBody": "Gib den 6-stelligen Einladungscode ein, den du von deinem Trainer erhalten hast.",
+  "trainerOnboardingInviteInvalid": "Bitte 6-stelligen Code eingeben.",
+  "trainerOnboardingInviteFailed": "Fehler beim Verbinden mit dem Trainer.",
+  "trainerOnboardingContinueAfterRequest": "Weiter zur Dauerempfehlung",
 
   "completionQuestionnaireTitle": "Abschlussreflexion",
-  "completionCelebrationTitle": "Block abgeschlossen! ⭐",
-  "completionCelebrationSubtitle": "Du hast einen wichtigen Schritt in deiner Entwicklung abgeschlossen. Gut gemacht.",
+  "completionCelebrationTitle": "Paket abgeschlossen",
+  "completionCelebrationSubtitle": "Du hast dieses Paket über die geplante Zeit begleitet.",
   "completionNextPackage": "Weiter zum nächsten Paket",
   "completionBackToDashboard": "Zum Dashboard",
+  "completionReachedTitle": "Paketdauer erreicht",
+  "completionReachedBody": "Du hast die geplante Paketdauer erreicht. In Heute findest du jetzt oben eine kurze Einschätzung, mit der du das Paket abschließen oder um 7 Tage verlängern kannst.",
+  "completionPlaceholderQuestion": "Platzhalter-Einschätzung: Fühlt sich dieses Paket stimmig abgeschlossen an?",
+  "completionPass": "Paket abschließen",
+  "completionInsufficient": "Noch 7 Tage wiederholen",
+  "completionMoroReturnSubtitle": "Der erneute Moro-Durchlauf ist abgeschlossen. Du kehrst jetzt zu deinem unterbrochenen Paket zurück und startest dort wieder bei Tag 1.",
+  "completionBackToInterruptedPackage": "Zurück zum unterbrochenen Paket",
   "completionExtendedTitle": "Noch eine Woche",
-  "completionExtendedSubtitle": "Kein Problem — du hast 7 weitere Tage. Mach weiter so.",
-  "completionQuestion": "Hattest du durch das Training eine verstärkte emotionale oder stressige Zeit und konntest dich mit diesen Themen konfrontieren – zu erkennen, dass deine emotionale Reaktion nicht immer mit der Realität übereinstimmt – und anfangen dich zu regulieren?",
+  "completionExtendedSubtitle": "Du hast 7 weitere Tage in diesem Paket.",
+  "completionQuestion": "Hast du seit Beginn dieses Pakets stärkere emotionale oder stressbezogene Reaktionen bemerkt und konntest du sie etwas besser einordnen oder regulieren?",
   "completionYes": "Ja, ich bin bereit",
   "completionNotYet": "Noch nicht",
 
@@ -105,13 +127,18 @@
   "packageAvailable": "Verfügbar",
 
   "settings": "Einstellungen",
-  "settingsTraining": "Training",
+  "settingsTraining": "Einheiten",
   "settingsReminders": "Erinnerungen",
   "settingsLanguage": "Sprache",
   "settingsTheme": "Erscheinungsbild",
   "settingsWeeklyGoal": "Wochenziel",
   "settingsChildAssist": "Kinderunterstützung",
   "settingsConnectTrainer": "Trainer verbinden",
+  "moroRestartSettingsTitle": "Zurück zum Moro",
+  "moroRestartSettingsSubtitle": "Moro für 4 Wochen neu starten und das aktuelle Paket unterbrechen.",
+  "moroRestartTitle": "Zum Moro zurückkehren?",
+  "moroRestartBody": "Der Moro-Reflex kann im Unterschied zu vielen anderen Reflexen durch stark belastende oder traumatische Ereignisse erneut aktiviert werden, zum Beispiel durch einen Autounfall, den Tod eines Angehörigen oder andere intensive Schockerlebnisse.\n\nWenn du fortfährst, wird dein aktuelles Paket unterbrochen. Du startest Moro für 4 Wochen neu. Nach dem Moro-Abschluss kehrst du zu deinem unterbrochenen Paket zurück und beginnst dort wieder bei Tag 1.",
+  "moroRestartConfirm": "Moro neu starten",
 
   "reminderEnabled": "Erinnerungen aktiviert",
   "reminderWindow": "Erinnerungsfenster",
@@ -128,11 +155,11 @@
     "placeholders": { "goal": { "type": "int" } }
   },
 
-  "settingsFeedback": "Trainings-Feedback",
+  "settingsFeedback": "Einheits-Feedback",
   "settingsAccount": "Konto",
 
   "disclaimer": "Medizinischer Hinweis",
-  "disclaimerText": "Dieses Training ersetzt keine medizinische Behandlung. Bitte konsultiere einen Arzt, wenn du gesundheitliche Bedenken hast. Achte auf die Signale deines Körpers und mache Pausen, wenn nötig.",
+  "disclaimerText": "Diese Einheiten ersetzen keine medizinische Behandlung. Bitte konsultiere einen Arzt, wenn du gesundheitliche Bedenken hast. Achte auf die Signale deines Körpers und mache Pausen, wenn nötig.",
   "disclaimerAccept": "Verstanden, weiter",
 
   "errorGeneric": "Etwas ist schiefgelaufen. Bitte versuche es erneut.",
@@ -188,7 +215,7 @@
 
   "journal": "Tagebuch",
   "journalEmptyTitle": "Noch keine Einträge.",
-  "journalEmptySubtitle": "Schreib auf, was du in deinem Alltag beobachtest — nach jedem Training oder wann immer du möchtest.",
+  "journalEmptySubtitle": "Schreib auf, was du in deinem Alltag beobachtest — nach einer Einheit oder wann immer du möchtest.",
   "journalEmptyHint": "Halte fest, was sich in deinem Alltag verändert.",
   "journalNewEntry": "Neue Notiz",
   "journalPostTrainingTitle": "Veränderungen im Alltag?",
@@ -199,8 +226,8 @@
   "moodHistory": "Stimmungsverlauf",
   "profile": "Profil",
 
-  "completionBannerTitle": "Block abgeschlossen!",
-  "completionBannerSubtitle": "Du hast dein Zieldatum erreicht. Jetzt zur Abschlussreflexion.",
+  "completionBannerTitle": "Paket bereit zur Einschätzung",
+  "completionBannerSubtitle": "Beantworte den kurzen Fragebogen, um dieses Paket abzuschließen oder um 7 Tage zu verlängern.",
 
   "settingsDataSync": "Daten & Sync",
   "syncStatusOk": "Alles synchronisiert",
@@ -229,6 +256,14 @@
   },
   "profileChangePassword": "Passwort ändern",
   "profileChangePasswordSent": "Passwort-Reset-E-Mail wurde gesendet.",
+  "newPassword": "Neues Passwort",
+  "passwordConfirm": "Passwort bestätigen",
+  "currentPassword": "Aktuelles Passwort",
+  "passwordChanged": "Passwort erfolgreich geändert.",
+  "passwordSet": "Neues Passwort gesetzt. Bitte einloggen.",
+  "authErrorSamePassword": "Das neue Passwort muss sich vom bisherigen unterscheiden.",
+  "authErrorInvalidCurrentPassword": "Das aktuelle Passwort ist falsch.",
+  "validationPasswordMismatch": "Passwörter stimmen nicht überein.",
   "profileDeleteAccount": "Konto löschen",
   "profileDeleteAccountTitle": "Konto löschen?",
   "profileDeleteAccountBody": "Dein Konto und alle deine Daten werden dauerhaft gelöscht. Dies kann nicht rückgängig gemacht werden.",
@@ -237,7 +272,7 @@
   "profileDeleteAccountError": "Konto konnte nicht gelöscht werden. Bitte kontaktiere den Support."
 ,
   "trainerDashboard": "Trainer-Dashboard",
-  "trainerTabTrainees": "Trainees",
+  "trainerTabTrainees": "Klienten",
   "trainerTabCalendar": "Kalender",
   "trainerMyLink": "Mein Einladungslink",
   "trainerCopyLink": "Link kopieren",
@@ -267,5 +302,44 @@
   "appointmentStatusConfirmed": "Bestätigt",
   "appointmentStatusCancelled": "Abgesagt",
   "appointmentStatusDone": "Abgeschlossen",
-  "appointmentOpenInCalendar": "Im Kalender öffnen"
+  "appointmentOpenInCalendar": "Im Kalender öffnen",
+
+  "trainerRequestsTitle": "Anfragen",
+  "trainerRequestNoRequests": "Keine offenen Anfragen.",
+  "trainerRequestAccept": "Annehmen",
+  "trainerRequestDecline": "Ablehnen",
+  "trainerDiscoveryTitle": "Trainer finden",
+  "trainerDiscoveryLocationDenied": "Standortzugriff ist erforderlich, um Trainer in deiner Nähe zu finden.",
+  "trainerDiscoveryRadiusLabel": "{radius} km",
+  "@trainerDiscoveryRadiusLabel": {
+    "placeholders": { "radius": { "type": "int" } }
+  },
+  "trainerDiscoveryEmpty": "Keine Trainer in der Nähe gefunden.",
+  "trainerDiscoveryDistanceLabel": "{distance} km entfernt",
+  "@trainerDiscoveryDistanceLabel": {
+    "placeholders": { "distance": { "type": "double" } }
+  },
+  "trainerDiscoveryRequestAlreadySent": "Anfrage wurde bereits gesendet.",
+  "trainerDiscoveryRequestAlreadyConnected": "Du bist bereits mit diesem Trainer verbunden.",
+  "trainerDiscoveryRequestSent": "Anfrage gesendet.",
+  "trainerDiscoverySendRequest": "Anfrage senden",
+  "trainerPublicProfileTitle": "Trainer-Profil",
+  "trainerPublicProfileVerified": "Verifizierter Trainer",
+  "trainerSetupTitle": "Trainer-Profil",
+  "trainerSetupDisplayNameLabel": "Anzeigename",
+  "trainerSetupBioLabel": "Bio",
+  "trainerSetupEmailLabel": "E-Mail",
+  "trainerSetupPhoneLabel": "Telefon",
+  "trainerSetupLocationTitle": "Standort",
+  "trainerSetupLocationHint": "Wähle deinen Trainer-Standort, damit Klienten dich in der Nähe finden.",
+  "trainerSetupLocationMissing": "Bitte wähle einen Standort.",
+  "trainerSetupSubmit": "Zur Prüfung einreichen",
+  "trainerSetupPendingTitle": "Profil wird geprüft",
+  "trainerSetupPendingBody": "Wir benachrichtigen dich, sobald dein Trainer-Profil freigegeben ist.",
+  "adminTrainerReviewTab": "Trainer-Prüfung",
+  "adminTrainerNoPending": "Keine Trainer-Profile zur Prüfung.",
+  "adminTrainerApproveSuccess": "Trainer freigegeben.",
+  "adminTrainerSuspendSuccess": "Trainer gesperrt.",
+  "adminTrainerApprove": "Freigeben",
+  "adminTrainerSuspend": "Sperren"
 }

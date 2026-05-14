@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../../../../core/navigation/app_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../progress/presentation/providers/progress_provider.dart';
@@ -29,10 +29,13 @@ class PackagesScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final selectedPackageId = ref.watch(selectedPackageIdProvider);
+    final currentEmail = Supabase.instance.client.auth.currentUser?.email ?? '';
+    final allowDevPackageSwitch = currentEmail.endsWith('@corejourney.dev');
 
     // Read all user enrollments to derive real per-package status.
     // Do NOT use static frontend logic to determine completion.
-    final allEnrollments = ref.watch(allUserEnrollmentsProvider).valueOrNull ?? [];
+    final allEnrollments =
+        ref.watch(allUserEnrollmentsProvider).valueOrNull ?? [];
     final completedPackageIds = {
       for (final e in allEnrollments)
         if (e.status == 'completed') e.packageId,
@@ -63,12 +66,14 @@ class PackagesScreen extends ConsumerWidget {
 
           return Card(
             child: ListTile(
-              onTap: isLocked
-                  ? null
-                  : () {
-                      ref.read(selectedPackageIdProvider.notifier).select(packageId);
+              onTap: allowDevPackageSwitch
+                  ? () {
+                      ref
+                          .read(selectedPackageIdProvider.notifier)
+                          .select(packageId);
                       context.pop();
-                    },
+                    }
+                  : null,
               leading: Container(
                 width: 36,
                 height: 36,
@@ -99,26 +104,36 @@ class PackagesScreen extends ConsumerWidget {
               subtitle: isSelected
                   ? Text(
                       l10n.packageCurrent,
-                      style: TextStyle(color: AppColors.primary, fontSize: 12),
+                      style: const TextStyle(
+                          color: AppColors.primary, fontSize: 12),
                     )
-                  : isLocked
+                  : allowDevPackageSwitch
                       ? Text(
-                          l10n.packageLocked,
+                          'Dev-Auswahl verfuegbar',
                           style: TextStyle(
-                              color: AppColors.textDisabled, fontSize: 12),
+                              color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 12),
                         )
-                      : isCompleted
+                      : isLocked
                           ? Text(
-                              l10n.packageCompleted,
-                              style: TextStyle(
-                                  color: AppColors.success, fontSize: 12),
+                              l10n.packageLocked,
+                              style: const TextStyle(
+                                  color: AppColors.textDisabled, fontSize: 12),
                             )
-                          : Text(
-                              l10n.packageAvailable,
-                              style: TextStyle(
-                                  color: AppColors.textSecondary, fontSize: 12),
-                            ),
-              trailing: isLocked ? null : const Icon(Icons.chevron_right),
+                          : isCompleted
+                              ? Text(
+                                  l10n.packageCompleted,
+                                  style: const TextStyle(
+                                      color: AppColors.success, fontSize: 12),
+                                )
+                              : Text(
+                                  'Im festen Paketverlauf',
+                                  style: TextStyle(
+                                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                      fontSize: 12),
+                                ),
+              trailing: allowDevPackageSwitch
+                  ? const Icon(Icons.chevron_right)
+                  : null,
             ),
           );
         },

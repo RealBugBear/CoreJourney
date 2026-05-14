@@ -179,7 +179,7 @@ abstract class AppLocalizations {
   /// No description provided for @startTraining.
   ///
   /// In de, this message translates to:
-  /// **'Training starten'**
+  /// **'Einheit beginnen'**
   String get startTraining;
 
   /// No description provided for @currentDay.
@@ -191,7 +191,7 @@ abstract class AppLocalizations {
   /// No description provided for @dailyStreak.
   ///
   /// In de, this message translates to:
-  /// **'Tages-Streak'**
+  /// **'Regelmäßigkeit'**
   String get dailyStreak;
 
   /// No description provided for @weeklyProgress.
@@ -215,7 +215,7 @@ abstract class AppLocalizations {
   /// No description provided for @trainingMode.
   ///
   /// In de, this message translates to:
-  /// **'Trainingsmodus'**
+  /// **'Einheitsmodus'**
   String get trainingMode;
 
   /// No description provided for @tutorialMode.
@@ -275,13 +275,13 @@ abstract class AppLocalizations {
   /// No description provided for @sessionComplete.
   ///
   /// In de, this message translates to:
-  /// **'Training abgeschlossen'**
+  /// **'Einheit abgeschlossen'**
   String get sessionComplete;
 
   /// No description provided for @sessionCompleteSubtitle.
   ///
   /// In de, this message translates to:
-  /// **'Gut gemacht! Du hast dein Training für heute abgeschlossen.'**
+  /// **'Du hast deine heutige Einheit abgeschlossen.'**
   String get sessionCompleteSubtitle;
 
   /// No description provided for @moodCheckIn.
@@ -323,7 +323,7 @@ abstract class AppLocalizations {
   /// No description provided for @moodChartEmpty.
   ///
   /// In de, this message translates to:
-  /// **'Schließe eine Trainingseinheit ab, um deine Stimmung zu verfolgen.'**
+  /// **'Trage eine Einheit ein, um dein Befinden im Verlauf zu sehen.'**
   String get moodChartEmpty;
 
   /// No description provided for @intakeAssessmentTitle.
@@ -353,7 +353,7 @@ abstract class AppLocalizations {
   /// No description provided for @intakeTrainerBody.
   ///
   /// In de, this message translates to:
-  /// **'Wir empfehlen, das Programm mit einem zertifizierten Trainer zu beginnen und begleiten zu lassen. Ein Trainer führt isometrisches Aktivierungstraining durch, das die betreffenden Reflexe gezielt anspricht. Diese gezielte Aktivierung beschleunigt den Integrationsprozess. Ohne sie braucht der Körper in der Regel länger, bis die Reflexe ausreichend angesprochen werden.'**
+  /// **'Wir empfehlen, das Programm mit einem zertifizierten Trainer zu beginnen und begleiten zu lassen. Ein Trainer führt isometrische Partnerübungen durch, die klares Spüren von Richtung, Bewegung und Widerstand unterstützen. Ohne diese Begleitung braucht der Körper in der Regel mehr ruhige Wiederholung.'**
   String get intakeTrainerBody;
 
   /// No description provided for @intakeQuestionLabel.
@@ -365,7 +365,7 @@ abstract class AppLocalizations {
   /// No description provided for @questionIsometricWithTrainer.
   ///
   /// In de, this message translates to:
-  /// **'Hast du bereits isometrisches Aktivierungstraining mit einem Trainer durchgeführt?'**
+  /// **'Hast du bereits isometrische Partnerübungen mit einem Trainer durchgeführt?'**
   String get questionIsometricWithTrainer;
 
   /// No description provided for @yes.
@@ -398,6 +398,96 @@ abstract class AppLocalizations {
   /// **'Bestätigen'**
   String get confirm;
 
+  /// No description provided for @durationWithoutTrainerInfo.
+  ///
+  /// In de, this message translates to:
+  /// **'Ohne begleitenden Trainer empfehlen wir etwa 8 Wochen, damit der Körper mehr Zeit für die Integration hat.'**
+  String get durationWithoutTrainerInfo;
+
+  /// No description provided for @durationTrainerMinimumInfo.
+  ///
+  /// In de, this message translates to:
+  /// **'Mit begleitendem Trainer empfehlen wir mindestens 4 Wochen. Du kannst die Dauer verlängern, wenn du mehr Integrationszeit möchtest.'**
+  String get durationTrainerMinimumInfo;
+
+  /// No description provided for @trainerOnboardingTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Trainer-Begleitung'**
+  String get trainerOnboardingTitle;
+
+  /// No description provided for @trainerOnboardingFindTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Starte mit einem Trainer in deiner Nähe'**
+  String get trainerOnboardingFindTitle;
+
+  /// No description provided for @trainerOnboardingFindBody.
+  ///
+  /// In de, this message translates to:
+  /// **'Da du die isometrische Aktivierung noch nicht mit einem Trainer gemacht hast, empfehlen wir dir, zuerst einen passenden Trainer zu finden. Du kannst trotzdem direkt starten, wenn du das möchtest.'**
+  String get trainerOnboardingFindBody;
+
+  /// No description provided for @trainerOnboardingConnectTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Verknüpfe dich mit deinem Trainer'**
+  String get trainerOnboardingConnectTitle;
+
+  /// No description provided for @trainerOnboardingConnectBody.
+  ///
+  /// In de, this message translates to:
+  /// **'Wenn du bereits mit einem Trainer gearbeitet hast, kannst du dich jetzt verbinden. So kann dein Trainer deinen Fortschritt begleiten und bei Bedarf Termine abstimmen.'**
+  String get trainerOnboardingConnectBody;
+
+  /// No description provided for @trainerOnboardingSearchCta.
+  ///
+  /// In de, this message translates to:
+  /// **'Trainer in meiner Nähe suchen'**
+  String get trainerOnboardingSearchCta;
+
+  /// No description provided for @trainerOnboardingInviteCta.
+  ///
+  /// In de, this message translates to:
+  /// **'Einladungscode eingeben'**
+  String get trainerOnboardingInviteCta;
+
+  /// No description provided for @trainerOnboardingSkipCta.
+  ///
+  /// In de, this message translates to:
+  /// **'Später machen'**
+  String get trainerOnboardingSkipCta;
+
+  /// No description provided for @trainerOnboardingInviteTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Mit Trainer verbinden'**
+  String get trainerOnboardingInviteTitle;
+
+  /// No description provided for @trainerOnboardingInviteBody.
+  ///
+  /// In de, this message translates to:
+  /// **'Gib den 6-stelligen Einladungscode ein, den du von deinem Trainer erhalten hast.'**
+  String get trainerOnboardingInviteBody;
+
+  /// No description provided for @trainerOnboardingInviteInvalid.
+  ///
+  /// In de, this message translates to:
+  /// **'Bitte 6-stelligen Code eingeben.'**
+  String get trainerOnboardingInviteInvalid;
+
+  /// No description provided for @trainerOnboardingInviteFailed.
+  ///
+  /// In de, this message translates to:
+  /// **'Fehler beim Verbinden mit dem Trainer.'**
+  String get trainerOnboardingInviteFailed;
+
+  /// No description provided for @trainerOnboardingContinueAfterRequest.
+  ///
+  /// In de, this message translates to:
+  /// **'Weiter zur Dauerempfehlung'**
+  String get trainerOnboardingContinueAfterRequest;
+
   /// No description provided for @completionQuestionnaireTitle.
   ///
   /// In de, this message translates to:
@@ -407,13 +497,13 @@ abstract class AppLocalizations {
   /// No description provided for @completionCelebrationTitle.
   ///
   /// In de, this message translates to:
-  /// **'Block abgeschlossen! ⭐'**
+  /// **'Paket abgeschlossen'**
   String get completionCelebrationTitle;
 
   /// No description provided for @completionCelebrationSubtitle.
   ///
   /// In de, this message translates to:
-  /// **'Du hast einen wichtigen Schritt in deiner Entwicklung abgeschlossen. Gut gemacht.'**
+  /// **'Du hast dieses Paket über die geplante Zeit begleitet.'**
   String get completionCelebrationSubtitle;
 
   /// No description provided for @completionNextPackage.
@@ -428,6 +518,48 @@ abstract class AppLocalizations {
   /// **'Zum Dashboard'**
   String get completionBackToDashboard;
 
+  /// No description provided for @completionReachedTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Paketdauer erreicht'**
+  String get completionReachedTitle;
+
+  /// No description provided for @completionReachedBody.
+  ///
+  /// In de, this message translates to:
+  /// **'Du hast die geplante Paketdauer erreicht. In Heute findest du jetzt oben eine kurze Einschätzung, mit der du das Paket abschließen oder um 7 Tage verlängern kannst.'**
+  String get completionReachedBody;
+
+  /// No description provided for @completionPlaceholderQuestion.
+  ///
+  /// In de, this message translates to:
+  /// **'Platzhalter-Einschätzung: Fühlt sich dieses Paket stimmig abgeschlossen an?'**
+  String get completionPlaceholderQuestion;
+
+  /// No description provided for @completionPass.
+  ///
+  /// In de, this message translates to:
+  /// **'Paket abschließen'**
+  String get completionPass;
+
+  /// No description provided for @completionInsufficient.
+  ///
+  /// In de, this message translates to:
+  /// **'Noch 7 Tage wiederholen'**
+  String get completionInsufficient;
+
+  /// No description provided for @completionMoroReturnSubtitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Der erneute Moro-Durchlauf ist abgeschlossen. Du kehrst jetzt zu deinem unterbrochenen Paket zurück und startest dort wieder bei Tag 1.'**
+  String get completionMoroReturnSubtitle;
+
+  /// No description provided for @completionBackToInterruptedPackage.
+  ///
+  /// In de, this message translates to:
+  /// **'Zurück zum unterbrochenen Paket'**
+  String get completionBackToInterruptedPackage;
+
   /// No description provided for @completionExtendedTitle.
   ///
   /// In de, this message translates to:
@@ -437,13 +569,13 @@ abstract class AppLocalizations {
   /// No description provided for @completionExtendedSubtitle.
   ///
   /// In de, this message translates to:
-  /// **'Kein Problem — du hast 7 weitere Tage. Mach weiter so.'**
+  /// **'Du hast 7 weitere Tage in diesem Paket.'**
   String get completionExtendedSubtitle;
 
   /// No description provided for @completionQuestion.
   ///
   /// In de, this message translates to:
-  /// **'Hattest du durch das Training eine verstärkte emotionale oder stressige Zeit und konntest dich mit diesen Themen konfrontieren – zu erkennen, dass deine emotionale Reaktion nicht immer mit der Realität übereinstimmt – und anfangen dich zu regulieren?'**
+  /// **'Hast du seit Beginn dieses Pakets stärkere emotionale oder stressbezogene Reaktionen bemerkt und konntest du sie etwas besser einordnen oder regulieren?'**
   String get completionQuestion;
 
   /// No description provided for @completionYes.
@@ -497,7 +629,7 @@ abstract class AppLocalizations {
   /// No description provided for @settingsTraining.
   ///
   /// In de, this message translates to:
-  /// **'Training'**
+  /// **'Einheiten'**
   String get settingsTraining;
 
   /// No description provided for @settingsReminders.
@@ -535,6 +667,36 @@ abstract class AppLocalizations {
   /// In de, this message translates to:
   /// **'Trainer verbinden'**
   String get settingsConnectTrainer;
+
+  /// No description provided for @moroRestartSettingsTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Zurück zum Moro'**
+  String get moroRestartSettingsTitle;
+
+  /// No description provided for @moroRestartSettingsSubtitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Moro für 4 Wochen neu starten und das aktuelle Paket unterbrechen.'**
+  String get moroRestartSettingsSubtitle;
+
+  /// No description provided for @moroRestartTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Zum Moro zurückkehren?'**
+  String get moroRestartTitle;
+
+  /// No description provided for @moroRestartBody.
+  ///
+  /// In de, this message translates to:
+  /// **'Der Moro-Reflex kann im Unterschied zu vielen anderen Reflexen durch stark belastende oder traumatische Ereignisse erneut aktiviert werden, zum Beispiel durch einen Autounfall, den Tod eines Angehörigen oder andere intensive Schockerlebnisse.\n\nWenn du fortfährst, wird dein aktuelles Paket unterbrochen. Du startest Moro für 4 Wochen neu. Nach dem Moro-Abschluss kehrst du zu deinem unterbrochenen Paket zurück und beginnst dort wieder bei Tag 1.'**
+  String get moroRestartBody;
+
+  /// No description provided for @moroRestartConfirm.
+  ///
+  /// In de, this message translates to:
+  /// **'Moro neu starten'**
+  String get moroRestartConfirm;
 
   /// No description provided for @reminderEnabled.
   ///
@@ -593,7 +755,7 @@ abstract class AppLocalizations {
   /// No description provided for @settingsFeedback.
   ///
   /// In de, this message translates to:
-  /// **'Trainings-Feedback'**
+  /// **'Einheits-Feedback'**
   String get settingsFeedback;
 
   /// No description provided for @settingsAccount.
@@ -611,7 +773,7 @@ abstract class AppLocalizations {
   /// No description provided for @disclaimerText.
   ///
   /// In de, this message translates to:
-  /// **'Dieses Training ersetzt keine medizinische Behandlung. Bitte konsultiere einen Arzt, wenn du gesundheitliche Bedenken hast. Achte auf die Signale deines Körpers und mache Pausen, wenn nötig.'**
+  /// **'Diese Einheiten ersetzen keine medizinische Behandlung. Bitte konsultiere einen Arzt, wenn du gesundheitliche Bedenken hast. Achte auf die Signale deines Körpers und mache Pausen, wenn nötig.'**
   String get disclaimerText;
 
   /// No description provided for @disclaimerAccept.
@@ -845,7 +1007,7 @@ abstract class AppLocalizations {
   /// No description provided for @journalEmptySubtitle.
   ///
   /// In de, this message translates to:
-  /// **'Schreib auf, was du in deinem Alltag beobachtest — nach jedem Training oder wann immer du möchtest.'**
+  /// **'Schreib auf, was du in deinem Alltag beobachtest — nach einer Einheit oder wann immer du möchtest.'**
   String get journalEmptySubtitle;
 
   /// No description provided for @journalEmptyHint.
@@ -899,13 +1061,13 @@ abstract class AppLocalizations {
   /// No description provided for @completionBannerTitle.
   ///
   /// In de, this message translates to:
-  /// **'Block abgeschlossen!'**
+  /// **'Paket bereit zur Einschätzung'**
   String get completionBannerTitle;
 
   /// No description provided for @completionBannerSubtitle.
   ///
   /// In de, this message translates to:
-  /// **'Du hast dein Zieldatum erreicht. Jetzt zur Abschlussreflexion.'**
+  /// **'Beantworte den kurzen Fragebogen, um dieses Paket abzuschließen oder um 7 Tage zu verlängern.'**
   String get completionBannerSubtitle;
 
   /// No description provided for @settingsDataSync.
@@ -998,6 +1160,54 @@ abstract class AppLocalizations {
   /// **'Passwort-Reset-E-Mail wurde gesendet.'**
   String get profileChangePasswordSent;
 
+  /// No description provided for @newPassword.
+  ///
+  /// In de, this message translates to:
+  /// **'Neues Passwort'**
+  String get newPassword;
+
+  /// No description provided for @passwordConfirm.
+  ///
+  /// In de, this message translates to:
+  /// **'Passwort bestätigen'**
+  String get passwordConfirm;
+
+  /// No description provided for @currentPassword.
+  ///
+  /// In de, this message translates to:
+  /// **'Aktuelles Passwort'**
+  String get currentPassword;
+
+  /// No description provided for @passwordChanged.
+  ///
+  /// In de, this message translates to:
+  /// **'Passwort erfolgreich geändert.'**
+  String get passwordChanged;
+
+  /// No description provided for @passwordSet.
+  ///
+  /// In de, this message translates to:
+  /// **'Neues Passwort gesetzt. Bitte einloggen.'**
+  String get passwordSet;
+
+  /// No description provided for @authErrorSamePassword.
+  ///
+  /// In de, this message translates to:
+  /// **'Das neue Passwort muss sich vom bisherigen unterscheiden.'**
+  String get authErrorSamePassword;
+
+  /// No description provided for @authErrorInvalidCurrentPassword.
+  ///
+  /// In de, this message translates to:
+  /// **'Das aktuelle Passwort ist falsch.'**
+  String get authErrorInvalidCurrentPassword;
+
+  /// No description provided for @validationPasswordMismatch.
+  ///
+  /// In de, this message translates to:
+  /// **'Passwörter stimmen nicht überein.'**
+  String get validationPasswordMismatch;
+
   /// No description provided for @profileDeleteAccount.
   ///
   /// In de, this message translates to:
@@ -1043,7 +1253,7 @@ abstract class AppLocalizations {
   /// No description provided for @trainerTabTrainees.
   ///
   /// In de, this message translates to:
-  /// **'Trainees'**
+  /// **'Klienten'**
   String get trainerTabTrainees;
 
   /// No description provided for @trainerTabCalendar.
@@ -1207,6 +1417,198 @@ abstract class AppLocalizations {
   /// In de, this message translates to:
   /// **'Im Kalender öffnen'**
   String get appointmentOpenInCalendar;
+
+  /// No description provided for @trainerRequestsTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Anfragen'**
+  String get trainerRequestsTitle;
+
+  /// No description provided for @trainerRequestNoRequests.
+  ///
+  /// In de, this message translates to:
+  /// **'Keine offenen Anfragen.'**
+  String get trainerRequestNoRequests;
+
+  /// No description provided for @trainerRequestAccept.
+  ///
+  /// In de, this message translates to:
+  /// **'Annehmen'**
+  String get trainerRequestAccept;
+
+  /// No description provided for @trainerRequestDecline.
+  ///
+  /// In de, this message translates to:
+  /// **'Ablehnen'**
+  String get trainerRequestDecline;
+
+  /// No description provided for @trainerDiscoveryTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Trainer finden'**
+  String get trainerDiscoveryTitle;
+
+  /// No description provided for @trainerDiscoveryLocationDenied.
+  ///
+  /// In de, this message translates to:
+  /// **'Standortzugriff ist erforderlich, um Trainer in deiner Nähe zu finden.'**
+  String get trainerDiscoveryLocationDenied;
+
+  /// No description provided for @trainerDiscoveryRadiusLabel.
+  ///
+  /// In de, this message translates to:
+  /// **'{radius} km'**
+  String trainerDiscoveryRadiusLabel(int radius);
+
+  /// No description provided for @trainerDiscoveryEmpty.
+  ///
+  /// In de, this message translates to:
+  /// **'Keine Trainer in der Nähe gefunden.'**
+  String get trainerDiscoveryEmpty;
+
+  /// No description provided for @trainerDiscoveryDistanceLabel.
+  ///
+  /// In de, this message translates to:
+  /// **'{distance} km entfernt'**
+  String trainerDiscoveryDistanceLabel(double distance);
+
+  /// No description provided for @trainerDiscoveryRequestAlreadySent.
+  ///
+  /// In de, this message translates to:
+  /// **'Anfrage wurde bereits gesendet.'**
+  String get trainerDiscoveryRequestAlreadySent;
+
+  /// No description provided for @trainerDiscoveryRequestAlreadyConnected.
+  ///
+  /// In de, this message translates to:
+  /// **'Du bist bereits mit diesem Trainer verbunden.'**
+  String get trainerDiscoveryRequestAlreadyConnected;
+
+  /// No description provided for @trainerDiscoveryRequestSent.
+  ///
+  /// In de, this message translates to:
+  /// **'Anfrage gesendet.'**
+  String get trainerDiscoveryRequestSent;
+
+  /// No description provided for @trainerDiscoverySendRequest.
+  ///
+  /// In de, this message translates to:
+  /// **'Anfrage senden'**
+  String get trainerDiscoverySendRequest;
+
+  /// No description provided for @trainerPublicProfileTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Trainer-Profil'**
+  String get trainerPublicProfileTitle;
+
+  /// No description provided for @trainerPublicProfileVerified.
+  ///
+  /// In de, this message translates to:
+  /// **'Verifizierter Trainer'**
+  String get trainerPublicProfileVerified;
+
+  /// No description provided for @trainerSetupTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Trainer-Profil'**
+  String get trainerSetupTitle;
+
+  /// No description provided for @trainerSetupDisplayNameLabel.
+  ///
+  /// In de, this message translates to:
+  /// **'Anzeigename'**
+  String get trainerSetupDisplayNameLabel;
+
+  /// No description provided for @trainerSetupBioLabel.
+  ///
+  /// In de, this message translates to:
+  /// **'Bio'**
+  String get trainerSetupBioLabel;
+
+  /// No description provided for @trainerSetupEmailLabel.
+  ///
+  /// In de, this message translates to:
+  /// **'E-Mail'**
+  String get trainerSetupEmailLabel;
+
+  /// No description provided for @trainerSetupPhoneLabel.
+  ///
+  /// In de, this message translates to:
+  /// **'Telefon'**
+  String get trainerSetupPhoneLabel;
+
+  /// No description provided for @trainerSetupLocationTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Standort'**
+  String get trainerSetupLocationTitle;
+
+  /// No description provided for @trainerSetupLocationHint.
+  ///
+  /// In de, this message translates to:
+  /// **'Wähle deinen Trainer-Standort, damit Klienten dich in der Nähe finden.'**
+  String get trainerSetupLocationHint;
+
+  /// No description provided for @trainerSetupLocationMissing.
+  ///
+  /// In de, this message translates to:
+  /// **'Bitte wähle einen Standort.'**
+  String get trainerSetupLocationMissing;
+
+  /// No description provided for @trainerSetupSubmit.
+  ///
+  /// In de, this message translates to:
+  /// **'Zur Prüfung einreichen'**
+  String get trainerSetupSubmit;
+
+  /// No description provided for @trainerSetupPendingTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Profil wird geprüft'**
+  String get trainerSetupPendingTitle;
+
+  /// No description provided for @trainerSetupPendingBody.
+  ///
+  /// In de, this message translates to:
+  /// **'Wir benachrichtigen dich, sobald dein Trainer-Profil freigegeben ist.'**
+  String get trainerSetupPendingBody;
+
+  /// No description provided for @adminTrainerReviewTab.
+  ///
+  /// In de, this message translates to:
+  /// **'Trainer-Prüfung'**
+  String get adminTrainerReviewTab;
+
+  /// No description provided for @adminTrainerNoPending.
+  ///
+  /// In de, this message translates to:
+  /// **'Keine Trainer-Profile zur Prüfung.'**
+  String get adminTrainerNoPending;
+
+  /// No description provided for @adminTrainerApproveSuccess.
+  ///
+  /// In de, this message translates to:
+  /// **'Trainer freigegeben.'**
+  String get adminTrainerApproveSuccess;
+
+  /// No description provided for @adminTrainerSuspendSuccess.
+  ///
+  /// In de, this message translates to:
+  /// **'Trainer gesperrt.'**
+  String get adminTrainerSuspendSuccess;
+
+  /// No description provided for @adminTrainerApprove.
+  ///
+  /// In de, this message translates to:
+  /// **'Freigeben'**
+  String get adminTrainerApprove;
+
+  /// No description provided for @adminTrainerSuspend.
+  ///
+  /// In de, this message translates to:
+  /// **'Sperren'**
+  String get adminTrainerSuspend;
 }
 
 class _AppLocalizationsDelegate

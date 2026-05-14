@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'package:permission_handler/permission_handler.dart';
+
 import '../../domain/models/chat_channel.dart';
 import '../../domain/models/chat_message.dart';
 import '../providers/chat_providers.dart';
@@ -12,8 +14,10 @@ import '../widgets/message_input_bar.dart';
 import '../widgets/typing_indicator.dart';
 import '../../../video/domain/models/video_call.dart';
 import '../../../video/presentation/providers/video_providers.dart';
-import '../../../video/presentation/screens/video_call_screen.dart';
+import '../../../video/presentation/widgets/incoming_call_listener.dart';
+import '../../../trainer/domain/models/trainer_client.dart';
 import '../../../trainer/presentation/providers/trainer_provider.dart';
+import '../../../../core/logging/app_logger.dart';
 import '../../../../core/navigation/app_router.dart';
 import 'package:go_router/go_router.dart';
 
@@ -64,12 +68,13 @@ class _ChatChannelScreenState extends ConsumerState<ChatChannelScreen> {
   }
 
   Future<void> _loadMoreOlder() async {
-    final messages = ref.read(chatMessagesProvider(widget.channelId)).valueOrNull;
+    final messages =
+        ref.read(chatMessagesProvider(widget.channelId)).valueOrNull;
     final allMessages = [..._olderMessages, ...(messages ?? [])];
     if (allMessages.isEmpty) return;
 
-    final oldest = allMessages.reduce((a, b) =>
-        a.createdAt.isBefore(b.createdAt) ? a : b);
+    final oldest =
+        allMessages.reduce((a, b) => a.createdAt.isBefore(b.createdAt) ? a : b);
 
     setState(() => _loadingOlder = true);
     try {
@@ -86,6 +91,7 @@ class _ChatChannelScreenState extends ConsumerState<ChatChannelScreen> {
 
   void _sendMessage(String content) {
     ref.read(sendMessageProvider.notifier).send(widget.channelId, content);
+    ref.invalidate(chatChannelsProvider);
     // Scroll to bottom after send.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_scrollController.hasClients) {
@@ -99,97 +105,221 @@ class _ChatChannelScreenState extends ConsumerState<ChatChannelScreen> {
   }
 
   Future<void> _startCall() async {
-    final call = await ref.read(startCallProvider.notifier).start(widget.channelId);
-    if (call == null) return;
-    final token = await ref
-        .read(videoRepositoryProvider)
-        .getAgoraToken(call.channelId, call.agoraChannelName);
-    if (!mounted) return;
-    await Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        fullscreenDialog: true,
-        builder: (_) => VideoCallScreen(call: call, token: token),
-      ),
-    );
-  }
+    appLogger.d('ChatChannelScreen: requesting permissions for trainer call');
+    final statuses = await [Permission.camera, Permission.microphone].request();
+    final cameraOk = statuses[Permission.camera]?.isGranted ?? false;
+    final micOk = statuses[Permission.microphone]?.isGranted ?? false;
 
-  void _showIncomingCall(VideoCall call) {
-    if (!mounted) return;
-    showDialog<void>(
-      context: context,
-      barrierDismissible: false,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Eingehender Video-Call'),
-        content: const Text(
-          'Dein Trainer möchte mit dir sprechen.\nMöchtest du beitreten?',
+    if (!cameraOk || !micOk) {
+      appLogger.e(
+          'ChatChannelScreen: permissions denied camera=$cameraOk mic=$micOk');
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+              'Kamera & Mikrofon-Zugriff erforderlich. Bitte in den Einstellungen erlauben.'),
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Ignorieren'),
-          ),
-          FilledButton(
-            onPressed: () async {
-              Navigator.pop(ctx);
-              final token = await ref
-                  .read(videoRepositoryProvider)
-                  .getAgoraToken(call.channelId, call.agoraChannelName);
-              if (!mounted) return;
-              await Navigator.of(context).push(
-                MaterialPageRoute<void>(
-                  fullscreenDialog: true,
-                  builder: (_) => VideoCallScreen(call: call, token: token),
-                ),
-              );
-            },
-            child: const Text('Beitreten'),
-          ),
-        ],
-      ),
-    );
+      );
+      return;
+    }
+
+    appLogger
+        .d('ChatChannelScreen: starting call on channel ${widget.channelId}');
+    VideoCall? call;
+    try {
+      call = await ref.read(startCallProvider.notifier).start(widget.channelId);
+      if (call == null) {
+        appLogger.e('ChatChannelScreen: startCall returned null');
+        return;
+      }
+      appLogger
+          .d('ChatChannelScreen: call created id=${call.id}, fetching token');
+      if (!mounted) return;
+      await openVideoCall(context, ref, call);
+    } catch (e, st) {
+      appLogger.e('ChatChannelScreen: _startCall failed',
+          error: e, stackTrace: st);
+      if (call != null) {
+        await ref.read(endCallProvider.notifier).end(call.id);
+      }
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Fehler beim Starten des Calls: $e')),
+        );
+      }
+    }
   }
 
-  Future<void> _proposeAppointment(BuildContext context, WidgetRef ref) async {
-    final clientId = await ref.read(chatPartnerIdProvider(widget.channelId).future);
-    if (clientId == null || !mounted) return;
-    context.push(
-      Routes.appointmentScheduler.replaceFirst(':clientId', clientId),
-    );
-  }
-
-  void _showPremiumSheet(BuildContext context) {
-    showModalBottomSheet<void>(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (_) => Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.videocam_outlined, size: 48),
-            const SizedBox(height: 16),
-            Text(
-              'Video-Calls sind ein Premium-Feature',
-              style: Theme.of(context).textTheme.titleMedium,
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Mit einem Premium-Abo kannst du deinen Trainer direkt per Video-Call erreichen.',
-              style: Theme.of(context).textTheme.bodyMedium,
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 24),
-            FilledButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Verstanden'),
-            ),
-          ],
+  Future<void> _proposeAppointment(
+    WidgetRef ref, {
+    String? clientId,
+    bool reviewFlow = false,
+  }) async {
+    try {
+      final client = await _appointmentClient(
+        ref,
+        clientId: clientId,
+        reviewFlow: reviewFlow,
+      );
+      if (!mounted) return;
+      context.push(
+        Routes.appointmentScheduler.replaceFirst(':clientId', client.clientId),
+        extra: reviewFlow
+            ? {
+                'client': client,
+                'reviewChannelId': widget.channelId,
+              }
+            : client,
+      );
+    } catch (e, st) {
+      appLogger.e('ChatChannelScreen: propose appointment failed',
+          error: e, stackTrace: st);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            e is StateError
+                ? e.message
+                : 'Terminplanung konnte nicht geöffnet werden.',
+          ),
         ),
-      ),
+      );
+    }
+  }
+
+  Future<TrainerClient> _appointmentClient(
+    WidgetRef ref, {
+    String? clientId,
+    bool reviewFlow = false,
+  }) async {
+    if (reviewFlow) {
+      return _reviewApplicantClient();
+    }
+
+    final currentUserId = Supabase.instance.client.auth.currentUser?.id;
+    final directClientId = clientId == currentUserId ? null : clientId;
+    final resolvedClientId = directClientId ?? await _safePartnerId(ref);
+    if (resolvedClientId == null) {
+      throw StateError(
+          'Klient konnte für Terminplanung nicht gefunden werden.');
+    }
+
+    final knownClients = ref.read(trainerClientsProvider).valueOrNull ?? [];
+    for (final client in knownClients) {
+      if (client.clientId == resolvedClientId) return client;
+    }
+
+    final profile = await Supabase.instance.client
+        .from('profiles')
+        .select('display_name')
+        .eq('id', resolvedClientId)
+        .maybeSingle();
+    final displayName =
+        (profile?['display_name'] as String?)?.trim() ?? 'Nutzer';
+
+    return TrainerClient(
+      relationshipId: '',
+      clientId: resolvedClientId,
+      displayName: displayName.isEmpty ? 'Nutzer' : displayName,
+      currentDay: 1,
+      dailyStreak: 0,
     );
+  }
+
+  Future<TrainerClient> _reviewApplicantClient() async {
+    final channel = await Supabase.instance.client
+        .from('chat_channels')
+        .select('application_id')
+        .eq('id', widget.channelId)
+        .maybeSingle();
+    final applicationId = channel?['application_id'] as String?;
+    if (applicationId == null) {
+      throw StateError(
+          'Bewerbung konnte für den Review-Kanal nicht gefunden werden.');
+    }
+
+    final application = await Supabase.instance.client
+        .from('trainer_applications')
+        .select('user_id, full_name, desired_display_name')
+        .eq('id', applicationId)
+        .maybeSingle();
+    if (application == null) {
+      throw StateError('Bewerber konnte nicht gefunden werden.');
+    }
+
+    final applicantId = application['user_id'] as String?;
+    if (applicantId == null) {
+      throw StateError('Bewerber konnte nicht gefunden werden.');
+    }
+
+    final desiredDisplayName =
+        (application['desired_display_name'] as String?)?.trim();
+    final fullName = (application['full_name'] as String?)?.trim();
+    final displayName = desiredDisplayName?.isNotEmpty == true
+        ? desiredDisplayName!
+        : fullName?.isNotEmpty == true
+            ? fullName!
+            : 'Bewerber';
+
+    return TrainerClient(
+      relationshipId: '',
+      clientId: applicantId,
+      displayName: displayName,
+      currentDay: 1,
+      dailyStreak: 0,
+    );
+  }
+
+  Future<String?> _safePartnerId(WidgetRef ref) async {
+    final messagePartnerId = _messagePartnerId(ref);
+    if (messagePartnerId != null) return messagePartnerId;
+
+    try {
+      final partnerId =
+          await ref.read(chatPartnerIdProvider(widget.channelId).future);
+      if (partnerId != null) return partnerId;
+    } catch (e, st) {
+      appLogger.e('ChatChannelScreen: chat partner provider failed',
+          error: e, stackTrace: st);
+    }
+
+    try {
+      return await _fetchPartnerId();
+    } catch (e, st) {
+      appLogger.e('ChatChannelScreen: chat partner fallback failed',
+          error: e, stackTrace: st);
+      return null;
+    }
+  }
+
+  String? _messagePartnerId(WidgetRef ref) {
+    final currentUserId = Supabase.instance.client.auth.currentUser?.id;
+    if (currentUserId == null) return null;
+
+    final messages = [
+      ..._olderMessages,
+      ...?ref.read(chatMessagesProvider(widget.channelId)).valueOrNull,
+    ].reversed;
+
+    for (final message in messages) {
+      if (message.senderId != currentUserId) return message.senderId;
+    }
+    return null;
+  }
+
+  Future<String?> _fetchPartnerId() async {
+    final currentUserId = Supabase.instance.client.auth.currentUser?.id;
+    if (currentUserId == null) return null;
+
+    final rows = await Supabase.instance.client
+        .from('chat_channel_members')
+        .select('user_id')
+        .eq('channel_id', widget.channelId)
+        .neq('user_id', currentUserId)
+        .limit(1);
+    final list = rows as List;
+    if (list.isEmpty) return null;
+    return list.first['user_id'] as String?;
   }
 
   void _sendCallRequest() {
@@ -222,37 +352,44 @@ class _ChatChannelScreenState extends ConsumerState<ChatChannelScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final channel = widget.channel;
+    final channels = ref.watch(chatChannelsProvider).valueOrNull ?? const [];
+    final channel = _findChannel(channels, widget.channelId) ?? widget.channel;
+    final isDirect = channel?.type == ChannelType.direct;
+    final isApplicationReview = channel?.type == ChannelType.applicationReview;
     final isModerator = channel?.isModerator ?? false;
-    final isPractitioner = !isModerator && channel?.type == ChannelType.direct;
+    final isPractitioner = !isModerator && isDirect;
+    final canModerateCall = isModerator && (isDirect || isApplicationReview);
 
     final messagesAsync = ref.watch(chatMessagesProvider(widget.channelId));
-
-    // Listen for active calls started by someone else (incoming call for practitioner).
-    ref.listen(activeCallProvider(widget.channelId), (prev, next) {
-      final call = next.valueOrNull;
-      if (call == null) return;
-      final currentUserId =
-          Supabase.instance.client.auth.currentUser?.id ?? '';
-      // Don't show incoming call dialog to the person who started it.
-      if (call.startedBy == currentUserId) return;
-      // Only show if this is a new call (prev had no active call for this id).
-      if (prev?.valueOrNull?.id == call.id) return;
-      _showIncomingCall(call);
-    });
+    ref.listen<AsyncValue<List<ChatMessage>>>(
+      chatMessagesProvider(widget.channelId),
+      (_, next) {
+        if (next.hasValue) {
+          ref.invalidate(chatChannelsProvider);
+          ref.read(markReadProvider.notifier).markRead(widget.channelId);
+        }
+      },
+    );
 
     return Scaffold(
       appBar: AppBar(
-        title: channel?.type == ChannelType.direct
-            ? Text(ref.watch(chatPartnerNameProvider(widget.channelId)).valueOrNull ?? 'Chat')
-            : Text(channel?.channelDisplayName() ?? 'Chat'),
+        title: isDirect
+            ? Text(
+                'Chat mit ${ref.watch(chatPartnerNameProvider(widget.channelId)).valueOrNull ?? 'Trainer'}',
+              )
+            : isApplicationReview
+                ? const Text('Trainer-Bewerbung')
+                : Text(channel?.channelDisplayName() ?? 'Chat'),
         actions: [
-          // Trainer: start call + propose appointment
-          if (isModerator && channel?.type == ChannelType.direct) ...[
+          // Trainer/Admin moderator: start call + propose appointment.
+          if (canModerateCall) ...[
             IconButton(
               icon: const Icon(Icons.event_outlined),
               tooltip: 'Termin vorschlagen',
-              onPressed: () => _proposeAppointment(context, ref),
+              onPressed: () => _proposeAppointment(
+                ref,
+                reviewFlow: isApplicationReview,
+              ),
             ),
             IconButton(
               icon: const Icon(Icons.videocam_outlined),
@@ -260,19 +397,13 @@ class _ChatChannelScreenState extends ConsumerState<ChatChannelScreen> {
               onPressed: _startCall,
             ),
           ],
-          // Practitioner (client): request video call (premium gate)
+          // Practitioner: request video call.
           if (isPractitioner)
-            Consumer(builder: (context, ref, _) {
-              final tier = ref.watch(subscriptionTierProvider).valueOrNull ?? 'free';
-              final isPremium = tier == 'premium';
-              return IconButton(
-                icon: Icon(
-                  isPremium ? Icons.videocam_outlined : Icons.videocam_off_outlined,
-                ),
-                tooltip: isPremium ? 'Video-Call anfragen' : 'Premium-Feature',
-                onPressed: isPremium ? _sendCallRequest : () => _showPremiumSheet(context),
-              );
-            }),
+            IconButton(
+              icon: const Icon(Icons.videocam_outlined),
+              tooltip: 'Video-Call anfragen',
+              onPressed: _sendCallRequest,
+            ),
         ],
       ),
       body: Column(
@@ -280,7 +411,15 @@ class _ChatChannelScreenState extends ConsumerState<ChatChannelScreen> {
           Expanded(
             child: messagesAsync.when(
               loading: () => const Center(child: CircularProgressIndicator()),
-              error: (e, _) => Center(child: Text('Fehler: $e')),
+              error: (e, _) => const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(24),
+                  child: Text(
+                    'Nachrichten konnten gerade nicht geladen werden. Bitte Verbindung prüfen.',
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ),
               data: (realtimeMessages) {
                 final allMessages = [
                   ..._olderMessages,
@@ -320,21 +459,27 @@ class _ChatChannelScreenState extends ConsumerState<ChatChannelScreen> {
                                         strokeWidth: 2))),
                           );
                         }
-                        final msgIndex =
-                            _loadingOlder ? index - 1 : index;
+                        final msgIndex = _loadingOlder ? index - 1 : index;
                         final msg = allMessages[msgIndex];
                         return MessageBubble(
                           message: msg,
                           isModerator: isModerator,
                           onDeleteRequested: (isModerator ||
-                                  msg.isOwnMessage(
-                                      _currentUserId()))
+                                  msg.isOwnMessage(_currentUserId()))
                               ? () => _confirmDelete(msg)
                               : null,
                           onAcceptCall: isModerator ? _startCall : null,
-                          onProposeAppointment: isModerator
-                              ? () => _proposeAppointment(context, ref)
+                          onProposeAppointment: canModerateCall
+                              ? () => _proposeAppointment(
+                                    ref,
+                                    clientId: msg.senderId,
+                                    reviewFlow: isApplicationReview,
+                                  )
                               : null,
+                          onOpenAppointmentProposals: () {
+                            ref.invalidate(traineeProposalsProvider);
+                            context.push(Routes.appointmentProposals);
+                          },
                         );
                       },
                     ),
@@ -364,6 +509,13 @@ class _ChatChannelScreenState extends ConsumerState<ChatChannelScreen> {
     );
   }
 
+  ChatChannel? _findChannel(List<ChatChannel> channels, String channelId) {
+    for (final channel in channels) {
+      if (channel.id == channelId) return channel;
+    }
+    return null;
+  }
+
   String _currentUserId() {
     return Supabase.instance.client.auth.currentUser?.id ?? '';
   }
@@ -373,8 +525,8 @@ class _ChatChannelScreenState extends ConsumerState<ChatChannelScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Nachricht entfernen?'),
-        content: const Text(
-            'Die Nachricht wird für alle als entfernt angezeigt.'),
+        content:
+            const Text('Die Nachricht wird für alle als entfernt angezeigt.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
@@ -383,9 +535,7 @@ class _ChatChannelScreenState extends ConsumerState<ChatChannelScreen> {
           TextButton(
             onPressed: () {
               Navigator.pop(ctx);
-              ref
-                  .read(deleteMessageProvider.notifier)
-                  .delete(message.id);
+              ref.read(deleteMessageProvider.notifier).delete(message.id);
             },
             style: TextButton.styleFrom(foregroundColor: Colors.red),
             child: const Text('Entfernen'),

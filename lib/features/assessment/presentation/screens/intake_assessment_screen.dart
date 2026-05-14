@@ -15,7 +15,13 @@ class IntakeAssessmentScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final hadTrainer = ref.watch(_hadTrainerProvider);
-    final packageId = GoRouterState.of(context).extra as String? ?? 'moro';
+    final extra = GoRouterState.of(context).extra;
+    final packageId = extra is Map<String, dynamic>
+        ? extra['packageId'] as String? ?? 'moro'
+        : extra as String? ?? 'moro';
+    final reflexProfileStatus = extra is Map<String, dynamic>
+        ? extra['reflexProfileStatus'] as String?
+        : null;
 
     return Scaffold(
       appBar: AppBar(title: Text(l10n.intakeAssessmentTitle)),
@@ -25,6 +31,11 @@ class IntakeAssessmentScreen extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              const Center(
+                child: _BrandMark(size: 84),
+              ),
+              const SizedBox(height: 20),
+
               // ── Welcome ───────────────────────────────────────────────────
               _InfoCard(
                 icon: Icons.self_improvement_outlined,
@@ -47,7 +58,7 @@ class IntakeAssessmentScreen extends ConsumerWidget {
               Text(
                 l10n.intakeQuestionLabel.toUpperCase(),
                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: AppColors.textSecondary,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
                       letterSpacing: 0.8,
                       fontWeight: FontWeight.w600,
                     ),
@@ -83,10 +94,12 @@ class IntakeAssessmentScreen extends ConsumerWidget {
                     : () {
                         ref.read(_hadTrainerProvider.notifier).state = null;
                         context.push(
-                          Routes.durationRecommendation,
+                          Routes.trainerOnboardingPrompt,
                           extra: {
                             'packageId': packageId,
                             'hadIsometricWithTrainer': hadTrainer,
+                            if (reflexProfileStatus != null)
+                              'reflexProfileStatus': reflexProfileStatus,
                           },
                         );
                       },
@@ -96,6 +109,22 @@ class IntakeAssessmentScreen extends ConsumerWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _BrandMark extends StatelessWidget {
+  final double size;
+
+  const _BrandMark({required this.size});
+
+  @override
+  Widget build(BuildContext context) {
+    return Image.asset(
+      'assets/images/brand/free.png',
+      width: size,
+      height: size,
+      fit: BoxFit.contain,
     );
   }
 }
@@ -148,7 +177,7 @@ class _InfoCard extends StatelessWidget {
                 Text(
                   body,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: AppColors.textSecondary,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
                         height: 1.5,
                       ),
                 ),
@@ -184,8 +213,7 @@ class _AnswerButton extends StatelessWidget {
           width: selected ? 2 : 1,
         ),
         padding: const EdgeInsets.symmetric(vertical: 16),
-        shape:
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
       child: Text(
         label,

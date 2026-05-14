@@ -6,6 +6,7 @@ class TrainingSessionsTable extends Table {
 
   TextColumn get id => text()();
   TextColumn get userId => text()();
+  TextColumn get subjectProfileId => text().nullable()();
   TextColumn get enrollmentId => text()();
   DateTimeColumn get sessionDate => dateTime()();
   IntColumn get dayNumber => integer()();

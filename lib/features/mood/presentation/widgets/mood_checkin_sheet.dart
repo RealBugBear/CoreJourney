@@ -1,19 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../../../bootstrap/providers.dart';
+import '../../../../core/navigation/app_router.dart';
 import '../../../../core/database/app_database.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/error_retry_widget.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../../chat/domain/models/chat_channel.dart';
+import '../../../chat/presentation/providers/chat_providers.dart';
+import '../../../assessment/presentation/providers/reflex_profile_provider.dart';
 import '../providers/mood_provider.dart';
 
-Future<void> showMoodCheckinSheet(
+Future<bool?> showMoodCheckinSheet(
   BuildContext context, {
   String? enrollmentId,
   MoodCheckinsTableData? initialEntry,
   VoidCallback? onSaved,
+  String? subjectProfileId,
 }) {
-  return showModalBottomSheet<void>(
+  return showModalBottomSheet<bool>(
     context: context,
     isScrollControlled: true,
     showDragHandle: true,
@@ -21,6 +28,7 @@ Future<void> showMoodCheckinSheet(
       enrollmentId: enrollmentId,
       initialEntry: initialEntry,
       onSaved: onSaved,
+      subjectProfileId: subjectProfileId,
     ),
   );
 }
@@ -29,12 +37,14 @@ class MoodCheckinSheet extends ConsumerStatefulWidget {
   final String? enrollmentId;
   final MoodCheckinsTableData? initialEntry;
   final VoidCallback? onSaved;
+  final String? subjectProfileId;
 
   const MoodCheckinSheet({
     super.key,
     this.enrollmentId,
     this.initialEntry,
     this.onSaved,
+    this.subjectProfileId,
   });
 
   @override
@@ -47,6 +57,7 @@ class _MoodCheckinSheetState extends ConsumerState<MoodCheckinSheet> {
   late int? _stress;
   late TextEditingController _noteController;
   bool _saving = false;
+  String? _selectedProfileId;
 
   bool get _isEdit => widget.initialEntry != null;
 
@@ -58,6 +69,8 @@ class _MoodCheckinSheetState extends ConsumerState<MoodCheckinSheet> {
     _stress = widget.initialEntry?.stress;
     _noteController =
         TextEditingController(text: widget.initialEntry?.note ?? '');
+    _selectedProfileId =
+        widget.subjectProfileId ?? widget.initialEntry?.subjectProfileId;
   }
 
   @override
@@ -78,6 +91,11 @@ class _MoodCheckinSheetState extends ConsumerState<MoodCheckinSheet> {
 
     setState(() => _saving = true);
     try {
+      final noteText = _noteController.text.trim();
+      final navigator = Navigator.of(context);
+      final rootNavigator = Navigator.of(context, rootNavigator: true);
+      final router = GoRouter.of(rootNavigator.context);
+
       final repo = ref.read(moodRepositoryProvider);
       if (_isEdit) {
         await repo.updateCheckin(
@@ -95,12 +113,20 @@ class _MoodCheckinSheetState extends ConsumerState<MoodCheckinSheet> {
           stress: _stress,
           note: _noteController.text,
           source: 'manual',
+          subjectProfileId: _selectedProfileId,
         );
       }
 
       if (!mounted) return;
       widget.onSaved?.call();
-      Navigator.of(context).pop();
+      navigator.pop(true);
+      if (noteText.isNotEmpty) {
+        await _promptCommunityShare(
+          rootNavigator: rootNavigator,
+          router: router,
+          enrollmentId: enrollmentId,
+        );
+      }
     } catch (_) {
       if (mounted) {
         showErrorSnackBar(
@@ -111,9 +137,61 @@ class _MoodCheckinSheetState extends ConsumerState<MoodCheckinSheet> {
     }
   }
 
+  Future<void> _promptCommunityShare({
+    required NavigatorState rootNavigator,
+    required GoRouter router,
+    required String enrollmentId,
+  }) async {
+    final db = ref.read(databaseProvider);
+    final enrollment = await (db.select(db.enrollmentsTable)
+          ..where((t) => t.id.equals(enrollmentId))
+          ..limit(1))
+        .getSingleOrNull();
+    final packageId = enrollment?.packageId;
+    if (packageId == null) return;
+
+    final channels = await ref.read(chatRepositoryProvider).getChannels();
+    final communityChannel = channels
+        .where(
+          (c) => c.type == ChannelType.community && c.packageId == packageId,
+        )
+        .firstOrNull;
+    if (communityChannel == null) return;
+    if (!rootNavigator.mounted) return;
+
+    final share = await showDialog<bool>(
+      context: rootNavigator.context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Geteilte Erfahrung einreichen?'),
+        content: const Text(
+          'Möchtest du diese Beobachtung als geteilte Erfahrung einreichen?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Nein danke'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Einreichen'),
+          ),
+        ],
+      ),
+    );
+
+    if (share == true) {
+      router.push(
+        Routes.experienceFeed.replaceFirst(':channelId', communityChannel.id),
+        extra: communityChannel,
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final profilesAsync =
+        _isEdit ? null : ref.watch(allReflexSubjectProfilesProvider);
 
     // SingleChildScrollView lets the user scroll to the save button when the
     // keyboard is open and the sheet content no longer fits on screen.
@@ -135,6 +213,65 @@ class _MoodCheckinSheetState extends ConsumerState<MoodCheckinSheet> {
                 .titleMedium
                 ?.copyWith(fontWeight: FontWeight.w700),
           ),
+          // Profile picker — shown when there are child profiles and not editing
+          if (!_isEdit)
+            profilesAsync?.when(
+                  loading: () => const SizedBox.shrink(),
+                  error: (_, __) => const SizedBox.shrink(),
+                  data: (profiles) {
+                    if (profiles.isEmpty) return const SizedBox.shrink();
+                    // Auto-select if only one profile and not already selected.
+                    if (profiles.length == 1 && _selectedProfileId == null) {
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        if (mounted) {
+                          setState(
+                              () => _selectedProfileId = profiles.first.id);
+                        }
+                      });
+                    }
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const SizedBox(height: 12),
+                        Text(
+                          'Für wen?',
+                          style:
+                              Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onSurfaceVariant,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                        ),
+                        const SizedBox(height: 6),
+                        SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Row(
+                            children: [
+                              _ProfileChip(
+                                label: 'Allgemein',
+                                selected: _selectedProfileId == null,
+                                onTap: () =>
+                                    setState(() => _selectedProfileId = null),
+                              ),
+                              const SizedBox(width: 6),
+                              for (final p in profiles) ...[
+                                _ProfileChip(
+                                  label: p.displayName,
+                                  selected: _selectedProfileId == p.id,
+                                  onTap: () =>
+                                      setState(() => _selectedProfileId = p.id),
+                                ),
+                                const SizedBox(width: 6),
+                              ],
+                            ],
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                ) ??
+                const SizedBox.shrink(),
           const SizedBox(height: 16),
           _MetricSelector(
             label: l10n.moodLabel,
@@ -161,9 +298,9 @@ class _MoodCheckinSheetState extends ConsumerState<MoodCheckinSheet> {
           ),
           const SizedBox(height: 4),
           Text(
-            'Tippe auf einen Wert um ihn auszuwählen — oder lass ihn frei.',
+            'Tippe auf einen Wert, um ihn auszuwählen, oder lass ihn frei.',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: AppColors.textSecondary,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
           ),
           const SizedBox(height: 16),
@@ -196,6 +333,43 @@ class _MoodCheckinSheetState extends ConsumerState<MoodCheckinSheet> {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _ProfileChip extends StatelessWidget {
+  const _ProfileChip({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: selected
+              ? AppColors.primary
+              : AppColors.primary.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: selected ? Colors.white : AppColors.primary,
+          ),
+        ),
       ),
     );
   }
@@ -235,7 +409,7 @@ class _MetricSelector extends StatelessWidget {
               foregroundColor: WidgetStateProperty.resolveWith((states) {
                 return states.contains(WidgetState.selected)
                     ? color
-                    : AppColors.textSecondary;
+                    : Theme.of(context).colorScheme.onSurfaceVariant;
               }),
             ),
             segments: const [

@@ -14,7 +14,18 @@ import 'mood_trend_chart.dart';
 import 'note_entry_sheet.dart';
 
 class MoodChartWidget extends ConsumerStatefulWidget {
-  const MoodChartWidget({super.key});
+  final bool showNotesList;
+  final bool showLegend;
+  final bool compactHeader;
+  final double chartHeight;
+
+  const MoodChartWidget({
+    super.key,
+    this.showNotesList = true,
+    this.showLegend = true,
+    this.compactHeader = false,
+    this.chartHeight = 180,
+  });
 
   @override
   ConsumerState<MoodChartWidget> createState() => _MoodChartWidgetState();
@@ -72,8 +83,7 @@ class _MoodChartWidgetState extends ConsumerState<MoodChartWidget> {
     final l10n = AppLocalizations.of(context);
     final aggregatesAsync = ref.watch(moodDailyAggregatesProvider(_rangeDays));
     final notesAsync = ref.watch(moodNotesProvider(_rangeDays));
-    final enrollmentId =
-        ref.watch(activeEnrollmentProvider).valueOrNull?.id;
+    final enrollmentId = ref.watch(activeEnrollmentProvider).valueOrNull?.id;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -82,7 +92,7 @@ class _MoodChartWidgetState extends ConsumerState<MoodChartWidget> {
           children: [
             Flexible(
               child: Text(
-                l10n.moodCheckIn,
+                widget.compactHeader ? 'Stimmung' : l10n.moodCheckIn,
                 style: Theme.of(context)
                     .textTheme
                     .titleMedium
@@ -99,7 +109,7 @@ class _MoodChartWidgetState extends ConsumerState<MoodChartWidget> {
               const SizedBox(width: 4),
               IconButton(
                 icon: const Icon(Icons.edit_note_outlined, size: 18),
-                color: AppColors.textSecondary,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints(),
                 tooltip: 'Notiz schreiben',
@@ -112,9 +122,9 @@ class _MoodChartWidgetState extends ConsumerState<MoodChartWidget> {
             ],
           ],
         ),
-        const SizedBox(height: 16),
+        SizedBox(height: widget.compactHeader ? 12 : 16),
         SizedBox(
-          height: 180,
+          height: widget.chartHeight,
           child: aggregatesAsync.when(
             loading: () => const Center(child: CircularProgressIndicator()),
             error: (_, __) => InlineErrorWidget(
@@ -127,7 +137,7 @@ class _MoodChartWidgetState extends ConsumerState<MoodChartWidget> {
                   child: Text(
                     l10n.moodChartEmpty,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: AppColors.textSecondary,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
                         ),
                     textAlign: TextAlign.center,
                   ),
@@ -148,29 +158,32 @@ class _MoodChartWidgetState extends ConsumerState<MoodChartWidget> {
             },
           ),
         ),
-        notesAsync.when(
-          loading: () => const SizedBox.shrink(),
-          error: (_, __) => const SizedBox.shrink(),
-          data: (notes) {
-            if (notes.isEmpty) return const SizedBox.shrink();
-            return Padding(
-              padding: const EdgeInsets.only(top: 8),
-              child: _NotesList(
-                entries: notes,
-                onEntryTap: (entry) => showMoodCheckinSheet(
-                  context,
-                  initialEntry: entry,
-                  onSaved: () {
-                    ref.invalidate(moodDailyAggregatesProvider(_rangeDays));
-                    ref.invalidate(moodNotesProvider(_rangeDays));
-                  },
+        if (widget.showNotesList)
+          notesAsync.when(
+            loading: () => const SizedBox.shrink(),
+            error: (_, __) => const SizedBox.shrink(),
+            data: (notes) {
+              if (notes.isEmpty) return const SizedBox.shrink();
+              return Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: _NotesList(
+                  entries: notes,
+                  onEntryTap: (entry) => showMoodCheckinSheet(
+                    context,
+                    initialEntry: entry,
+                    onSaved: () {
+                      ref.invalidate(moodDailyAggregatesProvider(_rangeDays));
+                      ref.invalidate(moodNotesProvider(_rangeDays));
+                    },
+                  ),
                 ),
-              ),
-            );
-          },
-        ),
-        const SizedBox(height: 12),
-        _Legend(),
+              );
+            },
+          ),
+        if (widget.showLegend) ...[
+          const SizedBox(height: 12),
+          _Legend(),
+        ],
       ],
     );
   }
@@ -255,9 +268,9 @@ class _LegendDot extends StatelessWidget {
         const SizedBox(width: 4),
         Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 11,
-            color: AppColors.textSecondary,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
           ),
         ),
       ],
@@ -314,7 +327,7 @@ class _NotesList extends StatelessWidget {
                           overflow: TextOverflow.ellipsis,
                           style:
                               Theme.of(context).textTheme.bodySmall?.copyWith(
-                                    color: AppColors.textSecondary,
+                                    color: Theme.of(context).colorScheme.onSurfaceVariant,
                                   ),
                         ),
                       ),

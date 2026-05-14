@@ -3,12 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Provider für SharedPreferences Instanz
-final sharedPreferencesProvider = FutureProvider<SharedPreferences>((ref) async {
+final sharedPreferencesProvider =
+    FutureProvider<SharedPreferences>((ref) async {
   return await SharedPreferences.getInstance();
 });
 
 /// Theme Provider - Verwaltet das aktuelle Theme der App
-/// 
+///
 /// Speichert die Nutzer-Präferenz in SharedPreferences und
 /// lädt sie beim App-Start automatisch.
 class ThemeNotifier extends StateNotifier<ThemeMode> {
@@ -52,7 +53,7 @@ class ThemeNotifier extends StateNotifier<ThemeMode> {
 /// Provider für Theme Management
 final themeProvider = StateNotifierProvider<ThemeNotifier, ThemeMode>((ref) {
   final prefs = ref.watch(sharedPreferencesProvider);
-  
+
   return prefs.when(
     data: (sharedPrefs) => ThemeNotifier(sharedPrefs),
     loading: () => ThemeNotifier(

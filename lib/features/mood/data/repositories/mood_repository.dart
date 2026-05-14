@@ -22,49 +22,59 @@ class MoodRepository {
     required String enrollmentId,
     required DateTime from,
     required DateTime to,
+    String? subjectProfileId,
   }) async {
     final userId = _userId;
     if (userId == null) return [];
 
-    return (_db.select(_db.moodCheckinsTable)
-          ..where((t) =>
-              t.userId.equals(userId) &
-              t.enrollmentId.equals(enrollmentId) &
-              t.recordedAt.isBiggerOrEqualValue(from) &
-              t.recordedAt.isSmallerOrEqualValue(to))
-          ..orderBy([(t) => drift.OrderingTerm.asc(t.recordedAt)]))
-        .get();
+    final q = _db.select(_db.moodCheckinsTable)
+      ..where((t) =>
+          t.userId.equals(userId) &
+          t.enrollmentId.equals(enrollmentId) &
+          t.recordedAt.isBiggerOrEqualValue(from) &
+          t.recordedAt.isSmallerOrEqualValue(to))
+      ..orderBy([(t) => drift.OrderingTerm.asc(t.recordedAt)]);
+    if (subjectProfileId != null) {
+      q.where((t) => t.subjectProfileId.equals(subjectProfileId));
+    }
+    return q.get();
   }
 
   Future<List<MoodCheckinsTableData>> getNotesInRange({
     required String enrollmentId,
     required DateTime from,
     required DateTime to,
+    String? subjectProfileId,
   }) async {
     final userId = _userId;
     if (userId == null) return [];
 
-    return (_db.select(_db.moodCheckinsTable)
-          ..where((t) =>
-              t.userId.equals(userId) &
-              t.enrollmentId.equals(enrollmentId) &
-              t.recordedAt.isBiggerOrEqualValue(from) &
-              t.recordedAt.isSmallerOrEqualValue(to) &
-              t.note.isNotNull() &
-              t.note.isNotValue(''))
-          ..orderBy([(t) => drift.OrderingTerm.desc(t.recordedAt)]))
-        .get();
+    final q = _db.select(_db.moodCheckinsTable)
+      ..where((t) =>
+          t.userId.equals(userId) &
+          t.enrollmentId.equals(enrollmentId) &
+          t.recordedAt.isBiggerOrEqualValue(from) &
+          t.recordedAt.isSmallerOrEqualValue(to) &
+          t.note.isNotNull() &
+          t.note.isNotValue(''))
+      ..orderBy([(t) => drift.OrderingTerm.desc(t.recordedAt)]);
+    if (subjectProfileId != null) {
+      q.where((t) => t.subjectProfileId.equals(subjectProfileId));
+    }
+    return q.get();
   }
 
   Future<List<MoodDailyAggregate>> getDailyAggregatesInRange({
     required String enrollmentId,
     required DateTime from,
     required DateTime to,
+    String? subjectProfileId,
   }) async {
     final checkins = await getCheckinsInRange(
       enrollmentId: enrollmentId,
       from: from,
       to: to,
+      subjectProfileId: subjectProfileId,
     );
 
     final grouped = <int, List<MoodCheckinsTableData>>{};
@@ -85,16 +95,17 @@ class MoodRepository {
     }).toList();
   }
 
-  Future<void> createCheckin({
+  Future<String> createCheckin({
     required String enrollmentId,
     int? mood,
     int? energy,
     int? stress,
     String? note,
     required String source,
+    String? subjectProfileId,
   }) async {
     final userId = _userId;
-    if (userId == null) return;
+    if (userId == null) return '';
 
     final now = _clock.now();
     final checkinId = _uuid.v4();
@@ -113,6 +124,7 @@ class MoodRepository {
             stress: drift.Value(stress),
             note: drift.Value(normalizedNote),
             source: source,
+            subjectProfileId: drift.Value(subjectProfileId),
           ),
         );
 
@@ -130,6 +142,7 @@ class MoodRepository {
         'stress': stress,
         'note': normalizedNote,
         'source': source,
+        if (subjectProfileId != null) 'subject_profile_id': subjectProfileId,
       },
     );
 
@@ -149,6 +162,7 @@ class MoodRepository {
               energy: drift.Value(energy),
               stress: drift.Value(stress),
               dayKey: dayKey,
+              subjectProfileId: drift.Value(subjectProfileId),
             ),
           );
 
@@ -170,9 +184,11 @@ class MoodRepository {
           'day_key': dayKey,
           'created_at': now.toIso8601String(),
           'updated_at': now.toIso8601String(),
+          if (subjectProfileId != null) 'subject_profile_id': subjectProfileId,
         },
       );
     }
+    return checkinId;
   }
 
   Future<void> updateCheckin({
@@ -219,6 +235,8 @@ class MoodRepository {
         'stress': updated.stress,
         'note': updated.note,
         'source': updated.source,
+        if (updated.subjectProfileId != null)
+          'subject_profile_id': updated.subjectProfileId,
       },
     );
 
@@ -256,6 +274,8 @@ class MoodRepository {
             'stress': stress,
             'day_key': updated.dayKey,
             'updated_at': now.toIso8601String(),
+            if (updated.subjectProfileId != null)
+              'subject_profile_id': updated.subjectProfileId,
           },
         );
       } else {
@@ -272,6 +292,7 @@ class MoodRepository {
                 energy: drift.Value(energy),
                 stress: drift.Value(stress),
                 dayKey: updated.dayKey,
+                subjectProfileId: drift.Value(updated.subjectProfileId),
               ),
             );
         await _syncService.enqueueUpsert(
@@ -289,6 +310,8 @@ class MoodRepository {
             'day_key': updated.dayKey,
             'created_at': now.toIso8601String(),
             'updated_at': now.toIso8601String(),
+            if (updated.subjectProfileId != null)
+              'subject_profile_id': updated.subjectProfileId,
           },
         );
       }

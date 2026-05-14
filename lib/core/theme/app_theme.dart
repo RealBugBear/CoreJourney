@@ -12,10 +12,10 @@ class AppTheme {
   static ThemeData get light {
     final base = ThemeData.light(useMaterial3: true);
     final textTheme = _useGoogleFonts
-        ? GoogleFonts.interTextTheme(base.textTheme)
+        ? GoogleFonts.poppinsTextTheme(base.textTheme)
         : base.textTheme;
     final titleTextStyle = _useGoogleFonts
-        ? GoogleFonts.inter(
+        ? GoogleFonts.poppins(
             fontSize: 17,
             fontWeight: FontWeight.w600,
             color: AppColors.textPrimary,
@@ -26,7 +26,7 @@ class AppTheme {
             color: AppColors.textPrimary,
           );
     final buttonTextStyle = _useGoogleFonts
-        ? GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w600)
+        ? GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600)
         : const TextStyle(fontSize: 16, fontWeight: FontWeight.w600);
     return base.copyWith(
       colorScheme: ColorScheme.fromSeed(
@@ -49,7 +49,8 @@ class AppTheme {
           backgroundColor: AppColors.primary,
           foregroundColor: AppColors.white,
           minimumSize: const Size.fromHeight(52),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
           textStyle: buttonTextStyle,
         ),
       ),
@@ -68,10 +69,10 @@ class AppTheme {
   static ThemeData get dark {
     final base = ThemeData.dark(useMaterial3: true);
     final textTheme = _useGoogleFonts
-        ? GoogleFonts.interTextTheme(base.textTheme)
+        ? GoogleFonts.poppinsTextTheme(base.textTheme)
         : base.textTheme;
     final titleTextStyle = _useGoogleFonts
-        ? GoogleFonts.inter(
+        ? GoogleFonts.poppins(
             fontSize: 17,
             fontWeight: FontWeight.w600,
             color: AppColors.textPrimaryDark,
@@ -82,12 +83,14 @@ class AppTheme {
             color: AppColors.textPrimaryDark,
           );
     final buttonTextStyle = _useGoogleFonts
-        ? GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w600)
+        ? GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600)
         : const TextStyle(fontSize: 16, fontWeight: FontWeight.w600);
     return base.copyWith(
       colorScheme: ColorScheme.fromSeed(
         seedColor: AppColors.primary,
         brightness: Brightness.dark,
+      ).copyWith(
+        onSurfaceVariant: const Color(0xFFC0C0C0),
       ),
       scaffoldBackgroundColor: AppColors.backgroundDark,
       textTheme: textTheme.apply(
@@ -105,7 +108,8 @@ class AppTheme {
           backgroundColor: AppColors.primary,
           foregroundColor: AppColors.white,
           minimumSize: const Size.fromHeight(52),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
           textStyle: buttonTextStyle,
         ),
       ),

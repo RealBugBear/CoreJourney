@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/navigation/app_router.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../../l10n/app_localizations.dart';
 import '../../domain/models/appointment.dart';
 import '../../domain/services/calendar_service.dart';
 import '../providers/trainer_provider.dart';
@@ -26,12 +27,12 @@ class AppointmentProposalScreen extends ConsumerWidget {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.calendar_today_outlined,
+                  const Icon(Icons.calendar_today_outlined,
                       size: 56, color: AppColors.textDisabled),
                   const SizedBox(height: 16),
                   Text(
                     'Keine offenen Terminvorschläge.',
-                    style: TextStyle(color: AppColors.textSecondary),
+                    style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
                   ),
                 ],
               ),
@@ -105,6 +106,14 @@ class _ProposalCardState extends State<_ProposalCard> {
           const SnackBar(content: Text('Termin bestätigt!')),
         );
       }
+      // Navigate away after confirming — pop if possible, else fall back to DMs
+      if (mounted) {
+        if (context.canPop()) {
+          context.pop();
+        } else {
+          context.go(Routes.dm);
+        }
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -118,26 +127,20 @@ class _ProposalCardState extends State<_ProposalCard> {
 
   Future<void> _addToCalendar() async {
     if (_chosen == null) return;
-    final calSvc = CalendarService.instance;
-    var calendarId = await calSvc.getSelectedCalendarId();
-
-    if (calendarId == null) {
-      final cals = await calSvc.getAvailableCalendars();
-      if (cals.isNotEmpty && mounted) {
-        calendarId = cals.first.id;
-        await calSvc.setSelectedCalendarId(calendarId!);
-      }
-    }
-
-    if (calendarId != null) {
-      await calSvc.createCalendarEvent(
-        calendarId: calendarId,
+    try {
+      await CalendarService.instance.createCalendarEvent(
         title: '${widget.proposal.title} (mit ${widget.proposal.traineeName})',
         start: _chosen!,
         duration: Duration(minutes: widget.proposal.durationMinutes),
         location: widget.proposal.location,
         description: widget.proposal.notes,
       );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Kalender konnte nicht geöffnet werden: $e')),
+        );
+      }
     }
   }
 
@@ -162,19 +165,23 @@ class _ProposalCardState extends State<_ProposalCard> {
                 CircleAvatar(
                   backgroundColor: AppColors.primary.withValues(alpha: 0.12),
                   radius: 18,
-                  child: Icon(Icons.person_outline, color: AppColors.primary, size: 20),
+                  child: const Icon(Icons.person_outline,
+                      color: AppColors.primary, size: 20),
                 ),
                 const SizedBox(width: 10),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      proposal.traineeName, // trainer name here (fromJson sets it)
-                      style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
+                      proposal
+                          .traineeName, // trainer name here (fromJson sets it)
+                      style: const TextStyle(
+                          fontWeight: FontWeight.w700, fontSize: 15),
                     ),
                     Text(
                       proposal.title,
-                      style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
+                      style: TextStyle(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 12),
                     ),
                   ],
                 ),
@@ -187,14 +194,15 @@ class _ProposalCardState extends State<_ProposalCard> {
               style: TextStyle(
                   fontWeight: FontWeight.w600,
                   fontSize: 13,
-                  color: AppColors.textSecondary),
+                  color: Theme.of(context).colorScheme.onSurfaceVariant),
             ),
             const SizedBox(height: 10),
 
             // Slot options
             ...proposal.proposedSlots.map((slot) {
               final isSelected = _chosen == slot;
-              final label = DateFormat('EEE, d. MMM · HH:mm', 'de_DE').format(slot);
+              final label =
+                  DateFormat('EEE, d. MMM · HH:mm', 'de_DE').format(slot);
               return GestureDetector(
                 onTap: () => setState(() => _chosen = slot),
                 child: Container(
@@ -207,9 +215,7 @@ class _ProposalCardState extends State<_ProposalCard> {
                         : Theme.of(context).colorScheme.surfaceContainerHighest,
                     borderRadius: BorderRadius.circular(10),
                     border: Border.all(
-                      color: isSelected
-                          ? AppColors.primary
-                          : AppColors.divider,
+                      color: isSelected ? AppColors.primary : AppColors.divider,
                       width: isSelected ? 1.5 : 1,
                     ),
                   ),
@@ -227,7 +233,8 @@ class _ProposalCardState extends State<_ProposalCard> {
                         label,
                         style: TextStyle(
                           fontWeight: FontWeight.w600,
-                          color: isSelected ? Colors.white : AppColors.textPrimary,
+                          color:
+                              isSelected ? Colors.white : AppColors.textPrimary,
                         ),
                       ),
                     ],
@@ -247,13 +254,14 @@ class _ProposalCardState extends State<_ProposalCard> {
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10)),
                 ),
-                onPressed: _chosen == null || _confirming
-                    ? null
-                    : () => _confirm(ref),
+                onPressed:
+                    _chosen == null || _confirming ? null : () => _confirm(ref),
                 child: _confirming
                     ? const SizedBox(
-                        width: 18, height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                            strokeWidth: 2, color: Colors.white))
                     : const Text('Termin bestätigen',
                         style: TextStyle(fontWeight: FontWeight.w600)),
               ),

@@ -50,17 +50,23 @@ class Exercise {
 
   // ── Rhythm config ──────────────────────────────────────────────────────────
   final RhythmType rhythmType;
+
   /// Phase sequence for [RhythmType.phased].
   final List<ExercisePhase> phases;
+
   /// Whether to announce "Wechsel" / "Switch" between reps (side-switching).
   final bool hasRepSwitch;
+
   /// Action word spoken at the start of each hold (e.g. "Spannung", "Halten").
   final String holdCueDe;
   final String holdCueEn;
+
   /// Seconds to hold per rep for [RhythmType.holdRest].
   final int holdSeconds;
+
   /// Seconds to rest between reps for [RhythmType.holdRest].
   final int restSeconds;
+
   /// Announce "Armkreuz wechseln" at the midpoint rep (e.g. Moro 6 + 7).
   final bool halfwaySwitch;
 
@@ -126,7 +132,8 @@ class Exercise {
 
   static List<ExercisePhase> _decodePhases(dynamic value) {
     if (value == null) return [];
-    final List<dynamic> raw = value is String ? jsonDecode(value) : value as List;
+    final List<dynamic> raw =
+        value is String ? jsonDecode(value) : value as List;
     return raw.map((e) {
       final m = e as Map<String, dynamic>;
       return ExercisePhase(
@@ -142,37 +149,42 @@ class Exercise {
   /// List<dynamic>, Drift stores them as JSON strings.
   factory Exercise.fromRow(Map<String, dynamic> row) {
     final rhythmStr = row['rhythm_type'] as String? ?? 'holdRest';
-    final rhythm = rhythmStr == 'phased' ? RhythmType.phased : RhythmType.holdRest;
+    final rhythm =
+        rhythmStr == 'phased' ? RhythmType.phased : RhythmType.holdRest;
     final id = row['id'] as String;
     final rawImagePath = row['image_path'] as String;
 
     return Exercise(
-      id:                      id,
-      packageId:               row['package_id'] as String,
-      sequenceNumber:          row['sequence_number'] as int,
-      titleDe:                 row['title_de'] as String,
-      titleEn:                 row['title_en'] as String,
-      positionInstructionsDe:  _decodeStringList(row['position_instructions_de']),
-      positionInstructionsEn:  _decodeStringList(row['position_instructions_en']),
-      movementInstructionsDe:  _decodeStringList(row['movement_instructions_de']),
-      movementInstructionsEn:  _decodeStringList(row['movement_instructions_en']),
-      hintsDe:                 _decodeNullableStringList(row['hints_de']),
-      hintsEn:                 _decodeNullableStringList(row['hints_en']),
-      executionGuideDe:        row['execution_guide_de'] as String,
-      executionGuideEn:        row['execution_guide_en'] as String,
-      durationSeconds:         row['duration_seconds'] as int,
-      repetitions:             row['repetitions'] as int,
-      imagePath:               _preferredBundledImagePath(id, rawImagePath),
-      videoPath:               row['video_path'] as String?,
-      audioCuePath:            row['audio_cue_path'] as String?,
-      rhythmType:              rhythm,
-      phases:                  _decodePhases(row['phases_json']),
-      hasRepSwitch:            row['has_rep_switch'] as bool? ?? false,
-      holdCueDe:               row['hold_cue_de'] as String? ?? 'Halten',
-      holdCueEn:               row['hold_cue_en'] as String? ?? 'Hold',
-      holdSeconds:             row['hold_seconds'] as int? ?? 7,
-      restSeconds:             row['rest_seconds'] as int? ?? 3,
-      halfwaySwitch:           row['halfway_switch'] as bool? ?? false,
+      id: id,
+      packageId: row['package_id'] as String,
+      sequenceNumber: row['sequence_number'] as int,
+      titleDe: row['title_de'] as String,
+      titleEn: row['title_en'] as String,
+      positionInstructionsDe:
+          _decodeStringList(row['position_instructions_de']),
+      positionInstructionsEn:
+          _decodeStringList(row['position_instructions_en']),
+      movementInstructionsDe:
+          _decodeStringList(row['movement_instructions_de']),
+      movementInstructionsEn:
+          _decodeStringList(row['movement_instructions_en']),
+      hintsDe: _decodeNullableStringList(row['hints_de']),
+      hintsEn: _decodeNullableStringList(row['hints_en']),
+      executionGuideDe: row['execution_guide_de'] as String,
+      executionGuideEn: row['execution_guide_en'] as String,
+      durationSeconds: row['duration_seconds'] as int,
+      repetitions: row['repetitions'] as int,
+      imagePath: _preferredBundledImagePath(id, rawImagePath),
+      videoPath: row['video_path'] as String?,
+      audioCuePath: row['audio_cue_path'] as String?,
+      rhythmType: rhythm,
+      phases: _decodePhases(row['phases_json']),
+      hasRepSwitch: row['has_rep_switch'] as bool? ?? false,
+      holdCueDe: row['hold_cue_de'] as String? ?? 'Halten',
+      holdCueEn: row['hold_cue_en'] as String? ?? 'Hold',
+      holdSeconds: row['hold_seconds'] as int? ?? 7,
+      restSeconds: row['rest_seconds'] as int? ?? 3,
+      halfwaySwitch: row['halfway_switch'] as bool? ?? false,
     );
   }
 }
@@ -269,9 +281,12 @@ const List<Exercise> moroExercises = [
       'Return in three seconds',
       'Switch sides',
     ],
-    hintsDe: ['Das nicht bewegte Bein bleibt komplett ruhig und unverändert liegen'],
+    hintsDe: [
+      'Das nicht bewegte Bein bleibt komplett ruhig und unverändert liegen'
+    ],
     hintsEn: ['The non-moving leg remains completely still'],
-    executionGuideDe: 'Bein anheben und auf dem Schienbein des anderen Beins ablegen.',
+    executionGuideDe:
+        'Bein anheben und auf dem Schienbein des anderen Beins ablegen.',
     executionGuideEn: 'Raise leg and rest it on the shin of the other leg.',
     durationSeconds: 40,
     repetitions: 3,
@@ -357,8 +372,12 @@ const List<Exercise> moroExercises = [
       'Knees open outward',
       'Return feet over three seconds',
     ],
-    hintsDe: ['Range of Motion nur so weit, wie die Fußsohlen während der gesamten Bewegung eng aneinander bleiben'],
-    hintsEn: ['Only move as far as the soles of the feet can remain together throughout'],
+    hintsDe: [
+      'Range of Motion nur so weit, wie die Fußsohlen während der gesamten Bewegung eng aneinander bleiben'
+    ],
+    hintsEn: [
+      'Only move as far as the soles of the feet can remain together throughout'
+    ],
     executionGuideDe: 'Füße zum Körper führen, Knie gehen nach außen.',
     executionGuideEn: 'Bring feet toward the body, knees open outward.',
     durationSeconds: 35,
@@ -408,8 +427,10 @@ const List<Exercise> moroExercises = [
       'Hips remain stable on the floor, not lifting or rotating',
       'Only move as far as the hips stay neutral',
     ],
-    executionGuideDe: 'Knie langsam zur Seite führen. Hüfte bleibt stabil am Boden.',
-    executionGuideEn: 'Slowly lower knees to the side. Hips stay stable on the floor.',
+    executionGuideDe:
+        'Knie langsam zur Seite führen. Hüfte bleibt stabil am Boden.',
+    executionGuideEn:
+        'Slowly lower knees to the side. Hips stay stable on the floor.',
     durationSeconds: 45,
     repetitions: 3,
     imagePath: 'assets/images/trainings/moro/moro1.1.jpeg',
@@ -456,8 +477,10 @@ const List<Exercise> moroExercises = [
       'If core strength is insufficient: place hands on the shins, palms open',
       'Arms only support lightly, do not pull',
     ],
-    executionGuideDe: 'Kopf und Oberkörper langsam anheben, Stirn Richtung Knie.',
-    executionGuideEn: 'Slowly raise head and upper body, forehead toward knees.',
+    executionGuideDe:
+        'Kopf und Oberkörper langsam anheben, Stirn Richtung Knie.',
+    executionGuideEn:
+        'Slowly raise head and upper body, forehead toward knees.',
     durationSeconds: 30,
     repetitions: 3,
     imagePath: 'assets/images/trainings/moro/moro1.2.jpeg',
@@ -555,8 +578,10 @@ const List<Exercise> moroExercises = [
     ],
     hintsDe: ['Bewegung bleibt klein; Fokus auf kontrollierter Spannung'],
     hintsEn: ['Movement stays small; focus on controlled tension'],
-    executionGuideDe: 'Beine und Hände arbeiten gegeneinander. Sieben Sekunden ausatmen.',
-    executionGuideEn: 'Legs and hands work against each other. Exhale for seven seconds.',
+    executionGuideDe:
+        'Beine und Hände arbeiten gegeneinander. Sieben Sekunden ausatmen.',
+    executionGuideEn:
+        'Legs and hands work against each other. Exhale for seven seconds.',
     durationSeconds: 90,
     repetitions: 6,
     imagePath: 'assets/images/trainings/moro/moro7.png',
@@ -611,7 +636,6 @@ const List<Exercise> spinalGalantExercises = [
     holdCueDe: 'Schaukeln',
     holdCueEn: 'Rock',
   ),
-
   Exercise(
     id: 'sg_ex2',
     packageId: 'spinal_galant',
@@ -646,7 +670,6 @@ const List<Exercise> spinalGalantExercises = [
     holdCueDe: 'Schaukeln',
     holdCueEn: 'Rock',
   ),
-
   Exercise(
     id: 'sg_ex3',
     packageId: 'spinal_galant',
@@ -683,7 +706,6 @@ const List<Exercise> spinalGalantExercises = [
     holdCueDe: 'Halten',
     holdCueEn: 'Hold',
   ),
-
   Exercise(
     id: 'sg_ex4',
     packageId: 'spinal_galant',
@@ -714,8 +736,12 @@ const List<Exercise> spinalGalantExercises = [
       'Hold 7 seconds, 3 seconds rest',
       '6 repetitions',
     ],
-    hintsDe: ['Wenn die Übung zu schwer ist oder Schmerzen auftreten: Kissen unter den Po legen'],
-    hintsEn: ['If too difficult or painful: place a pillow under the hips to reduce the load'],
+    hintsDe: [
+      'Wenn die Übung zu schwer ist oder Schmerzen auftreten: Kissen unter den Po legen'
+    ],
+    hintsEn: [
+      'If too difficult or painful: place a pillow under the hips to reduce the load'
+    ],
     executionGuideDe: 'Hüfte rotieren. Arme im rechten Winkel.',
     executionGuideEn: 'Rotate hips. Arms at right angles.',
     durationSeconds: 7,

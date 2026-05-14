@@ -28,7 +28,7 @@ class MoodTrendChart extends StatelessWidget {
         child: Text(
           'Noch keine Einträge im gewählten Zeitraum.',
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: AppColors.textSecondary,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
           textAlign: TextAlign.center,
         ),
@@ -112,9 +112,9 @@ class MoodTrendChart extends StatelessWidget {
                 if (value != value.roundToDouble()) return const SizedBox();
                 return Text(
                   value.toInt().toString(),
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 10,
-                    color: AppColors.textSecondary,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
                 );
               },
@@ -131,9 +131,9 @@ class MoodTrendChart extends StatelessWidget {
                     padding: const EdgeInsets.only(top: 4),
                     child: Text(
                       DateFormat('d.M').format(day),
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 10,
-                        color: AppColors.textSecondary,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
                       ),
                     ),
                   );

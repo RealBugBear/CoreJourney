@@ -31,12 +31,12 @@ class _AnimatedProgressBarState extends State<AnimatedProgressBar>
   @override
   void initState() {
     super.initState();
-    
+
     // Start from previous step to create smooth expanding animation
     // when navigating between screens
     final previousStep = (widget.currentStep - 1).clamp(0, widget.totalSteps);
     _previousProgress = previousStep / widget.totalSteps;
-    
+
     _controller = AnimationController(
       duration: widget.animationDuration,
       vsync: this,
@@ -80,7 +80,7 @@ class _AnimatedProgressBarState extends State<AnimatedProgressBar>
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final progress = widget.currentStep / widget.totalSteps;
-    
+
     if (widget.minimal) {
       return AnimatedBuilder(
         animation: _progressAnimation,
@@ -149,7 +149,7 @@ class _AnimatedProgressBarState extends State<AnimatedProgressBar>
         ),
       );
     }
-    
+
     // Full version (existing code)
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -169,7 +169,7 @@ class _AnimatedProgressBarState extends State<AnimatedProgressBar>
           },
         ),
         const SizedBox(height: 12),
-        
+
         // Progress bar with milestones
         Stack(
           children: [
@@ -181,7 +181,7 @@ class _AnimatedProgressBarState extends State<AnimatedProgressBar>
                 borderRadius: BorderRadius.circular(6),
               ),
             ),
-            
+
             // Animated progress fill
             AnimatedBuilder(
               animation: _progressAnimation,
@@ -194,13 +194,15 @@ class _AnimatedProgressBarState extends State<AnimatedProgressBar>
                       gradient: LinearGradient(
                         colors: [
                           _getProgressColor(_progressAnimation.value),
-                          _getProgressColor(_progressAnimation.value).withOpacity(0.7),
+                          _getProgressColor(_progressAnimation.value)
+                              .withOpacity(0.7),
                         ],
                       ),
                       borderRadius: BorderRadius.circular(6),
                       boxShadow: [
                         BoxShadow(
-                          color: _getProgressColor(_progressAnimation.value).withOpacity(0.4),
+                          color: _getProgressColor(_progressAnimation.value)
+                              .withOpacity(0.4),
                           blurRadius: 8,
                           spreadRadius: 1,
                         ),
@@ -210,14 +212,14 @@ class _AnimatedProgressBarState extends State<AnimatedProgressBar>
                 );
               },
             ),
-            
+
             // Milestone markers
             ..._buildMilestoneMarkers(theme),
           ],
         ),
-        
+
         const SizedBox(height: 8),
-        
+
         // Step counter
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -244,7 +246,7 @@ class _AnimatedProgressBarState extends State<AnimatedProgressBar>
   List<Widget> _buildMilestoneMarkers(ThemeData theme) {
     final milestones = [0.25, 0.5, 0.75, 1.0];
     final progress = widget.currentStep / widget.totalSteps;
-    
+
     return milestones.map((milestone) {
       final isPassed = progress >= milestone;
       return Positioned(
@@ -254,7 +256,8 @@ class _AnimatedProgressBarState extends State<AnimatedProgressBar>
           height: 16,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: isPassed ? _getMilestoneColor(milestone) : Colors.grey.shade300,
+            color:
+                isPassed ? _getMilestoneColor(milestone) : Colors.grey.shade300,
             border: Border.all(
               color: Colors.white,
               width: 2,
@@ -282,9 +285,11 @@ class _AnimatedProgressBarState extends State<AnimatedProgressBar>
   }
 
   Color _getProgressColor(double progress) {
-    if (progress >= 0.75) return const Color(0xFF4CAF50); // Green - almost done!
+    if (progress >= 0.75)
+      return const Color(0xFF4CAF50); // Green - almost done!
     if (progress >= 0.5) return const Color(0xFF2196F3); // Blue - halfway
-    if (progress >= 0.25) return const Color(0xFFFF9800); // Orange - getting started
+    if (progress >= 0.25)
+      return const Color(0xFFFF9800); // Orange - getting started
     return const Color(0xFF9C27B0); // Purple - just started
   }
 

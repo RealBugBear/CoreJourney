@@ -10,7 +10,8 @@ import '../../../consent/presentation/providers/consent_provider.dart';
 import '../providers/auth_provider.dart';
 
 // RFC 5322-lite email pattern — catches obvious typos without being overly strict.
-final _emailRegex = RegExp(r'^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$');
+final _emailRegex =
+    RegExp(r'^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$');
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -64,10 +65,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   String? _validatePasswordConfirm(String? value) {
     final l10n = AppLocalizations.of(context);
-    final isDE = l10n.localeName == 'de';
-    if ((value ?? '').isEmpty) return l10n.validationRequired;
-    if (value != _passwordController.text) {
-      return isDE ? 'Passwörter stimmen nicht überein.' : 'Passwords do not match.';
+    final v = (value ?? '').trim();
+    if (v.isEmpty) return l10n.validationRequired;
+    if (v != _passwordController.text.trim()) {
+      return l10n.validationPasswordMismatch;
     }
     return null;
   }
@@ -101,14 +102,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     if (!(_formKey.currentState?.validate() ?? false)) return;
 
     final email = _emailController.text.trim();
-    await ref.read(authNotifierProvider.notifier).sendPasswordReset(email: email);
+    await ref.read(authNotifierProvider.notifier).sendPasswordReset(
+          email: email,
+          redirectTo: 'https://corejourney.care/auth/reset-password',
+        );
 
-    if (mounted) {
-      setState(() => _showPasswordReset = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(AppLocalizations.of(context).passwordResetSent)),
-      );
-    }
+    if (!mounted) return;
+    final authState = ref.read(authNotifierProvider);
+    if (authState.hasError) return;
+
+    setState(() => _showPasswordReset = false);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(AppLocalizations.of(context).passwordResetSent)),
+    );
   }
 
   void _clearErrorAndRebuild() {
@@ -177,9 +183,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     controller: _passwordController,
                     focusNode: _passwordFocusNode,
                     obscureText: _obscurePassword,
-                    textInputAction: _isSignUp
-                        ? TextInputAction.next
-                        : TextInputAction.done,
+                    autocorrect: false,
+                    enableSuggestions: false,
+                    textInputAction:
+                        _isSignUp ? TextInputAction.next : TextInputAction.done,
                     decoration: InputDecoration(
                       labelText: l10n.password,
                       border: const OutlineInputBorder(),
@@ -189,8 +196,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               ? Icons.visibility_outlined
                               : Icons.visibility_off_outlined,
                         ),
-                        onPressed: () =>
-                            setState(() => _obscurePassword = !_obscurePassword),
+                        onPressed: () => setState(
+                            () => _obscurePassword = !_obscurePassword),
                       ),
                     ),
                     validator: _validatePassword,
@@ -212,10 +219,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       focusNode: _passwordConfirmFocusNode,
                       obscureText: _obscurePasswordConfirm,
                       textInputAction: TextInputAction.done,
+                      autocorrect: false,
+                      enableSuggestions: false,
                       decoration: InputDecoration(
-                        labelText: l10n.localeName == 'de'
-                            ? 'Passwort bestätigen'
-                            : 'Confirm password',
+                        labelText: l10n.passwordConfirm,
                         border: const OutlineInputBorder(),
                         suffixIcon: IconButton(
                           icon: Icon(
@@ -241,7 +248,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   const SizedBox(height: 8),
                   Text(
                     _localizeAuthError(authState.error.toString(), l10n),
-                    style: TextStyle(color: AppColors.error, fontSize: 14),
+                    style:
+                        const TextStyle(color: AppColors.error, fontSize: 14),
                   ),
                   const SizedBox(height: 8),
                 ],
@@ -285,6 +293,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     child: Text(_isSignUp ? l10n.signIn : l10n.signUp),
                   ),
 
+                if (!_showPasswordReset)
+                  OutlinedButton.icon(
+                    onPressed: () => context.go(Routes.reflexProfileDemo),
+                    icon: const Icon(Icons.radar_outlined),
+                    label: const Text('Kurztest ohne Konto'),
+                  ),
+
                 // Forgot password toggle
                 if (!_isSignUp)
                   TextButton(
@@ -314,8 +329,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   style: SegmentedButton.styleFrom(
                     selectedBackgroundColor: AppColors.primary,
                     selectedForegroundColor: Colors.white,
-                    textStyle:
-                        const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+                    textStyle: const TextStyle(
+                        fontSize: 13, fontWeight: FontWeight.w500),
                   ),
                 ),
               ],
@@ -327,15 +342,25 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   String _localizeAuthError(String error, AppLocalizations l10n) {
-    if (error.contains('invalid_credentials') ||
-        error.contains('Invalid login')) {
+    final normalized = error.toLowerCase();
+    if (error.contains('TimeoutException') || error.contains('timed out')) {
+      return l10n.errorGeneric;
+    }
+    if (normalized.contains('invalid_credentials') ||
+        normalized.contains('invalid login') ||
+        normalized.contains('invalid login credentials') ||
+        normalized.contains('email or password') ||
+        normalized.contains('invalid email or password')) {
       return l10n.authErrorInvalidCredentials;
     }
-    if (error.contains('already registered') ||
-        error.contains('already been registered')) {
+    if (normalized.contains('already registered') ||
+        normalized.contains('already been registered')) {
       return l10n.authErrorEmailInUse;
     }
-    if (error.contains('weak') || error.contains('password')) {
+    if (_isSignUp &&
+        (normalized.contains('weak') ||
+            normalized.contains('password') ||
+            normalized.contains('at least'))) {
       return l10n.authErrorWeakPassword;
     }
     return l10n.errorGeneric;

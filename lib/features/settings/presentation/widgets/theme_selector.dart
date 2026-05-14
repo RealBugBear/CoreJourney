@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/theme_provider.dart';
 
 /// Widget für Theme-Auswahl
-/// 
+///
 /// Zeigt die verfügbaren Theme-Modi (Hell, Dunkel, System) und
 /// ermöglicht dem Nutzer die Auswahl.
 class ThemeSelector extends ConsumerWidget {
@@ -81,13 +80,13 @@ class ThemeSelector extends ConsumerWidget {
               Icons.check_circle,
               color: theme.colorScheme.primary,
             )
-          : const Icon(
+          : Icon(
               Icons.radio_button_unchecked,
-              color: AppColors.textSecondary,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
       onTap: () {
         ref.read(themeProvider.notifier).setThemeMode(mode);
-        
+
         // Optional: Feedback für den Nutzer
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

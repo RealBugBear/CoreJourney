@@ -10,8 +10,10 @@ class CompletionQuestionnairesTable extends Table {
   BoolColumn get response => boolean()();
   // 'passed' | 'extend'
   TextColumn get result => text()();
-  BoolColumn get nextEnrollmentCreated => boolean().withDefault(const Constant(false))();
+  BoolColumn get nextEnrollmentCreated =>
+      boolean().withDefault(const Constant(false))();
   BoolColumn get needsSync => boolean().withDefault(const Constant(true))();
+  TextColumn get subjectProfileId => text().nullable()();
   DateTimeColumn get submittedAt => dateTime()();
 
   @override

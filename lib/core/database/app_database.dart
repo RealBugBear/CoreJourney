@@ -72,23 +72,41 @@ class AppDatabase extends _$AppDatabase {
   }
 
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 7;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
-    onUpgrade: (m, from, to) async {
-      if (from < 2) {
-        await m.createTable(journalEntriesTable);
-      }
-      if (from < 3) {
-        await m.createTable(exercisesTable);
-      }
-      if (from < 4) {
-        // journal_entries schema extended — drop and recreate (was dead code,
-        // no live rows existed before this version).
-        await m.deleteTable('journal_entries');
-        await m.createTable(journalEntriesTable);
-      }
-    },
-  );
+        onUpgrade: (m, from, to) async {
+          if (from < 2) {
+            await m.createTable(journalEntriesTable);
+          }
+          if (from < 3) {
+            await m.createTable(exercisesTable);
+          }
+          if (from < 4) {
+            // journal_entries schema extended — drop and recreate (was dead code,
+            // no live rows existed before this version).
+            await m.deleteTable('journal_entries');
+            await m.createTable(journalEntriesTable);
+          }
+          if (from < 5) {
+            await m.addColumn(
+                moodCheckinsTable, moodCheckinsTable.subjectProfileId);
+            await m.addColumn(
+                journalEntriesTable, journalEntriesTable.subjectProfileId);
+          }
+          if (from < 6) {
+            await m.addColumn(
+                enrollmentsTable, enrollmentsTable.subjectProfileId);
+            await m.addColumn(
+                progressEntriesTable, progressEntriesTable.subjectProfileId);
+            await m.addColumn(
+                trainingSessionsTable, trainingSessionsTable.subjectProfileId);
+          }
+          if (from < 7) {
+            await m.addColumn(completionQuestionnairesTable,
+                completionQuestionnairesTable.subjectProfileId);
+          }
+        },
+      );
 }
