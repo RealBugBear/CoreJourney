@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class DraftPersistenceService {
@@ -8,7 +9,9 @@ class DraftPersistenceService {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(_key(profileId), jsonEncode(draftJson));
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('[DraftPersistenceService] saveLocal failed: $e');
+    }
   }
 
   Future<Map<String, dynamic>?> loadLocal(String profileId) async {
@@ -27,6 +30,8 @@ class DraftPersistenceService {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove(_key(profileId));
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('[DraftPersistenceService] clearLocal failed: $e');
+    }
   }
 }

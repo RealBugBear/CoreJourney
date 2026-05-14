@@ -70,6 +70,10 @@ void main() {
       final result = await service2.loadLocal('corrupt-profile');
       expect(result, isNull);
 
+      // Verify the corrupt entry was actually cleared from SharedPreferences
+      final prefs = await SharedPreferences.getInstance();
+      expect(prefs.getString('reflex_draft_corrupt-profile'), isNull);
+
       // Draft should be cleared after corrupt read
       final afterClear = await service2.loadLocal('corrupt-profile');
       expect(afterClear, isNull);
