@@ -123,14 +123,12 @@ class _TrainerClientDetailScreenState
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             for (final profile in sharedProfiles) ...[
-                              _SharedProfileHeader(profile: profile),
-                              const SizedBox(height: 8),
                               profile.latestAssessment == null
                                   ? Padding(
                                       padding: const EdgeInsets.only(
                                           left: 4, bottom: 16),
                                       child: Text(
-                                        'Noch kein abgeschlossenes Reflexprofil.',
+                                        '${profile.displayName}: Noch kein abgeschlossenes Reflexprofil.',
                                         style: TextStyle(
                                             color: Theme.of(context)
                                                 .colorScheme
@@ -141,9 +139,10 @@ class _TrainerClientDetailScreenState
                                       crossAxisAlignment:
                                           CrossAxisAlignment.start,
                                       children: [
-                                        _SharedReflexProfileCard(
-                                            assessment:
-                                                profile.latestAssessment!),
+                                        _TappableProfileRow(
+                                          profile: profile,
+                                          clientId: client.clientId,
+                                        ),
                                         const SizedBox(height: 12),
                                         _ReflexProfileNotesCard(
                                           assessment: profile.latestAssessment!,
@@ -1035,3 +1034,136 @@ class _SessionList extends StatelessWidget {
     );
   }
 }
+
+class _TappableProfileRow extends StatelessWidget {
+  const _TappableProfileRow({
+    required this.profile,
+    required this.clientId,
+  });
+
+  final TrainerSharedProfile profile;
+  final String clientId;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final assessment = profile.latestAssessment!;
+
+    final age = profile.ageYears != null
+        ? '${profile.ageYears} Jahr${profile.ageYears == 1 ? '' : 'e'}'
+        : (profile.ageGroup ?? '');
+    final dateStr = DateFormat('dd.MM.yyyy', 'de_DE')
+        .format(assessment.completedAt ?? assessment.createdAt);
+    final metaStr = [if (age.isNotEmpty) age, dateStr].join(' · ');
+
+    final topBand = _topScoredBand(assessment);
+    final bandLabel = topBand != null ? _bandPillLabel(topBand) : null;
+    final bandColor = topBand != null ? _bandPillColor(topBand, cs) : null;
+
+    return Card(
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: () => context.push(
+          Routes.reflexProfileResult,
+          extra: {'assessment': assessment},
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: Row(
+            children: [
+              CircleAvatar(
+                radius: 18,
+                backgroundColor: cs.primaryContainer,
+                child: Text(
+                  profile.displayName.isNotEmpty
+                      ? profile.displayName[0].toUpperCase()
+                      : '?',
+                  style: TextStyle(
+                    color: cs.onPrimaryContainer,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      profile.displayName,
+                      style:
+                          Theme.of(context).textTheme.titleSmall?.copyWith(
+                                fontWeight: FontWeight.w700,
+                              ),
+                    ),
+                    const SizedBox(height: 2),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            metaStr,
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodySmall
+                                ?.copyWith(color: cs.onSurfaceVariant),
+                          ),
+                        ),
+                        if (bandLabel != null && bandColor != null) ...[
+                          const SizedBox(width: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: bandColor.withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(
+                              bandLabel,
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w700,
+                                color: bandColor,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Icon(Icons.chevron_right, color: cs.onSurfaceVariant),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+ReflexScoreBand? _topScoredBand(ReflexProfileAssessment assessment) {
+  ReflexScoreBand? worst;
+  for (final raw in assessment.scores.values) {
+    if (raw is! Map) continue;
+    final band = ReflexScoreBand.values.firstWhere(
+      (b) => b.name == (raw['band'] as String? ?? ''),
+      orElse: () => ReflexScoreBand.insufficientData,
+    );
+    if (band == ReflexScoreBand.strong) return band;
+    if (band == ReflexScoreBand.elevated) worst = band;
+  }
+  return worst;
+}
+
+String _bandPillLabel(ReflexScoreBand band) => switch (band) {
+      ReflexScoreBand.strong => 'stark auffällig',
+      ReflexScoreBand.elevated => 'auffällig',
+      _ => '',
+    };
+
+Color _bandPillColor(ReflexScoreBand band, ColorScheme cs) => switch (band) {
+      ReflexScoreBand.strong => AppColors.error,
+      ReflexScoreBand.elevated => AppColors.warning,
+      _ => cs.onSurface,
+    };
