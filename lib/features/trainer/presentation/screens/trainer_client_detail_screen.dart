@@ -141,7 +141,6 @@ class _TrainerClientDetailScreenState
                                       children: [
                                         _TappableProfileRow(
                                           profile: profile,
-                                          clientId: client.clientId,
                                         ),
                                         const SizedBox(height: 12),
                                         _ReflexProfileNotesCard(
@@ -1038,11 +1037,9 @@ class _SessionList extends StatelessWidget {
 class _TappableProfileRow extends StatelessWidget {
   const _TappableProfileRow({
     required this.profile,
-    required this.clientId,
   });
 
   final TrainerSharedProfile profile;
-  final String clientId;
 
   @override
   Widget build(BuildContext context) {
@@ -1061,6 +1058,7 @@ class _TappableProfileRow extends StatelessWidget {
     final bandColor = topBand != null ? _bandPillColor(topBand, cs) : null;
 
     return Card(
+      clipBehavior: Clip.antiAlias,
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
         onTap: () => context.push(
