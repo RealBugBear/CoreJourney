@@ -778,7 +778,7 @@ class _TappableProfileRow extends StatelessWidget {
                                 ?.copyWith(color: cs.onSurfaceVariant),
                           ),
                         ),
-                        if (bandLabel != null && bandColor != null) ...[
+                        if (bandLabel != null && bandLabel.isNotEmpty && bandColor != null) ...[
                           const SizedBox(width: 6),
                           Container(
                             padding: const EdgeInsets.symmetric(
