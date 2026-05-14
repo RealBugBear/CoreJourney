@@ -32,29 +32,17 @@ List<(ReflexQuestionModule, List<RelevantAnswerItem>)> buildRelevanteAngaben(
     final question = questionById[entry.key];
     if (question == null) continue;
 
-    final selectedIds =
-        (raw['selected_options'] as List?)?.map((e) => e as String).toList() ??
-        const <String>[];
     final text = raw['text'] as String?;
     final months = (raw['months'] as num?)?.toInt();
     final trimmedText = text?.trim();
     final hasFreeText = trimmedText != null && trimmedText.isNotEmpty;
 
-    if (selectedIds.isEmpty && !hasFreeText && months == null) continue;
-
-    final optionLabels = selectedIds.map((id) {
-      return question.options
-          .firstWhere(
-            (o) => o.id == id,
-            orElse: () => ReflexQuestionOption(id: id, label: id),
-          )
-          .label;
-    }).toList();
+    if (!hasFreeText && months == null) continue;
 
     byModule.putIfAbsent(question.module, () => []).add(
           RelevantAnswerItem(
             question: question,
-            selectedOptionLabels: optionLabels,
+            selectedOptionLabels: const [],
             freeText: hasFreeText ? trimmedText : null,
             months: months,
           ),

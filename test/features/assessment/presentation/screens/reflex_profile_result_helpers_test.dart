@@ -33,22 +33,14 @@ void main() {
       expect(result, isEmpty);
     });
 
-    test('selected_options resolves option labels and includes item', () {
-      // q006 = "Wurden Geburtshilfe-Instrumente eingesetzt?", pregnancyBirth
-      // option ids: 'forceps' -> 'Geburtszange', 'vacuum' -> 'Saugglocke'
+    test('selected_options only (no text/months) is excluded', () {
       final result = buildRelevanteAngaben(_assessment({
         'q006': {
           'answer': 'yes',
           'selected_options': ['vacuum', 'forceps'],
         },
       }));
-      expect(result.length, 1);
-      final (module, items) = result.first;
-      expect(module, ReflexQuestionModule.pregnancyBirth);
-      expect(items.length, 1);
-      expect(items.first.selectedOptionLabels, ['Saugglocke', 'Geburtszange']);
-      expect(items.first.freeText, isNull);
-      expect(items.first.months, isNull);
+      expect(result, isEmpty);
     });
 
     test('free text is included and trimmed', () {
@@ -86,19 +78,19 @@ void main() {
       expect(result, isEmpty);
     });
 
-    test('unknown option ID falls back to raw id as label', () {
+    test('selected_options only with unknown option ID is excluded', () {
       final result = buildRelevanteAngaben(_assessment({
         'q006': {'selected_options': ['unknown_option_xyz']},
       }));
-      expect(result.first.$2.first.selectedOptionLabels, ['unknown_option_xyz']);
+      expect(result, isEmpty);
     });
 
     test('groups are ordered by module enum order regardless of answer insertion order', () {
-      // q037 = motorSkills (enum index 2), q006 = pregnancyBirth (enum index 0)
+      // q037 = motorSkills (enum index 2), q009 = pregnancyBirth (enum index 0)
       // Insert in reverse order to verify enum-order output
       final result = buildRelevanteAngaben(_assessment({
         'q037': {'months': 18},        // motorSkills
-        'q006': {'selected_options': ['vacuum']},  // pregnancyBirth
+        'q009': {'text': 'Sturzgeburt'},  // pregnancyBirth
       }));
       expect(result.length, 2);
       expect(result[0].$1, ReflexQuestionModule.pregnancyBirth);
@@ -108,7 +100,7 @@ void main() {
     test('multiple answers in same module appear in the same group', () {
       // q006 and q009 are both pregnancyBirth
       final result = buildRelevanteAngaben(_assessment({
-        'q006': {'selected_options': ['vacuum']},
+        'q006': {'text': 'Zange verwendet'},
         'q009': {'text': 'Sturzgeburt'},
       }));
       expect(result.length, 1);
@@ -119,8 +111,8 @@ void main() {
       // q009 (number 9) and q006 (number 6) are both pregnancyBirth
       // Insert q009 first — output should still be q006 first (lower number)
       final result = buildRelevanteAngaben(_assessment({
-        'q009': {'text': 'Sturzgeburt'},  // question number 9
-        'q006': {'selected_options': ['vacuum']},  // question number 6
+        'q009': {'text': 'Sturzgeburt'},      // question number 9
+        'q006': {'text': 'Zange verwendet'},  // question number 6
       }));
       expect(result.length, 1);
       final items = result.first.$2;
