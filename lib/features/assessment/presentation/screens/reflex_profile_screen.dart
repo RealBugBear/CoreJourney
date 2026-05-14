@@ -235,6 +235,7 @@ class _ReflexProfileScreenState extends ConsumerState<ReflexProfileScreen>
       );
 
       deleteReflexProfileDraft(profile.id).ignore();
+      _draftService.clearLocal(profile.id);
       if (mounted) {
         context.go(
           Routes.reflexProfileResult,
@@ -411,10 +412,28 @@ class _ReflexProfileScreenState extends ConsumerState<ReflexProfileScreen>
   }
 
   Future<void> _checkForDraft(String profileId) async {
-    final draft = await loadReflexProfileDraft(profileId);
+    final localRaw = await _draftService.loadLocal(profileId);
+    final cloudRaw = await loadReflexProfileDraft(profileId);
     if (!mounted) return;
 
-    if (draft == null) {
+    Map<String, dynamic>? best;
+    if (localRaw != null && cloudRaw != null) {
+      final localSavedAt =
+          DateTime.tryParse(localRaw['saved_at'] as String? ?? '');
+      final cloudUpdatedAt =
+          DateTime.tryParse(cloudRaw['updated_at'] as String? ?? '');
+      if (localSavedAt != null &&
+          cloudUpdatedAt != null &&
+          localSavedAt.isAfter(cloudUpdatedAt)) {
+        best = localRaw;
+      } else {
+        best = cloudRaw;
+      }
+    } else {
+      best = cloudRaw ?? localRaw;
+    }
+
+    if (best == null) {
       setState(() {
         _questionnaireStarted = true;
         _currentModuleIndex = 0;
@@ -445,9 +464,10 @@ class _ReflexProfileScreenState extends ConsumerState<ReflexProfileScreen>
 
     if (!mounted) return;
     if (resume == true) {
-      _restoreDraft(draft);
+      _restoreDraft(best);
     } else {
       deleteReflexProfileDraft(profileId).ignore();
+      _draftService.clearLocal(profileId);
       setState(() {
         _questionnaireStarted = true;
         _currentModuleIndex = 0;
