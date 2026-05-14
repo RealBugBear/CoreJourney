@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -5,6 +6,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/navigation/app_router.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../domain/draft_persistence_service.dart';
 import '../../domain/reflex_profile_scoring.dart';
 import '../../domain/reflex_questionnaire.dart';
 import '../../domain/reflex_questionnaire_definitions.dart';
@@ -19,7 +21,8 @@ class ReflexProfileScreen extends ConsumerStatefulWidget {
       _ReflexProfileScreenState();
 }
 
-class _ReflexProfileScreenState extends ConsumerState<ReflexProfileScreen> {
+class _ReflexProfileScreenState extends ConsumerState<ReflexProfileScreen>
+    with WidgetsBindingObserver {
   final _nameController = TextEditingController();
   final _textControllers = <String, TextEditingController>{};
   final _answers = <String, ReflexAnswerValue>{};
@@ -27,6 +30,8 @@ class _ReflexProfileScreenState extends ConsumerState<ReflexProfileScreen> {
   final _scoringService = const ReflexProfileScoringService();
   final _questionnaireScrollController = ScrollController();
   final _questionKeys = <String, GlobalKey>{};
+  final _draftService = DraftPersistenceService();
+  final _debounceTimers = <String, Timer>{};
   Set<String> _highlightedQuestionIds = {};
 
   DateTime? _selectedBirthDate;
@@ -49,13 +54,30 @@ class _ReflexProfileScreenState extends ConsumerState<ReflexProfileScreen> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    for (final t in _debounceTimers.values) {
+      t.cancel();
+    }
     _nameController.dispose();
     _questionnaireScrollController.dispose();
     for (final controller in _textControllers.values) {
       controller.dispose();
     }
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused && _questionnaireStarted) {
+      _saveDraft(); // bestehende Supabase-Sync-Methode
+    }
   }
 
   TextEditingController _controllerFor(String questionId) {
@@ -114,6 +136,7 @@ class _ReflexProfileScreenState extends ConsumerState<ReflexProfileScreen> {
         isUnknown: value == null,
       );
     });
+    _saveLocalDraft();
   }
 
   Future<bool> _showProfessionalClearanceDialog(
@@ -329,6 +352,28 @@ class _ReflexProfileScreenState extends ConsumerState<ReflexProfileScreen> {
       currentModuleIndex: _currentModuleIndex,
       questionnaireFor: _questionnaireFor ?? 'child',
     ).ignore();
+  }
+
+  void _saveLocalDraft() {
+    final profile = _selectedProfile;
+    if (profile == null || !_questionnaireStarted) return;
+    _draftService.saveLocal(profile.id, {
+      'saved_at': DateTime.now().toIso8601String(),
+      'answers': {
+        '__meta': {
+          'module_index': _currentModuleIndex,
+          'questionnaire_for': _questionnaireFor ?? 'child',
+        },
+        for (final e in _answers.entries) e.key: _answerToJson(e.value),
+      },
+      'warning_confirmations': _warningConfirmations.values
+          .map((c) => {
+                'question_id': c.questionId,
+                'confirmed_at': c.confirmedAt.toIso8601String(),
+                'message_version': c.messageVersion,
+              })
+          .toList(),
+    });
   }
 
   Future<void> _checkForDraft(String profileId) async {
@@ -1025,6 +1070,7 @@ class _ReflexProfileScreenState extends ConsumerState<ReflexProfileScreen> {
                     const ReflexAnswerValue(isUnknown: true);
               }
             });
+            _saveLocalDraft();
           },
         ),
       ],
@@ -1072,6 +1118,7 @@ class _ReflexProfileScreenState extends ConsumerState<ReflexProfileScreen> {
                   text: controller.text,
                 );
               });
+              _saveLocalDraft();
             },
           ),
         TextField(
