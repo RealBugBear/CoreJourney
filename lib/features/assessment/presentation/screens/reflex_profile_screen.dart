@@ -376,6 +376,14 @@ class _ReflexProfileScreenState extends ConsumerState<ReflexProfileScreen>
     });
   }
 
+  void _scheduleDraftSave(String questionId) {
+    _debounceTimers[questionId]?.cancel();
+    _debounceTimers[questionId] = Timer(
+      const Duration(milliseconds: 300),
+      _saveLocalDraft,
+    );
+  }
+
   Future<void> _checkForDraft(String profileId) async {
     final draft = await loadReflexProfileDraft(profileId);
     if (!mounted) return;
@@ -1051,6 +1059,7 @@ class _ReflexProfileScreenState extends ConsumerState<ReflexProfileScreen>
                   months: int.tryParse(value.trim()),
                 );
               });
+              _scheduleDraftSave(question.id);
             },
           ),
         const SizedBox(height: 8),
@@ -1091,6 +1100,7 @@ class _ReflexProfileScreenState extends ConsumerState<ReflexProfileScreen>
         setState(() {
           _answers[question.id] = ReflexAnswerValue(text: value);
         });
+        _scheduleDraftSave(question.id);
       },
     );
   }
@@ -1136,6 +1146,7 @@ class _ReflexProfileScreenState extends ConsumerState<ReflexProfileScreen>
                 text: value,
               );
             });
+            _scheduleDraftSave(question.id);
           },
         ),
       ],
