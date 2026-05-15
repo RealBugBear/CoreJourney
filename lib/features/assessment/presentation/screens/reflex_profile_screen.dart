@@ -235,7 +235,7 @@ class _ReflexProfileScreenState extends ConsumerState<ReflexProfileScreen>
       );
 
       deleteReflexProfileDraft(profile.id).ignore();
-      _draftService.clearLocal(profile.id);
+      _draftService.clearLocal(profile.id).ignore();
       if (mounted) {
         context.go(
           Routes.reflexProfileResult,
@@ -422,12 +422,12 @@ class _ReflexProfileScreenState extends ConsumerState<ReflexProfileScreen>
           DateTime.tryParse(localRaw['saved_at'] as String? ?? '');
       final cloudUpdatedAt =
           DateTime.tryParse(cloudRaw['updated_at'] as String? ?? '');
-      if (localSavedAt != null &&
-          cloudUpdatedAt != null &&
-          localSavedAt.isAfter(cloudUpdatedAt)) {
+      if (localSavedAt != null && cloudUpdatedAt != null) {
+        best = localSavedAt.isAfter(cloudUpdatedAt) ? localRaw : cloudRaw;
+      } else if (localSavedAt != null) {
         best = localRaw;
       } else {
-        best = cloudRaw;
+        best = cloudRaw ?? localRaw;
       }
     } else {
       best = cloudRaw ?? localRaw;
