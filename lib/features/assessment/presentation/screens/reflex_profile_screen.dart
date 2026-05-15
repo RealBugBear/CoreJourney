@@ -76,7 +76,8 @@ class _ReflexProfileScreenState extends ConsumerState<ReflexProfileScreen>
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.paused && _questionnaireStarted) {
-      _saveDraft(); // bestehende Supabase-Sync-Methode
+      _saveLocalDraft();
+      _saveDraft();
     }
   }
 
@@ -427,7 +428,7 @@ class _ReflexProfileScreenState extends ConsumerState<ReflexProfileScreen>
       } else if (localSavedAt != null) {
         best = localRaw;
       } else {
-        best = cloudRaw ?? localRaw;
+        best = cloudRaw;
       }
     } else {
       best = cloudRaw ?? localRaw;
@@ -467,7 +468,7 @@ class _ReflexProfileScreenState extends ConsumerState<ReflexProfileScreen>
       _restoreDraft(best);
     } else {
       deleteReflexProfileDraft(profileId).ignore();
-      _draftService.clearLocal(profileId);
+      _draftService.clearLocal(profileId).ignore();
       setState(() {
         _questionnaireStarted = true;
         _currentModuleIndex = 0;
