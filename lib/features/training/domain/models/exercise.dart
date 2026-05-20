@@ -41,7 +41,9 @@ class Exercise {
   final List<String>? hintsDe;
   final List<String>? hintsEn;
   final List<String>? positionInstructionsDuoDe;
+  final List<String>? positionInstructionsDuoEn;
   final List<String>? movementInstructionsDuoDe;
+  final List<String>? movementInstructionsDuoEn;
   final String executionGuideDe;
   final String executionGuideEn;
   final int durationSeconds;
@@ -85,7 +87,9 @@ class Exercise {
     this.hintsDe,
     this.hintsEn,
     this.positionInstructionsDuoDe,
+    this.positionInstructionsDuoEn,
     this.movementInstructionsDuoDe,
+    this.movementInstructionsDuoEn,
     required this.executionGuideDe,
     required this.executionGuideEn,
     required this.durationSeconds,
@@ -990,7 +994,9 @@ const List<Exercise> vorrundeExercises = [
     movementInstructionsDe: ['TBD — solo Bewegung'],
     movementInstructionsEn: ['TBD — solo movement'],
     positionInstructionsDuoDe: ['TBD — Duo Ausgangsposition'],
+    positionInstructionsDuoEn: null,
     movementInstructionsDuoDe: ['TBD — Duo Bewegung'],
+    movementInstructionsDuoEn: null,
     executionGuideDe: 'TBD',
     executionGuideEn: 'TBD',
     durationSeconds: 7,
@@ -1013,7 +1019,9 @@ const List<Exercise> vorrundeExercises = [
     movementInstructionsDe: ['TBD — solo Bewegung'],
     movementInstructionsEn: ['TBD — solo movement'],
     positionInstructionsDuoDe: ['TBD — Duo Ausgangsposition'],
+    positionInstructionsDuoEn: null,
     movementInstructionsDuoDe: ['TBD — Duo Bewegung'],
+    movementInstructionsDuoEn: null,
     executionGuideDe: 'TBD',
     executionGuideEn: 'TBD',
     durationSeconds: 7,
@@ -1036,7 +1044,9 @@ const List<Exercise> vorrundeExercises = [
     movementInstructionsDe: ['TBD — solo Bewegung'],
     movementInstructionsEn: ['TBD — solo movement'],
     positionInstructionsDuoDe: ['TBD — Duo Ausgangsposition'],
+    positionInstructionsDuoEn: null,
     movementInstructionsDuoDe: ['TBD — Duo Bewegung'],
+    movementInstructionsDuoEn: null,
     executionGuideDe: 'TBD',
     executionGuideEn: 'TBD',
     durationSeconds: 7,
@@ -1059,7 +1069,9 @@ const List<Exercise> vorrundeExercises = [
     movementInstructionsDe: ['TBD — solo Bewegung'],
     movementInstructionsEn: ['TBD — solo movement'],
     positionInstructionsDuoDe: ['TBD — Duo Ausgangsposition'],
+    positionInstructionsDuoEn: null,
     movementInstructionsDuoDe: ['TBD — Duo Bewegung'],
+    movementInstructionsDuoEn: null,
     executionGuideDe: 'TBD',
     executionGuideEn: 'TBD',
     durationSeconds: 7,
@@ -1082,7 +1094,9 @@ const List<Exercise> vorrundeExercises = [
     movementInstructionsDe: ['TBD — solo Bewegung'],
     movementInstructionsEn: ['TBD — solo movement'],
     positionInstructionsDuoDe: ['TBD — Duo Ausgangsposition'],
+    positionInstructionsDuoEn: null,
     movementInstructionsDuoDe: ['TBD — Duo Bewegung'],
+    movementInstructionsDuoEn: null,
     executionGuideDe: 'TBD',
     executionGuideEn: 'TBD',
     durationSeconds: 7,
@@ -1105,7 +1119,9 @@ const List<Exercise> vorrundeExercises = [
     movementInstructionsDe: ['TBD — solo Bewegung'],
     movementInstructionsEn: ['TBD — solo movement'],
     positionInstructionsDuoDe: ['TBD — Duo Ausgangsposition'],
+    positionInstructionsDuoEn: null,
     movementInstructionsDuoDe: ['TBD — Duo Bewegung'],
+    movementInstructionsDuoEn: null,
     executionGuideDe: 'TBD',
     executionGuideEn: 'TBD',
     durationSeconds: 7,
