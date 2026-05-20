@@ -4,6 +4,7 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../../core/training/first_run_settings.dart';
 import '../../../../core/training/transition_duration_settings.dart';
 import '../../../../core/training/training_feedback_settings.dart';
 import '../../domain/models/exercise.dart';
@@ -16,6 +17,7 @@ enum _Phase { transition, exercise }
 class ImmersiveSessionScreen extends StatefulWidget {
   final List<Exercise> exercises;
   final bool isRoutineMode;
+  final String packageId;
   final List<String> companionSubjectProfileIds;
   final void Function(List<String> completedExerciseIds) onComplete;
 
@@ -23,6 +25,7 @@ class ImmersiveSessionScreen extends StatefulWidget {
     super.key,
     required this.exercises,
     required this.isRoutineMode,
+    required this.packageId,
     this.companionSubjectProfileIds = const [],
     required this.onComplete,
   });
@@ -36,11 +39,13 @@ class _ImmersiveSessionScreenState extends State<ImmersiveSessionScreen> {
   _Phase _phase = _Phase.transition;
   final List<String> _completedIds = [];
   int _transitionDuration = 10;
+  bool _isFirstRun = false;
 
   @override
   void initState() {
     super.initState();
     _loadTransitionDuration();
+    _loadFirstRun();
     if (widget.isRoutineMode && widget.exercises.isNotEmpty) {
       final first = widget.exercises.first;
       final isDuo = widget.companionSubjectProfileIds.isNotEmpty;
@@ -59,6 +64,14 @@ class _ImmersiveSessionScreenState extends State<ImmersiveSessionScreen> {
     });
   }
 
+  Future<void> _loadFirstRun() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (!mounted) return;
+    setState(() {
+      _isFirstRun = FirstRunSettings.isFirstRun(prefs, widget.packageId);
+    });
+  }
+
   @override
   void dispose() {
     AudioAnnouncementService.instance.stop();
@@ -74,6 +87,10 @@ class _ImmersiveSessionScreenState extends State<ImmersiveSessionScreen> {
     _completedIds.add(exercise.id);
 
     if (_exerciseIndex >= widget.exercises.length - 1) {
+      if (_isFirstRun) {
+        final prefs = await SharedPreferences.getInstance();
+        await FirstRunSettings.markComplete(prefs, widget.packageId);
+      }
       widget.onComplete(List.unmodifiable(_completedIds));
       return;
     }
@@ -126,7 +143,9 @@ class _ImmersiveSessionScreenState extends State<ImmersiveSessionScreen> {
           exerciseIndex: _exerciseIndex,
           totalExercises: widget.exercises.length,
           isRoutineMode: widget.isRoutineMode,
-          transitionDurationSeconds: _transitionDuration,
+          transitionDurationSeconds: widget.isRoutineMode ? 5 : _transitionDuration,
+          packageId: widget.packageId,
+          isFirstRun: _isFirstRun,
           locale: locale,
           onStart: _onTransitionComplete,
         ),

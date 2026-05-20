@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../domain/models/exercise.dart';
+import 'exercise_video_widget.dart';
 
 class ExerciseTransitionWidget extends StatefulWidget {
   final Exercise exercise;
@@ -12,6 +13,8 @@ class ExerciseTransitionWidget extends StatefulWidget {
   final int totalExercises;
   final bool isRoutineMode;
   final int transitionDurationSeconds; // countdown length for routine
+  final String packageId;
+  final bool isFirstRun;
   final String locale;         // 'de' or 'en'
   final VoidCallback onStart;
 
@@ -22,6 +25,8 @@ class ExerciseTransitionWidget extends StatefulWidget {
     required this.totalExercises,
     required this.isRoutineMode,
     required this.transitionDurationSeconds,
+    required this.packageId,
+    required this.isFirstRun,
     required this.locale,
     required this.onStart,
   });
@@ -66,6 +71,21 @@ class _ExerciseTransitionWidgetState extends State<ExerciseTransitionWidget> {
     widget.onStart();
   }
 
+  void _showVideo(BuildContext context) {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.black,
+      builder: (sheetContext) => SizedBox(
+        height: MediaQuery.of(context).size.height * 0.6,
+        child: ExerciseVideoWidget(
+          exercise: widget.exercise,
+          onReady: () => Navigator.of(sheetContext).pop(),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final ex = widget.exercise;
@@ -74,19 +94,53 @@ class _ExerciseTransitionWidgetState extends State<ExerciseTransitionWidget> {
     final content = Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // Exercise image
-        AspectRatio(
-          aspectRatio: 16 / 9,
-          child: Image.asset(
-            ex.imagePath,
-            fit: BoxFit.cover,
-            errorBuilder: (_, __, ___) => Container(
-              color: Colors.white.withOpacity(0.05),
-              alignment: Alignment.center,
-              child: const Icon(Icons.image_not_supported_outlined,
-                  color: Colors.white38, size: 40),
+        // Exercise image with optional video button overlay
+        Stack(
+          children: [
+            AspectRatio(
+              aspectRatio: 16 / 9,
+              child: Image.asset(
+                ex.imagePath,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => Container(
+                  color: Colors.white.withOpacity(0.05),
+                  alignment: Alignment.center,
+                  child: const Icon(Icons.image_not_supported_outlined,
+                      color: Colors.white38, size: 40),
+                ),
+              ),
             ),
-          ),
+            if (!widget.isFirstRun &&
+                ex.videoPath != null &&
+                !widget.isRoutineMode)
+              Positioned(
+                bottom: 8,
+                right: 8,
+                child: GestureDetector(
+                  onTap: () => _showVideo(context),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.75),
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(color: Colors.white24),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.play_arrow,
+                            color: Colors.white70, size: 14),
+                        SizedBox(width: 4),
+                        Text('Video',
+                            style: TextStyle(
+                                color: Colors.white70, fontSize: 12)),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+          ],
         ),
 
         Expanded(
@@ -128,7 +182,8 @@ class _ExerciseTransitionWidgetState extends State<ExerciseTransitionWidget> {
                 ...ex.movementInstructions(loc).map(_bullet),
                 const SizedBox(height: 10),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 12, vertical: 10),
                   decoration: BoxDecoration(
                     color: const Color(0xFF6366f1).withOpacity(0.1),
                     borderRadius: BorderRadius.circular(10),
@@ -145,6 +200,22 @@ class _ExerciseTransitionWidgetState extends State<ExerciseTransitionWidget> {
                     ),
                   ),
                 ),
+                // First-run video (Tutorial mode only)
+                if (widget.isFirstRun &&
+                    ex.videoPath != null &&
+                    !widget.isRoutineMode) ...[
+                  const SizedBox(height: 12),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: SizedBox(
+                      height: 220,
+                      child: ExerciseVideoWidget(
+                        exercise: ex,
+                        onReady: () {},
+                      ),
+                    ),
+                  ),
+                ],
               ],
             ),
           ),
@@ -180,7 +251,8 @@ class _ExerciseTransitionWidgetState extends State<ExerciseTransitionWidget> {
                     icon: const Icon(Icons.play_arrow),
                     label: const Text(
                       'Übung starten',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                          fontSize: 16, fontWeight: FontWeight.bold),
                     ),
                     style: FilledButton.styleFrom(
                       backgroundColor: const Color(0xFF6366f1),
