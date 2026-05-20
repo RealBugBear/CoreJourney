@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -5,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../core/training/transition_duration_settings.dart';
 import '../../../../core/training/training_feedback_settings.dart';
 import '../../domain/models/exercise.dart';
+import '../../domain/services/audio_announcement_service.dart';
 import '../widgets/exercise_transition_widget.dart';
 import 'immersive_exercise_screen.dart';
 
@@ -13,12 +16,14 @@ enum _Phase { transition, exercise }
 class ImmersiveSessionScreen extends StatefulWidget {
   final List<Exercise> exercises;
   final bool isRoutineMode;
+  final List<String> companionSubjectProfileIds;
   final void Function(List<String> completedExerciseIds) onComplete;
 
   const ImmersiveSessionScreen({
     super.key,
     required this.exercises,
     required this.isRoutineMode,
+    this.companionSubjectProfileIds = const [],
     required this.onComplete,
   });
 
@@ -36,6 +41,14 @@ class _ImmersiveSessionScreenState extends State<ImmersiveSessionScreen> {
   void initState() {
     super.initState();
     _loadTransitionDuration();
+    if (widget.isRoutineMode && widget.exercises.isNotEmpty) {
+      final first = widget.exercises.first;
+      final isDuo = widget.companionSubjectProfileIds.isNotEmpty;
+      unawaited(AudioAnnouncementService.instance.queue([
+        'sounds/announcements/de/exercises/${first.id}_name.mp3',
+        'sounds/announcements/de/exercises/${first.id}_position${isDuo ? '_duo' : ''}.mp3',
+      ]));
+    }
   }
 
   Future<void> _loadTransitionDuration() async {
@@ -44,6 +57,12 @@ class _ImmersiveSessionScreenState extends State<ImmersiveSessionScreen> {
     setState(() {
       _transitionDuration = TransitionDurationSettings.durationSeconds(prefs);
     });
+  }
+
+  @override
+  void dispose() {
+    AudioAnnouncementService.instance.stop();
+    super.dispose();
   }
 
   void _onTransitionComplete() {
@@ -77,6 +96,14 @@ class _ImmersiveSessionScreenState extends State<ImmersiveSessionScreen> {
     }
 
     if (!mounted) return;
+    if (widget.isRoutineMode) {
+      final nextExercise = widget.exercises[_exerciseIndex + 1];
+      final isDuo = widget.companionSubjectProfileIds.isNotEmpty;
+      unawaited(AudioAnnouncementService.instance.queue([
+        'sounds/announcements/de/exercises/${nextExercise.id}_name.mp3',
+        'sounds/announcements/de/exercises/${nextExercise.id}_position${isDuo ? '_duo' : ''}.mp3',
+      ]));
+    }
     setState(() {
       _exerciseIndex++;
       _phase = _Phase.transition;

@@ -335,6 +335,7 @@ class _TrainingSessionScreenState extends ConsumerState<TrainingSessionScreen> {
         return ImmersiveSessionScreen(
           exercises: state.exercises,
           isRoutineMode: state.mode == TrainingSessionMode.routine,
+          companionSubjectProfileIds: widget.companionSubjectProfileIds,
           onComplete: (ids) {
             setState(() {
               _completedExerciseIds = ids;
