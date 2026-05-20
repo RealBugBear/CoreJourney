@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/settings/settings_provider.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../domain/models/exercise.dart';
 import '../../domain/models/training_session.dart';
 
-class TrainingIntroWidget extends StatelessWidget {
+class TrainingIntroWidget extends ConsumerWidget {
   final Exercise exercise;
   final int exerciseIndex;
   final int totalExercises;
@@ -22,7 +24,7 @@ class TrainingIntroWidget extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final locale = Localizations.localeOf(context).languageCode;
 
@@ -78,53 +80,108 @@ class TrainingIntroWidget extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             '${exercise.durationSeconds}s · ${exercise.repetitions}x',
-            style: TextStyle(color: AppColors.textSecondaryDark, fontSize: 15),
+            style: const TextStyle(color: AppColors.textSecondaryDark, fontSize: 15),
           ),
           const SizedBox(height: 24),
 
-          Container(
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.08),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
-            ),
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-            child: Row(
-              children: [
-                Icon(
-                  mode == TrainingSessionMode.tutorial
-                      ? Icons.school_outlined
-                      : Icons.flash_on_outlined,
-                  color: Colors.white,
-                  size: 18,
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        mode == TrainingSessionMode.tutorial
-                            ? l10n.tutorialMode
-                            : l10n.routineMode,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w700,
-                        ),
+          // Inline mode toggle
+          Row(
+            children: [
+              Expanded(
+                child: GestureDetector(
+                  onTap: () => ref
+                      .read(settingsProvider.notifier)
+                      .setTrainingMode(TrainingSessionMode.tutorial),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    decoration: BoxDecoration(
+                      color: mode == TrainingSessionMode.tutorial
+                          ? AppColors.primary
+                          : Colors.transparent,
+                      border: Border.all(
+                        color: mode == TrainingSessionMode.tutorial
+                            ? AppColors.primary
+                            : AppColors.surfaceDarkElevated,
                       ),
-                      const SizedBox(height: 2),
-                      Text(
-                        'Ändere den Modus in den Einstellungen.',
-                        style: TextStyle(
-                          color: AppColors.textSecondaryDark,
-                          fontSize: 12,
+                      borderRadius: const BorderRadius.horizontal(
+                          left: Radius.circular(10)),
+                    ),
+                    child: Column(
+                      children: [
+                        Text(
+                          l10n.tutorialMode,
+                          style: TextStyle(
+                            color: mode == TrainingSessionMode.tutorial
+                                ? Colors.white
+                                : AppColors.textSecondaryDark,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 13,
+                          ),
                         ),
-                      ),
-                    ],
+                        const SizedBox(height: 2),
+                        Text(
+                          'Mit Anleitung',
+                          style: TextStyle(
+                            color: mode == TrainingSessionMode.tutorial
+                                ? Colors.white
+                                : AppColors.textDisabledDark,
+                            fontSize: 11,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ],
-            ),
+              ),
+              Expanded(
+                child: GestureDetector(
+                  onTap: () => ref
+                      .read(settingsProvider.notifier)
+                      .setTrainingMode(TrainingSessionMode.routine),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    decoration: BoxDecoration(
+                      color: mode == TrainingSessionMode.routine
+                          ? AppColors.primary
+                          : Colors.transparent,
+                      border: Border.all(
+                        color: mode == TrainingSessionMode.routine
+                            ? AppColors.primary
+                            : AppColors.surfaceDarkElevated,
+                      ),
+                      borderRadius: const BorderRadius.horizontal(
+                          right: Radius.circular(10)),
+                    ),
+                    child: Column(
+                      children: [
+                        Text(
+                          l10n.routineMode,
+                          style: TextStyle(
+                            color: mode == TrainingSessionMode.routine
+                                ? Colors.white
+                                : AppColors.textSecondaryDark,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 13,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'Hands-free',
+                          style: TextStyle(
+                            color: mode == TrainingSessionMode.routine
+                                ? Colors.white
+                                : AppColors.textDisabledDark,
+                            fontSize: 11,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 24),
 
