@@ -323,6 +323,12 @@ class _TrainingSessionScreenState extends ConsumerState<TrainingSessionScreen> {
           totalExercises: state.totalExercises,
           mode: state.mode,
           onStart: () => setState(() => _phase = _TrainingPhase.session),
+          onModeChanged: (newMode) {
+            // Update the flow state so the toggle visually switches immediately.
+            ref.read(trainingFlowProvider(widget.packageId).notifier).setMode(newMode);
+            // Also persist to settings so the next session starts in the chosen mode.
+            ref.read(settingsProvider.notifier).setTrainingMode(newMode);
+          },
         );
 
       case _TrainingPhase.session:

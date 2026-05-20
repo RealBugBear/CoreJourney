@@ -1,18 +1,17 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../core/settings/settings_provider.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../domain/models/exercise.dart';
 import '../../domain/models/training_session.dart';
 
-class TrainingIntroWidget extends ConsumerWidget {
+class TrainingIntroWidget extends StatelessWidget {
   final Exercise exercise;
   final int exerciseIndex;
   final int totalExercises;
   final TrainingSessionMode mode;
   final VoidCallback onStart;
+  final ValueChanged<TrainingSessionMode> onModeChanged;
 
   const TrainingIntroWidget({
     super.key,
@@ -21,10 +20,11 @@ class TrainingIntroWidget extends ConsumerWidget {
     required this.totalExercises,
     required this.mode,
     required this.onStart,
+    required this.onModeChanged,
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final locale = Localizations.localeOf(context).languageCode;
 
@@ -89,9 +89,7 @@ class TrainingIntroWidget extends ConsumerWidget {
             children: [
               Expanded(
                 child: GestureDetector(
-                  onTap: () => ref
-                      .read(settingsProvider.notifier)
-                      .setTrainingMode(TrainingSessionMode.tutorial),
+                  onTap: () => onModeChanged(TrainingSessionMode.tutorial),
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 200),
                     padding: const EdgeInsets.symmetric(vertical: 12),
@@ -120,6 +118,7 @@ class TrainingIntroWidget extends ConsumerWidget {
                           ),
                         ),
                         const SizedBox(height: 2),
+                        // TODO(l10n): add tutorialModeSubtitle key to ARB files
                         Text(
                           'Mit Anleitung',
                           style: TextStyle(
@@ -136,9 +135,7 @@ class TrainingIntroWidget extends ConsumerWidget {
               ),
               Expanded(
                 child: GestureDetector(
-                  onTap: () => ref
-                      .read(settingsProvider.notifier)
-                      .setTrainingMode(TrainingSessionMode.routine),
+                  onTap: () => onModeChanged(TrainingSessionMode.routine),
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 200),
                     padding: const EdgeInsets.symmetric(vertical: 12),
@@ -167,6 +164,7 @@ class TrainingIntroWidget extends ConsumerWidget {
                           ),
                         ),
                         const SizedBox(height: 2),
+                        // TODO(l10n): add routineModeSubtitle key to ARB files
                         Text(
                           'Hands-free',
                           style: TextStyle(
