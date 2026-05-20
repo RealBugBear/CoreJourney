@@ -69,6 +69,14 @@ class InAppMusicService {
     await _player.setVolume(volume.clamp(0.0, 1.0));
   }
 
+  /// Temporarily lowers music volume while an announcement plays.
+  /// Full implementation added in Task 3.
+  Future<void> duck() async {}
+
+  /// Restores music volume after an announcement finishes.
+  /// Full implementation added in Task 3.
+  Future<void> unduck() async {}
+
   Future<void> dispose() async {
     _initialized = false;
     _currentTrack = null;
