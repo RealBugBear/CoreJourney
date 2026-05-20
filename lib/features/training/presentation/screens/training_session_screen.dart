@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:drift/drift.dart' as drift;
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
 import '../../../../core/navigation/app_router.dart';
+import '../../../../core/training/routine_tip_settings.dart';
 
 import '../../../../bootstrap/providers.dart';
 import '../../../../core/database/app_database.dart';
@@ -162,6 +164,11 @@ class _TrainingSessionScreenState extends ConsumerState<TrainingSessionScreen> {
         );
       }
     }
+
+    if (!mounted) return;
+
+    final prefs = await SharedPreferences.getInstance();
+    await RoutineTipSettings.incrementSessionCount(prefs);
 
     if (!mounted) return;
     context.pop();

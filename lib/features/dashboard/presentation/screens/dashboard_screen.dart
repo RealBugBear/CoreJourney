@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../../bootstrap/providers.dart';
@@ -8,6 +9,7 @@ import '../../../../core/database/app_database.dart';
 import '../../../../core/navigation/app_router.dart';
 import '../../../../core/onboarding/onboarding_hint_gate.dart';
 import '../../../../core/onboarding/onboarding_hint_provider.dart';
+import '../../../../core/training/routine_tip_settings.dart';
 import '../../../../core/notifications/notification_service.dart';
 import '../../../../core/settings/settings_provider.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -39,6 +41,67 @@ class DashboardScreen extends ConsumerStatefulWidget {
 class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   bool _onboardingCheckDone = false;
   bool _usernameCheckDone = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _checkRoutineTip());
+  }
+
+  Future<void> _checkRoutineTip() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (!mounted) return;
+    if (RoutineTipSettings.shouldShowTip(prefs)) {
+      await RoutineTipSettings.markTipShown(prefs);
+      if (!mounted) return;
+      _showRoutineTip();
+    }
+  }
+
+  void _showRoutineTip() {
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: AppColors.surfaceDark,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (_) => Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const Text(
+              'Du kennst die Übungen jetzt',
+              style: TextStyle(
+                color: AppColors.textPrimaryDark,
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Probiere den Routine-Modus — er führt dich komplett '
+              'hands-free per Audio durch das Training.',
+              style: TextStyle(
+                color: AppColors.textSecondaryDark,
+                fontSize: 14,
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 20),
+            FilledButton(
+              style: FilledButton.styleFrom(
+                backgroundColor: AppColors.primary,
+              ),
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Verstanden'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
   void _maybeRedirectOnboarding() {
     if (_onboardingCheckDone) return;
