@@ -113,6 +113,7 @@ flutter:
     - assets/images/trainings/stnr/
     - assets/images/trainings/babinski/
     - assets/images/trainings/landau/
+    - assets/images/trainings/vorrunde/
     # Videos are streamed from Supabase Storage — NOT bundled
     # Sounds — shared + per package
     - assets/sounds/
@@ -126,6 +127,8 @@ flutter:
     - assets/sounds/babinski/
     - assets/sounds/landau/
     - assets/sounds/music/
+    - assets/sounds/announcements/de/
+    - assets/sounds/announcements/de/exercises/
 
 flutter_launcher_icons:
   android: true
