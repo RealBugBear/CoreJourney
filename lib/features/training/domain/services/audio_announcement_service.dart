@@ -17,12 +17,19 @@ class AudioAnnouncementService {
   Future<void> _init() async {
     if (_initialized) return;
     _initialized = true;
-    _player = AudioPlayer();
-    final ctx = AudioContextConfig(
-      focus: AudioContextConfigFocus.mixWithOthers,
-    ).build();
-    await _player!.setAudioContext(ctx);
-    await _player!.setReleaseMode(ReleaseMode.stop);
+    try {
+      _player = AudioPlayer();
+      final ctx = AudioContextConfig(
+        focus: AudioContextConfigFocus.mixWithOthers,
+      ).build();
+      await _player!.setAudioContext(ctx);
+      await _player!.setReleaseMode(ReleaseMode.stop);
+    } catch (e) {
+      _initialized = false;
+      await _player?.dispose();
+      _player = null;
+      rethrow;
+    }
   }
 
   /// Plays a single asset key (relative to assets/, e.g.
@@ -49,8 +56,8 @@ class AudioAnnouncementService {
   }
 
   void stop() {
-    _player?.stop();
-    InAppMusicService.instance.unduck();
+    unawaited(_player?.stop() ?? Future.value());
+    unawaited(InAppMusicService.instance.unduck());
   }
 
   Future<void> dispose() async {
