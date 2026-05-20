@@ -19,6 +19,8 @@ class InAppMusicService {
   final _player = AudioPlayer();
   bool _initialized = false;
   String? _currentTrack;
+  double _normalVolume = 0.7;
+  bool _isDucked = false;
 
   String? get currentTrack => _currentTrack;
 
@@ -52,7 +54,8 @@ class InAppMusicService {
     try {
       await init();
       _currentTrack = assetKey;
-      await _player.setVolume(volume.clamp(0.0, 1.0));
+      _normalVolume = volume.clamp(0.0, 1.0);
+      await _player.setVolume(_normalVolume);
       await _player.play(AssetSource(assetKey));
     } catch (error) {
       debugPrint('[InAppMusicService] play error: $error');
@@ -66,16 +69,23 @@ class InAppMusicService {
 
   Future<void> setVolume(double volume) async {
     await init();
-    await _player.setVolume(volume.clamp(0.0, 1.0));
+    _normalVolume = volume.clamp(0.0, 1.0);
+    if (!_isDucked) await _player.setVolume(_normalVolume);
   }
 
   /// Temporarily lowers music volume while an announcement plays.
-  /// Full implementation added in Task 3.
-  Future<void> duck() async {}
+  Future<void> duck() async {
+    if (_isDucked || _currentTrack == null) return;
+    _isDucked = true;
+    await _player.setVolume(0.2);
+  }
 
   /// Restores music volume after an announcement finishes.
-  /// Full implementation added in Task 3.
-  Future<void> unduck() async {}
+  Future<void> unduck() async {
+    if (!_isDucked) return;
+    _isDucked = false;
+    await _player.setVolume(_normalVolume);
+  }
 
   Future<void> dispose() async {
     _initialized = false;
