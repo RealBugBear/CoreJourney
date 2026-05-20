@@ -1,11 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../../core/navigation/app_router.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/training/vorrunde_status_settings.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../progress/presentation/providers/progress_provider.dart';
+import '../../../training/presentation/screens/training_session_screen.dart';
+import '../../../training/presentation/screens/vorrunde_interstitial_screen.dart';
 
 const _packages = [
   ('moro', 'Moro Reflex'),
@@ -22,11 +27,53 @@ const _packages = [
 // Indices of packages that are free/unlocked
 const _freePackageIndices = {0, 1, 2};
 
-class PackagesScreen extends ConsumerWidget {
+class PackagesScreen extends ConsumerStatefulWidget {
   const PackagesScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<PackagesScreen> createState() => _PackagesScreenState();
+}
+
+class _PackagesScreenState extends ConsumerState<PackagesScreen> {
+  bool _vorrundeChecked = false;
+  bool _showInterstitial = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkVorrunde();
+  }
+
+  Future<void> _checkVorrunde() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (!mounted) return;
+    setState(() {
+      _showInterstitial = VorrundeStatusSettings.isUnseen(prefs);
+      _vorrundeChecked = true;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (!_vorrundeChecked) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (_showInterstitial) {
+      return VorrundeInterstitialScreen(
+        onStartVorrunde: () {
+          setState(() => _showInterstitial = false);
+          context.push(
+            Routes.trainingSession,
+            extra: const TrainingSessionLaunchArgs(packageId: 'vorrunde'),
+          );
+        },
+        onSkip: () => setState(() => _showInterstitial = false),
+      );
+    }
+
     final l10n = AppLocalizations.of(context);
     final selectedPackageId = ref.watch(selectedPackageIdProvider);
     final currentEmail = Supabase.instance.client.auth.currentUser?.email ?? '';
@@ -109,9 +156,12 @@ class PackagesScreen extends ConsumerWidget {
                     )
                   : allowDevPackageSwitch
                       ? Text(
-                          'Dev-Auswahl verfuegbar',
+                          'Dev-Auswahl verfügbar',
                           style: TextStyle(
-                              color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 12),
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onSurfaceVariant,
+                              fontSize: 12),
                         )
                       : isLocked
                           ? Text(
@@ -128,7 +178,9 @@ class PackagesScreen extends ConsumerWidget {
                               : Text(
                                   'Im festen Paketverlauf',
                                   style: TextStyle(
-                                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onSurfaceVariant,
                                       fontSize: 12),
                                 ),
               trailing: allowDevPackageSwitch
