@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../domain/models/exercise.dart';
+import 'exercise_image_widget.dart';
 
 class ExercisePositionWidget extends StatelessWidget {
   final Exercise exercise;
@@ -40,7 +41,7 @@ class ExercisePositionWidget extends StatelessWidget {
             flex: 2,
             child: ClipRRect(
               borderRadius: BorderRadius.circular(16),
-              child: Image.asset(exercise.imagePath, fit: BoxFit.contain),
+              child: ExerciseImageWidget(exercise: exercise, fit: BoxFit.contain),
             ),
           ),
           const SizedBox(height: 24),
@@ -92,6 +93,7 @@ class ExercisePositionWidget extends StatelessWidget {
             style: ElevatedButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 18),
               backgroundColor: AppColors.primary,
+              foregroundColor: AppColors.textPrimary,
             ),
             child: Text(l10n.next,
                 style:

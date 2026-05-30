@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../domain/models/exercise.dart';
-import '../providers/training_flow_provider.dart';
 import '../widgets/animated_progress_bar.dart';
+import '../widgets/exercise_image_widget.dart';
 
 class TrainingMovementScreen extends ConsumerWidget {
   final Exercise exercise;
@@ -18,13 +18,15 @@ class TrainingMovementScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    final flowNotifier = ref.read(trainingFlowProvider.notifier);
+    final locale = Localizations.localeOf(context).languageCode;
+    final movementInstructions = exercise.movementInstructions(locale);
+    final hints = exercise.hints(locale);
 
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () => flowNotifier.previousScreen(),
+          onPressed: () => Navigator.of(context).maybePop(),
           tooltip: 'Zurück',
         ),
         // Slim progress bar
@@ -90,25 +92,11 @@ class TrainingMovementScreen extends ConsumerWidget {
                       ),
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(12.5),
-                        child: Image.asset(
-                          exercise.imagePath,
+                        child: ExerciseImageWidget(
+                          exercise: exercise,
                           width: 140,
                           height: 140,
                           fit: BoxFit.contain,
-                          semanticLabel:
-                              'Referenzbild für Übung ${exercise.exerciseNumber}',
-                          errorBuilder: (context, error, stackTrace) {
-                            return Container(
-                              width: 140,
-                              height: 140,
-                              color: theme.colorScheme.surfaceContainerHighest,
-                              child: Icon(
-                                Icons.image_not_supported,
-                                size: 32,
-                                color: theme.colorScheme.onSurfaceVariant,
-                              ),
-                            );
-                          },
                         ),
                       ),
                     ),
@@ -118,7 +106,7 @@ class TrainingMovementScreen extends ConsumerWidget {
                 // Movement Instructions - THE FOCUS!
                 Expanded(
                   child: ListView.separated(
-                    itemCount: exercise.movementInstructions.length,
+                    itemCount: movementInstructions.length,
                     separatorBuilder: (context, index) =>
                         const SizedBox(height: 28),
                     padding: const EdgeInsets.symmetric(vertical: 16),
@@ -153,7 +141,7 @@ class TrainingMovementScreen extends ConsumerWidget {
                           // Large, readable instruction text
                           Expanded(
                             child: Text(
-                              exercise.movementInstructions[index],
+                              movementInstructions[index],
                               style: theme.textTheme.headlineSmall?.copyWith(
                                 height: 1.7,
                                 fontWeight: FontWeight.w400,
@@ -169,7 +157,7 @@ class TrainingMovementScreen extends ConsumerWidget {
                 ),
 
                 // Hints Section (if available) - Compact
-                if (exercise.hints != null && exercise.hints!.isNotEmpty) ...[
+                if (hints != null && hints.isNotEmpty) ...[
                   const SizedBox(height: 12),
                   Container(
                     padding: const EdgeInsets.all(14),
@@ -203,7 +191,7 @@ class TrainingMovementScreen extends ConsumerWidget {
                           ],
                         ),
                         const SizedBox(height: 8),
-                        ...exercise.hints!.map((hint) => Padding(
+                        ...hints.map((hint) => Padding(
                               padding: const EdgeInsets.only(top: 3),
                               child: Text(
                                 '• $hint',

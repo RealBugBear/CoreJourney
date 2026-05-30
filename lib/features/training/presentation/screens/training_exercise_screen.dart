@@ -9,12 +9,12 @@ import '../../../../core/training/handsfree_setup_settings.dart';
 import '../../../../core/training/training_feedback_settings.dart';
 import '../../../../core/training/training_tempo_defaults.dart';
 import '../../domain/models/exercise.dart';
-import '../providers/training_flow_provider.dart';
 import '../widgets/animated_progress_bar.dart';
 import '../widgets/premium_glassmorphic_card.dart';
 import '../widgets/rhythm_visualizer.dart';
 import '../widgets/parallel_lines_visualizer.dart';
 import '../widgets/arc_swap_visualizer.dart';
+import '../widgets/exercise_image_widget.dart';
 
 class TrainingExerciseScreen extends ConsumerStatefulWidget {
   final Exercise exercise;
@@ -168,7 +168,6 @@ class _TrainingExerciseScreenState
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final flowNotifier = ref.read(trainingFlowProvider.notifier);
     final exercise = widget.exercise;
     final isLastExercise = widget.isLastExercise;
     final isRoutineMode = widget.routineMode;
@@ -238,7 +237,7 @@ class _TrainingExerciseScreenState
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () => flowNotifier.previousScreen(),
+          onPressed: () => Navigator.of(context).maybePop(),
           tooltip: 'Zurück',
         ),
         // Slim progress bar between back and close buttons
@@ -334,20 +333,7 @@ class _TrainingExerciseScreenState
                                     borderRadius: BorderRadius.circular(14),
                                     child: AspectRatio(
                                       aspectRatio: 16 / 9,
-                                      child: Image.asset(
-                                        exercise.imagePath,
-                                        fit: BoxFit.cover,
-                                        errorBuilder: (_, __, ___) => Container(
-                                          color: theme.colorScheme
-                                              .surfaceContainerHighest,
-                                          alignment: Alignment.center,
-                                          child: Icon(
-                                            Icons.image_not_supported_outlined,
-                                            color: theme.colorScheme.onSurface
-                                                .withOpacity(0.5),
-                                          ),
-                                        ),
-                                      ),
+                                      child: ExerciseImageWidget(exercise: exercise, fit: BoxFit.cover),
                                     ),
                                   ),
                                 ] else ...[
@@ -428,7 +414,9 @@ class _TrainingExerciseScreenState
                             padding: const EdgeInsets.all(28.0),
                             child: Center(
                               child: Text(
-                                exercise.executionGuide,
+                                exercise.executionGuide(
+                                  Localizations.localeOf(context).languageCode,
+                                ),
                                 style: theme.textTheme.headlineSmall?.copyWith(
                                   height: 1.8,
                                   fontWeight: FontWeight.w400,

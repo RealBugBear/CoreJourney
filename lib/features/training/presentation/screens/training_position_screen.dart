@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../domain/models/exercise.dart';
-import '../providers/training_flow_provider.dart';
 import '../widgets/animated_progress_bar.dart';
+import '../widgets/exercise_image_widget.dart';
 
 class TrainingPositionScreen extends ConsumerWidget {
   final Exercise exercise;
@@ -18,13 +18,14 @@ class TrainingPositionScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    final flowNotifier = ref.read(trainingFlowProvider.notifier);
+    final locale = Localizations.localeOf(context).languageCode;
+    final positionInstructions = exercise.positionInstructions(locale);
 
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () => flowNotifier.previousScreen(),
+          onPressed: () => Navigator.of(context).maybePop(),
           tooltip: 'Zurück',
         ),
         // Slim progress bar
@@ -88,25 +89,11 @@ class TrainingPositionScreen extends ConsumerWidget {
                     ),
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(18),
-                      child: Image.asset(
-                        exercise.imagePath,
+                      child: ExerciseImageWidget(
+                        exercise: exercise,
                         width: 260,
                         height: 260,
                         fit: BoxFit.contain,
-                        semanticLabel:
-                            'Übungsbild für Übung ${exercise.exerciseNumber}',
-                        errorBuilder: (context, error, stackTrace) {
-                          return Container(
-                            width: 260,
-                            height: 260,
-                            color: theme.colorScheme.surfaceContainerHighest,
-                            child: Icon(
-                              Icons.image_not_supported,
-                              size: 48,
-                              color: theme.colorScheme.onSurfaceVariant,
-                            ),
-                          );
-                        },
                       ),
                     ),
                   ),
@@ -115,7 +102,7 @@ class TrainingPositionScreen extends ConsumerWidget {
                 // Position Instructions - THE FOCUS!
                 Expanded(
                   child: ListView.separated(
-                    itemCount: exercise.positionInstructions.length,
+                    itemCount: positionInstructions.length,
                     separatorBuilder: (context, index) =>
                         const SizedBox(height: 24),
                     padding: const EdgeInsets.symmetric(vertical: 8),
@@ -150,7 +137,7 @@ class TrainingPositionScreen extends ConsumerWidget {
                           // Large, readable instruction text
                           Expanded(
                             child: Text(
-                              exercise.positionInstructions[index],
+                              positionInstructions[index],
                               style: theme.textTheme.headlineSmall?.copyWith(
                                 height: 1.7,
                                 fontWeight: FontWeight.w400,

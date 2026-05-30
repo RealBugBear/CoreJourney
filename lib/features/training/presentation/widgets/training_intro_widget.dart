@@ -4,12 +4,14 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../domain/models/exercise.dart';
 import '../../domain/models/training_session.dart';
+import 'exercise_image_widget.dart';
 
 class TrainingIntroWidget extends StatelessWidget {
   final Exercise exercise;
   final int exerciseIndex;
   final int totalExercises;
   final TrainingSessionMode mode;
+  final bool isDuo;
   final VoidCallback onStart;
   final ValueChanged<TrainingSessionMode> onModeChanged;
 
@@ -19,6 +21,7 @@ class TrainingIntroWidget extends StatelessWidget {
     required this.exerciseIndex,
     required this.totalExercises,
     required this.mode,
+    this.isDuo = false,
     required this.onStart,
     required this.onModeChanged,
   });
@@ -60,8 +63,9 @@ class TrainingIntroWidget extends StatelessWidget {
           Expanded(
             child: ClipRRect(
               borderRadius: BorderRadius.circular(16),
-              child: Image.asset(
-                exercise.imagePath,
+              child: ExerciseImageWidget(
+                exercise: exercise,
+                isDuo: isDuo,
                 fit: BoxFit.contain,
               ),
             ),
@@ -80,7 +84,8 @@ class TrainingIntroWidget extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             '${exercise.durationSeconds}s · ${exercise.repetitions}x',
-            style: const TextStyle(color: AppColors.textSecondaryDark, fontSize: 15),
+            style: const TextStyle(
+                color: AppColors.textSecondaryDark, fontSize: 15),
           ),
           const SizedBox(height: 24),
 
@@ -188,6 +193,7 @@ class TrainingIntroWidget extends StatelessWidget {
             style: ElevatedButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 18),
               backgroundColor: AppColors.primary,
+              foregroundColor: AppColors.textPrimary,
             ),
             child: Text(
               l10n.startTraining,

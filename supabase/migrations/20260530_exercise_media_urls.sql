@@ -19,7 +19,6 @@ VALUES (
 ON CONFLICT (id) DO NOTHING;
 
 -- Allow anyone (anon + authenticated) to read from the bucket.
-ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "exercise-media public read" ON storage.objects;
 CREATE POLICY "exercise-media public read"
   ON storage.objects FOR SELECT
