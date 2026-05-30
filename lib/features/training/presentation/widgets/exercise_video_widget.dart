@@ -4,6 +4,7 @@ import 'package:video_player/video_player.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../domain/models/exercise.dart';
+import 'exercise_image_widget.dart';
 
 class ExerciseVideoWidget extends StatefulWidget {
   final Exercise exercise;
@@ -32,14 +33,18 @@ class _ExerciseVideoWidgetState extends State<ExerciseVideoWidget> {
   }
 
   Future<void> _initVideo() async {
-    final path = widget.exercise.videoPath;
-    if (path == null) {
+    final videoUrl = widget.exercise.videoUrl;
+    final videoPath = widget.exercise.videoPath;
+
+    if (videoUrl == null && videoPath == null) {
       setState(() => _videoFailed = true);
       return;
     }
 
     try {
-      final controller = VideoPlayerController.asset(path);
+      final controller = videoUrl != null
+          ? VideoPlayerController.networkUrl(Uri.parse(videoUrl))
+          : VideoPlayerController.asset(videoPath!);
       await controller.initialize();
       controller.setLooping(true);
 
@@ -53,7 +58,6 @@ class _ExerciseVideoWidgetState extends State<ExerciseVideoWidget> {
         _initialized = true;
       });
 
-      // Auto-play
       controller.play();
       setState(() => _isPlaying = true);
     } catch (e) {
@@ -91,7 +95,7 @@ class _ExerciseVideoWidgetState extends State<ExerciseVideoWidget> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _StepLabel(label: 'Video'),
+          const _StepLabel(label: 'Video'),
           const SizedBox(height: 16),
           Text(
             widget.exercise.title(locale),
@@ -114,6 +118,7 @@ class _ExerciseVideoWidgetState extends State<ExerciseVideoWidget> {
             style: ElevatedButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 18),
               backgroundColor: AppColors.primary,
+              foregroundColor: AppColors.textPrimary,
             ),
             child: Text(l10n.next,
                 style:
@@ -125,7 +130,10 @@ class _ExerciseVideoWidgetState extends State<ExerciseVideoWidget> {
   }
 
   Widget _buildVideoArea() {
-    if (_videoFailed || widget.exercise.videoPath == null) {
+    final hasVideo =
+        widget.exercise.videoUrl != null || widget.exercise.videoPath != null;
+
+    if (_videoFailed || !hasVideo) {
       return _FallbackImage(exercise: widget.exercise);
     }
 
@@ -133,7 +141,7 @@ class _ExerciseVideoWidgetState extends State<ExerciseVideoWidget> {
       return Stack(
         alignment: Alignment.center,
         children: [
-          Image.asset(widget.exercise.imagePath, fit: BoxFit.cover),
+          ExerciseImageWidget(exercise: widget.exercise, fit: BoxFit.cover),
           Container(color: Colors.black54),
           const CircularProgressIndicator(color: AppColors.primary),
         ],
@@ -149,7 +157,6 @@ class _ExerciseVideoWidgetState extends State<ExerciseVideoWidget> {
             aspectRatio: _controller!.value.aspectRatio,
             child: VideoPlayer(_controller!),
           ),
-          // Play/pause overlay — fades after tap
           AnimatedOpacity(
             opacity: _isPlaying ? 0.0 : 1.0,
             duration: const Duration(milliseconds: 300),
@@ -166,7 +173,6 @@ class _ExerciseVideoWidgetState extends State<ExerciseVideoWidget> {
               ),
             ),
           ),
-          // Progress bar at bottom
           Positioned(
             bottom: 0,
             left: 0,
@@ -196,7 +202,7 @@ class _FallbackImage extends StatelessWidget {
     return Stack(
       alignment: Alignment.center,
       children: [
-        Image.asset(exercise.imagePath, fit: BoxFit.contain),
+        ExerciseImageWidget(exercise: exercise, fit: BoxFit.contain),
         Container(
           decoration: BoxDecoration(
             color: Colors.black.withValues(alpha: 0.4),
