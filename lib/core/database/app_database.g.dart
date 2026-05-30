@@ -814,6 +814,12 @@ class $ExercisesTableTable extends ExercisesTable
   late final GeneratedColumn<String> imagePath = GeneratedColumn<String>(
       'image_path', aliasedName, false,
       type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _duoImagePathMeta =
+      const VerificationMeta('duoImagePath');
+  @override
+  late final GeneratedColumn<String> duoImagePath = GeneratedColumn<String>(
+      'duo_image_path', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
   static const VerificationMeta _videoPathMeta =
       const VerificationMeta('videoPath');
   @override
@@ -825,6 +831,24 @@ class $ExercisesTableTable extends ExercisesTable
   @override
   late final GeneratedColumn<String> audioCuePath = GeneratedColumn<String>(
       'audio_cue_path', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _imageUrlMeta =
+      const VerificationMeta('imageUrl');
+  @override
+  late final GeneratedColumn<String> imageUrl = GeneratedColumn<String>(
+      'image_url', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _duoImageUrlMeta =
+      const VerificationMeta('duoImageUrl');
+  @override
+  late final GeneratedColumn<String> duoImageUrl = GeneratedColumn<String>(
+      'duo_image_url', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _videoUrlMeta =
+      const VerificationMeta('videoUrl');
+  @override
+  late final GeneratedColumn<String> videoUrl = GeneratedColumn<String>(
+      'video_url', aliasedName, true,
       type: DriftSqlType.string, requiredDuringInsert: false);
   static const VerificationMeta _rhythmTypeMeta =
       const VerificationMeta('rhythmType');
@@ -912,8 +936,12 @@ class $ExercisesTableTable extends ExercisesTable
         durationSeconds,
         repetitions,
         imagePath,
+        duoImagePath,
         videoPath,
         audioCuePath,
+        imageUrl,
+        duoImageUrl,
+        videoUrl,
         rhythmType,
         phasesJson,
         hasRepSwitch,
@@ -1042,6 +1070,12 @@ class $ExercisesTableTable extends ExercisesTable
     } else if (isInserting) {
       context.missing(_imagePathMeta);
     }
+    if (data.containsKey('duo_image_path')) {
+      context.handle(
+          _duoImagePathMeta,
+          duoImagePath.isAcceptableOrUnknown(
+              data['duo_image_path']!, _duoImagePathMeta));
+    }
     if (data.containsKey('video_path')) {
       context.handle(_videoPathMeta,
           videoPath.isAcceptableOrUnknown(data['video_path']!, _videoPathMeta));
@@ -1051,6 +1085,20 @@ class $ExercisesTableTable extends ExercisesTable
           _audioCuePathMeta,
           audioCuePath.isAcceptableOrUnknown(
               data['audio_cue_path']!, _audioCuePathMeta));
+    }
+    if (data.containsKey('image_url')) {
+      context.handle(_imageUrlMeta,
+          imageUrl.isAcceptableOrUnknown(data['image_url']!, _imageUrlMeta));
+    }
+    if (data.containsKey('duo_image_url')) {
+      context.handle(
+          _duoImageUrlMeta,
+          duoImageUrl.isAcceptableOrUnknown(
+              data['duo_image_url']!, _duoImageUrlMeta));
+    }
+    if (data.containsKey('video_url')) {
+      context.handle(_videoUrlMeta,
+          videoUrl.isAcceptableOrUnknown(data['video_url']!, _videoUrlMeta));
     }
     if (data.containsKey('rhythm_type')) {
       context.handle(
@@ -1145,10 +1193,18 @@ class $ExercisesTableTable extends ExercisesTable
           .read(DriftSqlType.int, data['${effectivePrefix}repetitions'])!,
       imagePath: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}image_path'])!,
+      duoImagePath: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}duo_image_path']),
       videoPath: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}video_path']),
       audioCuePath: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}audio_cue_path']),
+      imageUrl: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}image_url']),
+      duoImageUrl: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}duo_image_url']),
+      videoUrl: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}video_url']),
       rhythmType: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}rhythm_type'])!,
       phasesJson: attachedDatabase.typeMapping
@@ -1192,8 +1248,12 @@ class ExercisesTableData extends DataClass
   final int durationSeconds;
   final int repetitions;
   final String imagePath;
+  final String? duoImagePath;
   final String? videoPath;
   final String? audioCuePath;
+  final String? imageUrl;
+  final String? duoImageUrl;
+  final String? videoUrl;
   final String rhythmType;
   final String phasesJson;
   final bool hasRepSwitch;
@@ -1219,8 +1279,12 @@ class ExercisesTableData extends DataClass
       required this.durationSeconds,
       required this.repetitions,
       required this.imagePath,
+      this.duoImagePath,
       this.videoPath,
       this.audioCuePath,
+      this.imageUrl,
+      this.duoImageUrl,
+      this.videoUrl,
       required this.rhythmType,
       required this.phasesJson,
       required this.hasRepSwitch,
@@ -1252,11 +1316,23 @@ class ExercisesTableData extends DataClass
     map['duration_seconds'] = Variable<int>(durationSeconds);
     map['repetitions'] = Variable<int>(repetitions);
     map['image_path'] = Variable<String>(imagePath);
+    if (!nullToAbsent || duoImagePath != null) {
+      map['duo_image_path'] = Variable<String>(duoImagePath);
+    }
     if (!nullToAbsent || videoPath != null) {
       map['video_path'] = Variable<String>(videoPath);
     }
     if (!nullToAbsent || audioCuePath != null) {
       map['audio_cue_path'] = Variable<String>(audioCuePath);
+    }
+    if (!nullToAbsent || imageUrl != null) {
+      map['image_url'] = Variable<String>(imageUrl);
+    }
+    if (!nullToAbsent || duoImageUrl != null) {
+      map['duo_image_url'] = Variable<String>(duoImageUrl);
+    }
+    if (!nullToAbsent || videoUrl != null) {
+      map['video_url'] = Variable<String>(videoUrl);
     }
     map['rhythm_type'] = Variable<String>(rhythmType);
     map['phases_json'] = Variable<String>(phasesJson);
@@ -1291,12 +1367,24 @@ class ExercisesTableData extends DataClass
       durationSeconds: Value(durationSeconds),
       repetitions: Value(repetitions),
       imagePath: Value(imagePath),
+      duoImagePath: duoImagePath == null && nullToAbsent
+          ? const Value.absent()
+          : Value(duoImagePath),
       videoPath: videoPath == null && nullToAbsent
           ? const Value.absent()
           : Value(videoPath),
       audioCuePath: audioCuePath == null && nullToAbsent
           ? const Value.absent()
           : Value(audioCuePath),
+      imageUrl: imageUrl == null && nullToAbsent
+          ? const Value.absent()
+          : Value(imageUrl),
+      duoImageUrl: duoImageUrl == null && nullToAbsent
+          ? const Value.absent()
+          : Value(duoImageUrl),
+      videoUrl: videoUrl == null && nullToAbsent
+          ? const Value.absent()
+          : Value(videoUrl),
       rhythmType: Value(rhythmType),
       phasesJson: Value(phasesJson),
       hasRepSwitch: Value(hasRepSwitch),
@@ -1332,8 +1420,12 @@ class ExercisesTableData extends DataClass
       durationSeconds: serializer.fromJson<int>(json['durationSeconds']),
       repetitions: serializer.fromJson<int>(json['repetitions']),
       imagePath: serializer.fromJson<String>(json['imagePath']),
+      duoImagePath: serializer.fromJson<String?>(json['duoImagePath']),
       videoPath: serializer.fromJson<String?>(json['videoPath']),
       audioCuePath: serializer.fromJson<String?>(json['audioCuePath']),
+      imageUrl: serializer.fromJson<String?>(json['imageUrl']),
+      duoImageUrl: serializer.fromJson<String?>(json['duoImageUrl']),
+      videoUrl: serializer.fromJson<String?>(json['videoUrl']),
       rhythmType: serializer.fromJson<String>(json['rhythmType']),
       phasesJson: serializer.fromJson<String>(json['phasesJson']),
       hasRepSwitch: serializer.fromJson<bool>(json['hasRepSwitch']),
@@ -1368,8 +1460,12 @@ class ExercisesTableData extends DataClass
       'durationSeconds': serializer.toJson<int>(durationSeconds),
       'repetitions': serializer.toJson<int>(repetitions),
       'imagePath': serializer.toJson<String>(imagePath),
+      'duoImagePath': serializer.toJson<String?>(duoImagePath),
       'videoPath': serializer.toJson<String?>(videoPath),
       'audioCuePath': serializer.toJson<String?>(audioCuePath),
+      'imageUrl': serializer.toJson<String?>(imageUrl),
+      'duoImageUrl': serializer.toJson<String?>(duoImageUrl),
+      'videoUrl': serializer.toJson<String?>(videoUrl),
       'rhythmType': serializer.toJson<String>(rhythmType),
       'phasesJson': serializer.toJson<String>(phasesJson),
       'hasRepSwitch': serializer.toJson<bool>(hasRepSwitch),
@@ -1398,8 +1494,12 @@ class ExercisesTableData extends DataClass
           int? durationSeconds,
           int? repetitions,
           String? imagePath,
+          Value<String?> duoImagePath = const Value.absent(),
           Value<String?> videoPath = const Value.absent(),
           Value<String?> audioCuePath = const Value.absent(),
+          Value<String?> imageUrl = const Value.absent(),
+          Value<String?> duoImageUrl = const Value.absent(),
+          Value<String?> videoUrl = const Value.absent(),
           String? rhythmType,
           String? phasesJson,
           bool? hasRepSwitch,
@@ -1429,9 +1529,14 @@ class ExercisesTableData extends DataClass
         durationSeconds: durationSeconds ?? this.durationSeconds,
         repetitions: repetitions ?? this.repetitions,
         imagePath: imagePath ?? this.imagePath,
+        duoImagePath:
+            duoImagePath.present ? duoImagePath.value : this.duoImagePath,
         videoPath: videoPath.present ? videoPath.value : this.videoPath,
         audioCuePath:
             audioCuePath.present ? audioCuePath.value : this.audioCuePath,
+        imageUrl: imageUrl.present ? imageUrl.value : this.imageUrl,
+        duoImageUrl: duoImageUrl.present ? duoImageUrl.value : this.duoImageUrl,
+        videoUrl: videoUrl.present ? videoUrl.value : this.videoUrl,
         rhythmType: rhythmType ?? this.rhythmType,
         phasesJson: phasesJson ?? this.phasesJson,
         hasRepSwitch: hasRepSwitch ?? this.hasRepSwitch,
@@ -1476,10 +1581,17 @@ class ExercisesTableData extends DataClass
       repetitions:
           data.repetitions.present ? data.repetitions.value : this.repetitions,
       imagePath: data.imagePath.present ? data.imagePath.value : this.imagePath,
+      duoImagePath: data.duoImagePath.present
+          ? data.duoImagePath.value
+          : this.duoImagePath,
       videoPath: data.videoPath.present ? data.videoPath.value : this.videoPath,
       audioCuePath: data.audioCuePath.present
           ? data.audioCuePath.value
           : this.audioCuePath,
+      imageUrl: data.imageUrl.present ? data.imageUrl.value : this.imageUrl,
+      duoImageUrl:
+          data.duoImageUrl.present ? data.duoImageUrl.value : this.duoImageUrl,
+      videoUrl: data.videoUrl.present ? data.videoUrl.value : this.videoUrl,
       rhythmType:
           data.rhythmType.present ? data.rhythmType.value : this.rhythmType,
       phasesJson:
@@ -1518,8 +1630,12 @@ class ExercisesTableData extends DataClass
           ..write('durationSeconds: $durationSeconds, ')
           ..write('repetitions: $repetitions, ')
           ..write('imagePath: $imagePath, ')
+          ..write('duoImagePath: $duoImagePath, ')
           ..write('videoPath: $videoPath, ')
           ..write('audioCuePath: $audioCuePath, ')
+          ..write('imageUrl: $imageUrl, ')
+          ..write('duoImageUrl: $duoImageUrl, ')
+          ..write('videoUrl: $videoUrl, ')
           ..write('rhythmType: $rhythmType, ')
           ..write('phasesJson: $phasesJson, ')
           ..write('hasRepSwitch: $hasRepSwitch, ')
@@ -1550,8 +1666,12 @@ class ExercisesTableData extends DataClass
         durationSeconds,
         repetitions,
         imagePath,
+        duoImagePath,
         videoPath,
         audioCuePath,
+        imageUrl,
+        duoImageUrl,
+        videoUrl,
         rhythmType,
         phasesJson,
         hasRepSwitch,
@@ -1581,8 +1701,12 @@ class ExercisesTableData extends DataClass
           other.durationSeconds == this.durationSeconds &&
           other.repetitions == this.repetitions &&
           other.imagePath == this.imagePath &&
+          other.duoImagePath == this.duoImagePath &&
           other.videoPath == this.videoPath &&
           other.audioCuePath == this.audioCuePath &&
+          other.imageUrl == this.imageUrl &&
+          other.duoImageUrl == this.duoImageUrl &&
+          other.videoUrl == this.videoUrl &&
           other.rhythmType == this.rhythmType &&
           other.phasesJson == this.phasesJson &&
           other.hasRepSwitch == this.hasRepSwitch &&
@@ -1610,8 +1734,12 @@ class ExercisesTableCompanion extends UpdateCompanion<ExercisesTableData> {
   final Value<int> durationSeconds;
   final Value<int> repetitions;
   final Value<String> imagePath;
+  final Value<String?> duoImagePath;
   final Value<String?> videoPath;
   final Value<String?> audioCuePath;
+  final Value<String?> imageUrl;
+  final Value<String?> duoImageUrl;
+  final Value<String?> videoUrl;
   final Value<String> rhythmType;
   final Value<String> phasesJson;
   final Value<bool> hasRepSwitch;
@@ -1638,8 +1766,12 @@ class ExercisesTableCompanion extends UpdateCompanion<ExercisesTableData> {
     this.durationSeconds = const Value.absent(),
     this.repetitions = const Value.absent(),
     this.imagePath = const Value.absent(),
+    this.duoImagePath = const Value.absent(),
     this.videoPath = const Value.absent(),
     this.audioCuePath = const Value.absent(),
+    this.imageUrl = const Value.absent(),
+    this.duoImageUrl = const Value.absent(),
+    this.videoUrl = const Value.absent(),
     this.rhythmType = const Value.absent(),
     this.phasesJson = const Value.absent(),
     this.hasRepSwitch = const Value.absent(),
@@ -1667,8 +1799,12 @@ class ExercisesTableCompanion extends UpdateCompanion<ExercisesTableData> {
     required int durationSeconds,
     required int repetitions,
     required String imagePath,
+    this.duoImagePath = const Value.absent(),
     this.videoPath = const Value.absent(),
     this.audioCuePath = const Value.absent(),
+    this.imageUrl = const Value.absent(),
+    this.duoImageUrl = const Value.absent(),
+    this.videoUrl = const Value.absent(),
     this.rhythmType = const Value.absent(),
     this.phasesJson = const Value.absent(),
     this.hasRepSwitch = const Value.absent(),
@@ -1709,8 +1845,12 @@ class ExercisesTableCompanion extends UpdateCompanion<ExercisesTableData> {
     Expression<int>? durationSeconds,
     Expression<int>? repetitions,
     Expression<String>? imagePath,
+    Expression<String>? duoImagePath,
     Expression<String>? videoPath,
     Expression<String>? audioCuePath,
+    Expression<String>? imageUrl,
+    Expression<String>? duoImageUrl,
+    Expression<String>? videoUrl,
     Expression<String>? rhythmType,
     Expression<String>? phasesJson,
     Expression<bool>? hasRepSwitch,
@@ -1742,8 +1882,12 @@ class ExercisesTableCompanion extends UpdateCompanion<ExercisesTableData> {
       if (durationSeconds != null) 'duration_seconds': durationSeconds,
       if (repetitions != null) 'repetitions': repetitions,
       if (imagePath != null) 'image_path': imagePath,
+      if (duoImagePath != null) 'duo_image_path': duoImagePath,
       if (videoPath != null) 'video_path': videoPath,
       if (audioCuePath != null) 'audio_cue_path': audioCuePath,
+      if (imageUrl != null) 'image_url': imageUrl,
+      if (duoImageUrl != null) 'duo_image_url': duoImageUrl,
+      if (videoUrl != null) 'video_url': videoUrl,
       if (rhythmType != null) 'rhythm_type': rhythmType,
       if (phasesJson != null) 'phases_json': phasesJson,
       if (hasRepSwitch != null) 'has_rep_switch': hasRepSwitch,
@@ -1773,8 +1917,12 @@ class ExercisesTableCompanion extends UpdateCompanion<ExercisesTableData> {
       Value<int>? durationSeconds,
       Value<int>? repetitions,
       Value<String>? imagePath,
+      Value<String?>? duoImagePath,
       Value<String?>? videoPath,
       Value<String?>? audioCuePath,
+      Value<String?>? imageUrl,
+      Value<String?>? duoImageUrl,
+      Value<String?>? videoUrl,
       Value<String>? rhythmType,
       Value<String>? phasesJson,
       Value<bool>? hasRepSwitch,
@@ -1805,8 +1953,12 @@ class ExercisesTableCompanion extends UpdateCompanion<ExercisesTableData> {
       durationSeconds: durationSeconds ?? this.durationSeconds,
       repetitions: repetitions ?? this.repetitions,
       imagePath: imagePath ?? this.imagePath,
+      duoImagePath: duoImagePath ?? this.duoImagePath,
       videoPath: videoPath ?? this.videoPath,
       audioCuePath: audioCuePath ?? this.audioCuePath,
+      imageUrl: imageUrl ?? this.imageUrl,
+      duoImageUrl: duoImageUrl ?? this.duoImageUrl,
+      videoUrl: videoUrl ?? this.videoUrl,
       rhythmType: rhythmType ?? this.rhythmType,
       phasesJson: phasesJson ?? this.phasesJson,
       hasRepSwitch: hasRepSwitch ?? this.hasRepSwitch,
@@ -1874,11 +2026,23 @@ class ExercisesTableCompanion extends UpdateCompanion<ExercisesTableData> {
     if (imagePath.present) {
       map['image_path'] = Variable<String>(imagePath.value);
     }
+    if (duoImagePath.present) {
+      map['duo_image_path'] = Variable<String>(duoImagePath.value);
+    }
     if (videoPath.present) {
       map['video_path'] = Variable<String>(videoPath.value);
     }
     if (audioCuePath.present) {
       map['audio_cue_path'] = Variable<String>(audioCuePath.value);
+    }
+    if (imageUrl.present) {
+      map['image_url'] = Variable<String>(imageUrl.value);
+    }
+    if (duoImageUrl.present) {
+      map['duo_image_url'] = Variable<String>(duoImageUrl.value);
+    }
+    if (videoUrl.present) {
+      map['video_url'] = Variable<String>(videoUrl.value);
     }
     if (rhythmType.present) {
       map['rhythm_type'] = Variable<String>(rhythmType.value);
@@ -1929,8 +2093,12 @@ class ExercisesTableCompanion extends UpdateCompanion<ExercisesTableData> {
           ..write('durationSeconds: $durationSeconds, ')
           ..write('repetitions: $repetitions, ')
           ..write('imagePath: $imagePath, ')
+          ..write('duoImagePath: $duoImagePath, ')
           ..write('videoPath: $videoPath, ')
           ..write('audioCuePath: $audioCuePath, ')
+          ..write('imageUrl: $imageUrl, ')
+          ..write('duoImageUrl: $duoImageUrl, ')
+          ..write('videoUrl: $videoUrl, ')
           ..write('rhythmType: $rhythmType, ')
           ..write('phasesJson: $phasesJson, ')
           ..write('hasRepSwitch: $hasRepSwitch, ')
@@ -6561,8 +6729,12 @@ typedef $$ExercisesTableTableCreateCompanionBuilder = ExercisesTableCompanion
   required int durationSeconds,
   required int repetitions,
   required String imagePath,
+  Value<String?> duoImagePath,
   Value<String?> videoPath,
   Value<String?> audioCuePath,
+  Value<String?> imageUrl,
+  Value<String?> duoImageUrl,
+  Value<String?> videoUrl,
   Value<String> rhythmType,
   Value<String> phasesJson,
   Value<bool> hasRepSwitch,
@@ -6591,8 +6763,12 @@ typedef $$ExercisesTableTableUpdateCompanionBuilder = ExercisesTableCompanion
   Value<int> durationSeconds,
   Value<int> repetitions,
   Value<String> imagePath,
+  Value<String?> duoImagePath,
   Value<String?> videoPath,
   Value<String?> audioCuePath,
+  Value<String?> imageUrl,
+  Value<String?> duoImageUrl,
+  Value<String?> videoUrl,
   Value<String> rhythmType,
   Value<String> phasesJson,
   Value<bool> hasRepSwitch,
@@ -6669,11 +6845,23 @@ class $$ExercisesTableTableFilterComposer
   ColumnFilters<String> get imagePath => $composableBuilder(
       column: $table.imagePath, builder: (column) => ColumnFilters(column));
 
+  ColumnFilters<String> get duoImagePath => $composableBuilder(
+      column: $table.duoImagePath, builder: (column) => ColumnFilters(column));
+
   ColumnFilters<String> get videoPath => $composableBuilder(
       column: $table.videoPath, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<String> get audioCuePath => $composableBuilder(
       column: $table.audioCuePath, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get imageUrl => $composableBuilder(
+      column: $table.imageUrl, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get duoImageUrl => $composableBuilder(
+      column: $table.duoImageUrl, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get videoUrl => $composableBuilder(
+      column: $table.videoUrl, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<String> get rhythmType => $composableBuilder(
       column: $table.rhythmType, builder: (column) => ColumnFilters(column));
@@ -6765,12 +6953,25 @@ class $$ExercisesTableTableOrderingComposer
   ColumnOrderings<String> get imagePath => $composableBuilder(
       column: $table.imagePath, builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<String> get duoImagePath => $composableBuilder(
+      column: $table.duoImagePath,
+      builder: (column) => ColumnOrderings(column));
+
   ColumnOrderings<String> get videoPath => $composableBuilder(
       column: $table.videoPath, builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<String> get audioCuePath => $composableBuilder(
       column: $table.audioCuePath,
       builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get imageUrl => $composableBuilder(
+      column: $table.imageUrl, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get duoImageUrl => $composableBuilder(
+      column: $table.duoImageUrl, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get videoUrl => $composableBuilder(
+      column: $table.videoUrl, builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<String> get rhythmType => $composableBuilder(
       column: $table.rhythmType, builder: (column) => ColumnOrderings(column));
@@ -6856,11 +7057,23 @@ class $$ExercisesTableTableAnnotationComposer
   GeneratedColumn<String> get imagePath =>
       $composableBuilder(column: $table.imagePath, builder: (column) => column);
 
+  GeneratedColumn<String> get duoImagePath => $composableBuilder(
+      column: $table.duoImagePath, builder: (column) => column);
+
   GeneratedColumn<String> get videoPath =>
       $composableBuilder(column: $table.videoPath, builder: (column) => column);
 
   GeneratedColumn<String> get audioCuePath => $composableBuilder(
       column: $table.audioCuePath, builder: (column) => column);
+
+  GeneratedColumn<String> get imageUrl =>
+      $composableBuilder(column: $table.imageUrl, builder: (column) => column);
+
+  GeneratedColumn<String> get duoImageUrl => $composableBuilder(
+      column: $table.duoImageUrl, builder: (column) => column);
+
+  GeneratedColumn<String> get videoUrl =>
+      $composableBuilder(column: $table.videoUrl, builder: (column) => column);
 
   GeneratedColumn<String> get rhythmType => $composableBuilder(
       column: $table.rhythmType, builder: (column) => column);
@@ -6930,8 +7143,12 @@ class $$ExercisesTableTableTableManager extends RootTableManager<
             Value<int> durationSeconds = const Value.absent(),
             Value<int> repetitions = const Value.absent(),
             Value<String> imagePath = const Value.absent(),
+            Value<String?> duoImagePath = const Value.absent(),
             Value<String?> videoPath = const Value.absent(),
             Value<String?> audioCuePath = const Value.absent(),
+            Value<String?> imageUrl = const Value.absent(),
+            Value<String?> duoImageUrl = const Value.absent(),
+            Value<String?> videoUrl = const Value.absent(),
             Value<String> rhythmType = const Value.absent(),
             Value<String> phasesJson = const Value.absent(),
             Value<bool> hasRepSwitch = const Value.absent(),
@@ -6959,8 +7176,12 @@ class $$ExercisesTableTableTableManager extends RootTableManager<
             durationSeconds: durationSeconds,
             repetitions: repetitions,
             imagePath: imagePath,
+            duoImagePath: duoImagePath,
             videoPath: videoPath,
             audioCuePath: audioCuePath,
+            imageUrl: imageUrl,
+            duoImageUrl: duoImageUrl,
+            videoUrl: videoUrl,
             rhythmType: rhythmType,
             phasesJson: phasesJson,
             hasRepSwitch: hasRepSwitch,
@@ -6988,8 +7209,12 @@ class $$ExercisesTableTableTableManager extends RootTableManager<
             required int durationSeconds,
             required int repetitions,
             required String imagePath,
+            Value<String?> duoImagePath = const Value.absent(),
             Value<String?> videoPath = const Value.absent(),
             Value<String?> audioCuePath = const Value.absent(),
+            Value<String?> imageUrl = const Value.absent(),
+            Value<String?> duoImageUrl = const Value.absent(),
+            Value<String?> videoUrl = const Value.absent(),
             Value<String> rhythmType = const Value.absent(),
             Value<String> phasesJson = const Value.absent(),
             Value<bool> hasRepSwitch = const Value.absent(),
@@ -7017,8 +7242,12 @@ class $$ExercisesTableTableTableManager extends RootTableManager<
             durationSeconds: durationSeconds,
             repetitions: repetitions,
             imagePath: imagePath,
+            duoImagePath: duoImagePath,
             videoPath: videoPath,
             audioCuePath: audioCuePath,
+            imageUrl: imageUrl,
+            duoImageUrl: duoImageUrl,
+            videoUrl: videoUrl,
             rhythmType: rhythmType,
             phasesJson: phasesJson,
             hasRepSwitch: hasRepSwitch,

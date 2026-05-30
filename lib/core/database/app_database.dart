@@ -72,7 +72,7 @@ class AppDatabase extends _$AppDatabase {
   }
 
   @override
-  int get schemaVersion => 7;
+  int get schemaVersion => 8;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -106,6 +106,12 @@ class AppDatabase extends _$AppDatabase {
           if (from < 7) {
             await m.addColumn(completionQuestionnairesTable,
                 completionQuestionnairesTable.subjectProfileId);
+          }
+          if (from < 8) {
+            // Drop and recreate exercises so the next syncIfNeeded() fetches
+            // fresh rows that include the new URL columns.
+            await m.deleteTable('exercises');
+            await m.createTable(exercisesTable);
           }
         },
       );

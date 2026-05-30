@@ -33,8 +33,14 @@ class ExercisesTable extends Table {
 
   // ── Assets ──────────────────────────────────────────────────────────────────
   TextColumn get imagePath => text()();
+  TextColumn get duoImagePath => text().nullable()();
   TextColumn get videoPath => text().nullable()();
   TextColumn get audioCuePath => text().nullable()();
+
+  // Remote media (Supabase Storage). Null = use bundled asset above.
+  TextColumn get imageUrl => text().nullable()();
+  TextColumn get duoImageUrl => text().nullable()();
+  TextColumn get videoUrl => text().nullable()();
 
   // ── Timer config ────────────────────────────────────────────────────────────
   // 'phased' = counted phases; 'holdRest' = hold N s, rest M s
