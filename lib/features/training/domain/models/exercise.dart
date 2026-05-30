@@ -49,8 +49,12 @@ class Exercise {
   final int durationSeconds;
   final int repetitions;
   final String imagePath;
+  final String? duoImagePath;
   final String? videoPath;
   final String? audioCuePath;
+  final String? imageUrl;
+  final String? duoImageUrl;
+  final String? videoUrl;
 
   // ── Rhythm config ──────────────────────────────────────────────────────────
   final RhythmType rhythmType;
@@ -95,8 +99,12 @@ class Exercise {
     required this.durationSeconds,
     required this.repetitions,
     required this.imagePath,
+    this.duoImagePath,
     this.videoPath,
     this.audioCuePath,
+    this.imageUrl,
+    this.duoImageUrl,
+    this.videoUrl,
     // Rhythm defaults — works for all holdRest exercises without explicit config
     this.rhythmType = RhythmType.holdRest,
     this.phases = const [],
@@ -108,11 +116,50 @@ class Exercise {
     this.halfwaySwitch = false,
   });
 
+  int get exerciseNumber => sequenceNumber;
+
   String title(String locale) => locale == 'de' ? titleDe : titleEn;
   List<String> positionInstructions(String locale) =>
       locale == 'de' ? positionInstructionsDe : positionInstructionsEn;
   List<String> movementInstructions(String locale) =>
       locale == 'de' ? movementInstructionsDe : movementInstructionsEn;
+  List<String> positionInstructionsFor(String locale, {bool duo = false}) {
+    if (duo) {
+      final instructions = locale == 'de'
+          ? positionInstructionsDuoDe
+          : positionInstructionsDuoEn;
+      if (instructions != null && instructions.isNotEmpty) return instructions;
+    }
+    return positionInstructions(locale);
+  }
+
+  List<String> movementInstructionsFor(String locale, {bool duo = false}) {
+    if (duo) {
+      final instructions = locale == 'de'
+          ? movementInstructionsDuoDe
+          : movementInstructionsDuoEn;
+      if (instructions != null && instructions.isNotEmpty) return instructions;
+    }
+    return movementInstructions(locale);
+  }
+
+  String imagePathFor({bool duo = false}) {
+    if (duo && duoImagePath != null && duoImagePath!.isNotEmpty) {
+      return duoImagePath!;
+    }
+    return imagePath;
+  }
+
+  /// Returns the remote Supabase Storage URL for this exercise's image.
+  /// Prefers duo URL when [duo] is true and one is available.
+  String? imageUrlFor({bool duo = false}) {
+    if (duo && duoImageUrl != null && duoImageUrl!.isNotEmpty) {
+      return duoImageUrl;
+    }
+    if (imageUrl != null && imageUrl!.isNotEmpty) return imageUrl;
+    return null;
+  }
+
   List<String>? hints(String locale) => locale == 'de' ? hintsDe : hintsEn;
   String executionGuide(String locale) =>
       locale == 'de' ? executionGuideDe : executionGuideEn;
@@ -183,8 +230,12 @@ class Exercise {
       durationSeconds: row['duration_seconds'] as int,
       repetitions: row['repetitions'] as int,
       imagePath: _preferredBundledImagePath(id, rawImagePath),
+      duoImagePath: row['duo_image_path'] as String?,
       videoPath: row['video_path'] as String?,
       audioCuePath: row['audio_cue_path'] as String?,
+      imageUrl: row['image_url'] as String?,
+      duoImageUrl: row['duo_image_url'] as String?,
+      videoUrl: row['video_url'] as String?,
       rhythmType: rhythm,
       phases: _decodePhases(row['phases_json']),
       hasRepSwitch: row['has_rep_switch'] as bool? ?? false,
@@ -1001,7 +1052,8 @@ const List<Exercise> vorrundeExercises = [
     executionGuideEn: 'TBD',
     durationSeconds: 7,
     repetitions: 6,
-    imagePath: 'assets/images/trainings/vorrunde/vorrunde1.png',
+    imagePath: 'assets/images/trainings/vorrunde/Vorbereitung_solo_01.png',
+    duoImagePath: 'assets/images/trainings/vorrunde/Vorbereitung_duo_01.png',
     rhythmType: RhythmType.holdRest,
     holdSeconds: 7,
     restSeconds: 3,
@@ -1026,7 +1078,8 @@ const List<Exercise> vorrundeExercises = [
     executionGuideEn: 'TBD',
     durationSeconds: 7,
     repetitions: 6,
-    imagePath: 'assets/images/trainings/vorrunde/vorrunde2.png',
+    imagePath: 'assets/images/trainings/vorrunde/Vorbereitung_solo_02.png',
+    duoImagePath: 'assets/images/trainings/vorrunde/Vorbereitung_duo_02.png',
     rhythmType: RhythmType.holdRest,
     holdSeconds: 7,
     restSeconds: 3,
@@ -1051,7 +1104,8 @@ const List<Exercise> vorrundeExercises = [
     executionGuideEn: 'TBD',
     durationSeconds: 7,
     repetitions: 6,
-    imagePath: 'assets/images/trainings/vorrunde/vorrunde3.png',
+    imagePath: 'assets/images/trainings/vorrunde/Vorbereitung_solo_03.png',
+    duoImagePath: 'assets/images/trainings/vorrunde/Vorbereitung_duo_03.png',
     rhythmType: RhythmType.holdRest,
     holdSeconds: 7,
     restSeconds: 3,
@@ -1076,7 +1130,8 @@ const List<Exercise> vorrundeExercises = [
     executionGuideEn: 'TBD',
     durationSeconds: 7,
     repetitions: 6,
-    imagePath: 'assets/images/trainings/vorrunde/vorrunde4.png',
+    imagePath: 'assets/images/trainings/vorrunde/Vorbereitung_solo_04.png',
+    duoImagePath: 'assets/images/trainings/vorrunde/Vorbereitung_duo_04.png',
     rhythmType: RhythmType.holdRest,
     holdSeconds: 7,
     restSeconds: 3,
@@ -1101,7 +1156,8 @@ const List<Exercise> vorrundeExercises = [
     executionGuideEn: 'TBD',
     durationSeconds: 7,
     repetitions: 6,
-    imagePath: 'assets/images/trainings/vorrunde/vorrunde5.png',
+    imagePath: 'assets/images/trainings/vorrunde/Vorbereitung_solo_05.png',
+    duoImagePath: 'assets/images/trainings/vorrunde/Vorbereitung_duo_05.png',
     rhythmType: RhythmType.holdRest,
     holdSeconds: 7,
     restSeconds: 3,
@@ -1126,7 +1182,8 @@ const List<Exercise> vorrundeExercises = [
     executionGuideEn: 'TBD',
     durationSeconds: 7,
     repetitions: 6,
-    imagePath: 'assets/images/trainings/vorrunde/vorrunde6.png',
+    imagePath: 'assets/images/trainings/vorrunde/Vorbereitung_solo_06.png',
+    duoImagePath: 'assets/images/trainings/vorrunde/Vorbereitung_duo_06.png',
     rhythmType: RhythmType.holdRest,
     holdSeconds: 7,
     restSeconds: 3,
